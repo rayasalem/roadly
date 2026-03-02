@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "Roadly",
+    "slug": "roadly",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/brand/roadly-icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/brand/roadly-splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#f1f5f9"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mechnow.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/brand/roadly-adaptive-icon.png",
+        "backgroundColor": "#1a1a2e"
+      },
+      "package": "com.mechnow.app"
+    }
+  }
+}
