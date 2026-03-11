@@ -117,7 +117,8 @@ export function findNearby(
   if (role) list = list.filter((p) => p.role === role);
   if (availableOnly) list = list.filter((p) => p.isAvailable);
   if (verifiedOnly) list = list.filter((p) => p.verified);
-  list = list
+  type ProviderWithDistance = Provider & { distanceKm: number };
+  const withDistance: ProviderWithDistance[] = list
     .filter((p) => {
       const { latitude, longitude } = p.location;
       return latitude != null && longitude != null && (latitude !== 0 || longitude !== 0);
@@ -125,11 +126,12 @@ export function findNearby(
     .map((p) => ({
       ...p,
       distanceKm: haversineKm(lat, lng, p.location.latitude, p.location.longitude),
-    }))
+    }));
+  const sorted = withDistance
     .filter((p) => p.distanceKm <= radiusKm)
     .sort((a, b) => a.distanceKm - b.distanceKm);
-  const total = list.length;
+  const total = sorted.length;
   const start = (page - 1) * limit;
-  const items = list.slice(start, start + limit).map(({ distanceKm, ...p }) => p);
+  const items = sorted.slice(start, start + limit).map(({ distanceKm: _d, ...p }) => p);
   return { items, total };
 }

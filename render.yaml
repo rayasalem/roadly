@@ -4,4 +4,4 @@ services:
     name: roadmapapp
     env: node
     buildCommand: npm install && npm run build
-    startCommand: node server.js
+    startCommand: npm start

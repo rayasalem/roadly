@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "expo/AppEntry.js",
   "scripts": {
-    "start": "node node_modules/expo/bin/cli start",
+    "start": "node scripts/start.js",
     "build": "node node_modules/expo/bin/cli export --platform web",
     "build:web": "node node_modules/expo/bin/cli export --platform web",
     "vercel-build": "node node_modules/expo/bin/cli export --platform web",

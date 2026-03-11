@@ -57,7 +57,7 @@ export function validateBodyJoi(schema: Joi.Schema) {
     } catch (err) {
       const detail = err instanceof Error ? err.message : 'Validation failed';
       const details = err && typeof err === 'object' && 'details' in err ? (err as { details: unknown }).details : undefined;
-      res.status(400).json({ message: detail, ...(details && { errors: details }) });
+      res.status(400).json({ message: detail, ...(details !== undefined ? { errors: details } : {}) });
     }
   };
 }
@@ -73,7 +73,7 @@ export function validateQueryJoi(schema: Joi.Schema) {
     } catch (err) {
       const detail = err instanceof Error ? err.message : 'Validation failed';
       const details = err && typeof err === 'object' && 'details' in err ? (err as { details: unknown }).details : undefined;
-      res.status(400).json({ message: detail, ...(details && { errors: details }) });
+      res.status(400).json({ message: detail, ...(details !== undefined ? { errors: details } : {}) });
     }
   };
 }
