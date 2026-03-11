@@ -1,11 +1,7 @@
-# Render – Frontend (Static Site) – مُوصى به
-# استخدم نوع "Static Site" في Render واربط هذا المستودع ثم:
-# Build Command:  npm install && npm run build
-# Publish Directory:  dist
-# لا تحتاج Start Command.
-
----
-# إذا استخدمت Web Service بدلاً من Static Site فعيّن:
-# Build Command:  npm install && npm run build
-# Start Command:  npm run serve
-# واترك Publish Directory فارغاً.
+# Render Web Service – يُستخدم عند ربط المستودع أو إعداد الخدمة
+services:
+  - type: web
+    name: roadmapapp
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: node server.js
