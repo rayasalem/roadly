@@ -11,7 +11,7 @@ export const GlobalOverlayHost = React.memo(function GlobalOverlayHost() {
   return (
     <>
       {isLoading ? (
-        <View style={styles.loaderBackdrop} pointerEvents="auto">
+        <View style={[styles.loaderBackdrop, { pointerEvents: 'auto' }]}>
           <View style={styles.loaderCard}>
             <ActivityIndicator size="large" color={colors.primary} />
           </View>

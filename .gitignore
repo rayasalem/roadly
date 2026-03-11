@@ -32,3 +32,9 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# DevOps
+backups/
+deploy/nginx/ssl/*.pem
+deploy/nginx/ssl/*.key
+deploy/nginx/conf.d/https.conf

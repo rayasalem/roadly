@@ -1,0 +1,31 @@
+# MechNow – CD: deploy to production (manual approval via workflow_dispatch)
+name: CD Production
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "deploy" to deploy to production'
+        required: true
+
+jobs:
+  deploy-production:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm == 'deploy'
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - name: Build backend image
+        run: docker build -t mechnow-backend:prod-${{ github.sha }} -f backend/Dockerfile backend
+      - name: Build frontend image
+        run: |
+          docker build -t mechnow-frontend:prod-${{ github.sha }} -f frontend.Dockerfile \
+            --build-arg EXPO_PUBLIC_API_URL=${{ vars.EXPO_PUBLIC_API_URL || 'https://mechnow.example.com/api' }} \
+            --build-arg EXPO_PUBLIC_ENVIRONMENT=production .
+      - name: Deploy to production
+        run: |
+          echo "Deploy to production (e.g. push to registry, then k8s or compose on prod server)"
+          echo "Use production secrets only in environment: production"

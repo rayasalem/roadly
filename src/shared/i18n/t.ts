@@ -1,16 +1,10 @@
 import { STRINGS, type Locale, type StringKey } from './strings';
+import { getLocale } from '../../store/localeStore';
 
-let currentLocale: Locale = 'ar';
-
-export function setLocale(locale: Locale) {
-  currentLocale = locale;
-}
-
-export function getLocale(): Locale {
-  return currentLocale;
-}
+export { getLocale, setLocale } from '../../store/localeStore';
+export type { Locale } from '../../store/localeStore';
 
 export function t(key: StringKey): string {
-  return STRINGS[currentLocale][key] ?? STRINGS.en[key] ?? key;
+  const locale = getLocale();
+  return STRINGS[locale][key] ?? STRINGS.en[key] ?? key;
 }
-

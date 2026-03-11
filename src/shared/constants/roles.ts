@@ -13,9 +13,9 @@ export const ROLES = {
 export type Role = (typeof ROLES)[keyof typeof ROLES];
 
 export const ROLE_LABELS: Record<Role, string> = {
-  [ROLES.USER]: 'User',
+  [ROLES.USER]: 'Customer',
   [ROLES.MECHANIC]: 'Mechanic',
-  [ROLES.MECHANIC_TOW]: 'Mechanic (Tow)',
+  [ROLES.MECHANIC_TOW]: 'Tow Truck',
   [ROLES.CAR_RENTAL]: 'Car Rental',
   [ROLES.ADMIN]: 'Admin',
 };
@@ -36,7 +36,7 @@ export function canRequestServices(role: Role): boolean {
 }
 
 export function hasLiveLocationTracking(role: Role): boolean {
-  return [ROLES.MECHANIC, ROLES.MECHANIC_TOW, ROLES.CAR_RENTAL].includes(role);
+  return ([ROLES.MECHANIC, ROLES.MECHANIC_TOW, ROLES.CAR_RENTAL] as readonly Role[]).includes(role);
 }
 
 export function hasTowCapability(role: Role): boolean {

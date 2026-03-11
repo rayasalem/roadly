@@ -20,6 +20,8 @@ type UIState = {
   clearToasts: () => void;
 };
 
+const MAX_TOASTS = 5;
+
 function uid(): string {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
@@ -31,7 +33,9 @@ export const useUIStore = create<UIState>((set, get) => ({
   hideLoader: () => set((s) => ({ loadingCount: Math.max(0, s.loadingCount - 1) })),
   toast: (toast) => {
     const id = uid();
-    set((s) => ({ toasts: [...s.toasts, { id, ...toast }] }));
+    set((s) => ({
+      toasts: [...s.toasts, { id, ...toast }].slice(-MAX_TOASTS),
+    }));
   },
   dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
   clearToasts: () => set({ toasts: [] }),

@@ -1,275 +1,361 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View, Animated, ScrollView, TouchableOpacity } from 'react-native';
+/**
+ * Ride-style "Start Your Journey": header, pickup/destination inputs,
+ * two dark teal action cards (Nearest Locations, Saved Places), Nearby Riders list, bottom nav.
+ */
+import React, { useRef, useEffect, memo } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  TouchableOpacity,
+  Animated,
+  TextInput,
+  Platform,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../../../../navigation/RootNavigator';
-import { Button } from '../../../../shared/components/Button';
-import { t, getLocale, setLocale } from '../../../../shared/i18n/t';
-import type { Locale } from '../../../../shared/i18n/strings';
+import type { CustomerStackParamList } from '../../../../navigation/CustomerStack';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+
+import { t } from '../../../../shared/i18n/t';
 import { colors } from '../../../../shared/theme/colors';
 import { spacing, typography, radii, shadows } from '../../../../shared/theme';
 import { ScreenWrapper } from '../../../../shared/components/ScreenWrapper';
-import { useUIStore } from '../../../../store/uiStore';
+import { AppHeader } from '../../../../shared/components/AppHeader';
+import { BottomNavBar, type NavTabId } from '../../../../shared/components/BottomNavBar';
 
-type Nav = NativeStackNavigationProp<RootStackParamList, 'Home'>;
+type Nav = NativeStackNavigationProp<CustomerStackParamList, 'Home'>;
+
+const NEARBY_RIDERS = [
+  { id: '1', name: 'خدمة طرق طريق سريع', distance: 'على بُعد ٨٠ كم', rating: 5 },
+  { id: '2', name: 'ورشة فاست فيكس', distance: 'على بُعد ١٫٢ كم', rating: 4.8 },
+  { id: '3', name: 'ونش رودلي ٢٤/٧', distance: 'على بُعد ٢٫٣ كم', rating: 4.6 },
+];
 
 export function HomeScreen() {
   const navigation = useNavigation<Nav>();
-  const toast = useUIStore((s) => s.toast);
-  const showLoader = useUIStore((s) => s.showLoader);
-  const hideLoader = useUIStore((s) => s.hideLoader);
-
-  const [locale, setLocaleState] = useState<Locale>(getLocale());
-
-  // Fade / slide‑up animation for first load
   const fade = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(12)).current;
 
+  const useNativeDriver = Platform.OS !== 'web';
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fade, {
-        toValue: 1,
-        duration: 350,
-        useNativeDriver: true,
-      }),
-      Animated.spring(translateY, {
-        toValue: 0,
-        useNativeDriver: true,
-        speed: 24,
-        bounciness: 7,
-      }),
+      Animated.timing(fade, { toValue: 1, duration: 350, useNativeDriver }),
+      Animated.spring(translateY, { toValue: 0, useNativeDriver, speed: 24, bounciness: 7 }),
     ]).start();
-  }, [fade, translateY]);
+  }, [fade, translateY, useNativeDriver]);
 
-  const onToast = useCallback(() => {
-    toast({ type: 'success', message: t('home.toastExample') });
-  }, [toast]);
-
-  const onLoader = useCallback(async () => {
-    showLoader();
-    try {
-      await new Promise((r) => setTimeout(r, 600));
-    } finally {
-      hideLoader();
-    }
-  }, [hideLoader, showLoader]);
-
-  const toggleLocale = useCallback(() => {
-    const next: Locale = locale === 'en' ? 'ar' : 'en';
-    setLocale(next);
-    setLocaleState(next);
-  }, [locale]);
+  const handleTab = (tab: NavTabId) => {
+    if (tab === 'Home') navigation.navigate('Map');
+    else if (tab === 'Profile') navigation.navigate('Profile');
+    else if (tab === 'Chat') navigation.navigate('Chat');
+    else if (tab === 'Notifications') navigation.navigate('Notifications');
+    else if (tab === 'Settings') navigation.navigate('Settings');
+  };
 
   return (
     <ScreenWrapper>
-      <Animated.View
-        style={[
-          styles.container,
-          {
-            opacity: fade,
-            transform: [{ translateY }],
-          },
-        ]}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greetingTitle}>{t('home.greeting')}</Text>
-            <Text style={styles.greetingSubtitle}>{t('home.subtitle')}</Text>
-          </View>
-          <TouchableOpacity
-            style={styles.langToggle}
-            onPress={toggleLocale}
-            accessibilityRole="button"
-          >
-            <Text style={styles.langToggleText}>{t('home.languageToggle')}</Text>
-          </TouchableOpacity>
-        </View>
-
+      <AppHeader
+        title={t('home.startJourney')}
+        rightIcon="settings"
+        onProfile={() => navigation.navigate('Settings')}
+      />
+      <Animated.View style={[styles.content, { opacity: fade, transform: [{ translateY }] }]}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Services cards */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('home.servicesTitle')}</Text>
-            <Text style={styles.sectionSubtitle}>{t('home.servicesSubtitle')}</Text>
-
-            <View style={styles.cardsGrid}>
-              <ServiceCard
-                title={t('home.services.mechanic.title')}
-                description={t('home.services.mechanic.subtitle')}
-                meta={t('home.services.mechanic.meta')}
-                icon="wrench-outline"
-                onPress={() => navigation.navigate('Map')}
+          {/* Pickup / Destination inputs */}
+          <View style={styles.inputRow}>
+            <View style={styles.inputWrap}>
+              <MaterialCommunityIcons name="map-marker-outline" size={20} color={colors.textSecondary} />
+              <TextInput
+                style={styles.input}
+                placeholder={t('home.pickupPlaceholder')}
+                placeholderTextColor={colors.textMuted}
+                editable={false}
               />
-              <ServiceCard
-                title={t('home.services.tow.title')}
-                description={t('home.services.tow.subtitle')}
-                meta={t('home.services.tow.meta')}
-                icon="tow-truck"
-                onPress={() => navigation.navigate('Map')}
+              <MaterialCommunityIcons name="chevron-down" size={20} color={colors.textMuted} />
+            </View>
+            <View style={styles.inputWrap}>
+              <MaterialCommunityIcons name="map-marker-outline" size={20} color={colors.textSecondary} />
+              <TextInput
+                style={styles.input}
+                placeholder={t('home.destinationPlaceholder')}
+                placeholderTextColor={colors.textMuted}
+                editable={false}
               />
-              <ServiceCard
-                title={t('home.services.rental.title')}
-                description={t('home.services.rental.subtitle')}
-                meta={t('home.services.rental.meta')}
-                icon="car-estate"
-                onPress={() => navigation.navigate('Map')}
-              />
+              <MaterialCommunityIcons name="chevron-down" size={20} color={colors.textMuted} />
             </View>
           </View>
 
-          {/* Demo actions (toast / loader / map) remain for testing */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('home.title')}</Text>
-            <Text style={styles.sectionSubtitle}>{t('common.notImplemented')}</Text>
-            <View style={styles.actions}>
-              <Button title={t('home.action.toast')} onPress={onToast} />
-              <Button title={t('home.action.loader')} variant="outline" onPress={onLoader} />
-              <Button title={t('home.action.openMap')} variant="outline" onPress={() => navigation.navigate('Map')} />
+          {/* Quick Request: 1 tap from home */}
+          <TouchableOpacity
+            style={styles.quickRequest}
+            onPress={() => navigation.navigate('Request', { serviceType: 'mechanic' })}
+            activeOpacity={0.9}
+            testID="home-quick-request"
+          >
+            <View style={styles.quickRequestIcon}>
+              <MaterialCommunityIcons name="flash" size={20} color={colors.primaryContrast} />
             </View>
+            <View style={styles.quickRequestTextWrap}>
+              <Text style={styles.quickRequestTitle}>{t('home.requestHelpNow') ?? t('map.requestService')}</Text>
+              <Text style={styles.quickRequestSubtitle}>{t('request.confirmHint') ?? ''}</Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-left" size={22} color={colors.primaryContrast} />
+          </TouchableOpacity>
+
+          {/* Service cards: mechanic / tow / rental */}
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              style={styles.serviceCard}
+              onPress={() => navigation.navigate('Request', { serviceType: 'mechanic' })}
+              activeOpacity={0.9}
+            >
+              <MaterialCommunityIcons name="wrench" size={28} color={colors.primaryContrast} />
+              <Text style={styles.serviceCardTitle}>{t('services.mechanic') ?? 'Mechanic'}</Text>
+              <Text style={styles.serviceCardSubtitle}>{t('home.services.mechanic.subtitle')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.serviceCard}
+              onPress={() => navigation.navigate('Request', { serviceType: 'tow' })}
+              activeOpacity={0.9}
+            >
+              <MaterialCommunityIcons name="tow-truck" size={28} color={colors.primaryContrast} />
+              <Text style={styles.serviceCardTitle}>{t('services.tow') ?? 'Tow'}</Text>
+              <Text style={styles.serviceCardSubtitle}>{t('home.services.tow.subtitle')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.serviceCard}
+              onPress={() => navigation.navigate('Request', { serviceType: 'rental' })}
+              activeOpacity={0.9}
+            >
+              <MaterialCommunityIcons name="car-estate" size={28} color={colors.primaryContrast} />
+              <Text style={styles.serviceCardTitle}>{t('services.rental') ?? 'Rental'}</Text>
+              <Text style={styles.serviceCardSubtitle}>{t('home.services.rental.subtitle')}</Text>
+            </TouchableOpacity>
           </View>
+
+          {/* Nearby Riders */}
+          <Text style={styles.sectionTitle}>{t('home.nearbyRiders')}</Text>
+          {NEARBY_RIDERS.map((r) => (
+            <RiderCard
+              key={r.id}
+              name={r.name}
+              distance={r.distance}
+              rating={r.rating}
+              onPress={() => navigation.navigate('Request', { serviceType: 'mechanic' })}
+            />
+          ))}
         </ScrollView>
       </Animated.View>
+      <BottomNavBar activeTab="Home" onSelect={handleTab} />
     </ScreenWrapper>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    marginBottom: spacing.xl,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  greetingTitle: {
-    fontSize: typography.fontSize.title1,
-    fontWeight: typography.fontWeight.bold,
-    color: colors.text,
-  },
-  greetingSubtitle: {
-    marginTop: spacing.xs,
-    fontSize: typography.fontSize.callout,
-    color: colors.textSecondary,
-  },
-  langToggle: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radii.full,
-    backgroundColor: colors.surface,
-    ...shadows.sm,
-  },
-  langToggleText: {
-    fontSize: typography.fontSize.caption,
-    color: colors.textSecondary,
-  },
-  scrollContent: {
-    paddingBottom: spacing.xxxl,
-  },
-  section: {
-    marginBottom: spacing.xxl,
-  },
-  sectionTitle: {
-    fontSize: typography.fontSize.title2,
-    fontWeight: typography.fontWeight.semibold,
-    color: colors.text,
-  },
-  sectionSubtitle: {
-    marginTop: spacing.xs,
-    fontSize: typography.fontSize.callout,
-    color: colors.textSecondary,
-  },
-  cardsGrid: {
-    marginTop: spacing.lg,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  actions: {
-    marginTop: spacing.md,
-    gap: spacing.sm,
-  },
-});
-
-type ServiceCardProps = {
-  title: string;
-  description: string;
-  meta: string;
-  icon: string;
+type RiderCardProps = {
+  name: string;
+  distance: string;
+  rating: number;
   onPress: () => void;
 };
 
-function ServiceCard({ title, description, meta, icon, onPress }: ServiceCardProps) {
+const useNativeDriverWebSafe = Platform.OS !== 'web';
+
+const RiderCard = memo(function RiderCard({ name, distance, rating, onPress }: RiderCardProps) {
   const scale = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
-    Animated.spring(scale, {
-      toValue: 0.97,
-      useNativeDriver: true,
-      speed: 28,
-      bounciness: 6,
-    }).start();
+    Animated.spring(scale, { toValue: 0.98, useNativeDriver: useNativeDriverWebSafe, speed: 28, bounciness: 6 }).start();
   };
-
   const handlePressOut = () => {
-    Animated.spring(scale, {
-      toValue: 1,
-      useNativeDriver: true,
-      speed: 28,
-      bounciness: 6,
-    }).start();
+    Animated.spring(scale, { toValue: 1, useNativeDriver: useNativeDriverWebSafe, speed: 28, bounciness: 6 }).start();
   };
 
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
       <TouchableOpacity
-        activeOpacity={0.9}
+        style={styles.riderCard}
         onPress={onPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        style={serviceStyles.card}
+        activeOpacity={0.9}
       >
-        <View style={serviceStyles.iconWrap}>
-          {/* TODO: استبدل بـ MaterialCommunityIcons فعلياً إذا رغبت */}
+        <View style={styles.riderAvatar}>
+          <MaterialCommunityIcons name="account" size={24} color={colors.primary} />
         </View>
-        <Text style={serviceStyles.label}>{title}</Text>
-        <Text style={serviceStyles.description}>{description}</Text>
-        <Text style={serviceStyles.meta}>{meta}</Text>
+        <View style={styles.riderInfo}>
+          <Text style={styles.riderName} numberOfLines={1}>{name}</Text>
+          <View style={styles.riderMeta}>
+            <View style={styles.stars}>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <MaterialCommunityIcons
+                  key={i}
+                  name="star"
+                  size={14}
+                  color={i <= rating ? colors.primary : colors.border}
+                />
+              ))}
+            </View>
+            <Text style={styles.riderDistance}>{distance}</Text>
+          </View>
+        </View>
+        <TouchableOpacity style={styles.riderCta} onPress={onPress}>
+          <MaterialCommunityIcons name="arrow-right" size={20} color={colors.primaryContrast} />
+        </TouchableOpacity>
       </TouchableOpacity>
     </Animated.View>
   );
-}
-
-const serviceStyles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: spacing.lg,
-    ...shadows.sm,
-    width: '48%',
-    marginBottom: spacing.md,
-  },
-  iconWrap: {
-    marginBottom: spacing.sm,
-  },
-  label: {
-    fontSize: typography.fontSize.body,
-    fontWeight: typography.fontWeight.semibold,
-    color: colors.text,
-    marginBottom: spacing.xs,
-  },
-  description: {
-    fontSize: typography.fontSize.caption,
-    color: colors.textSecondary,
-    marginBottom: spacing.xs,
-  },
-  meta: {
-    fontSize: typography.fontSize.caption,
-    color: colors.textMuted,
-  },
 });
 
+const styles = StyleSheet.create({
+  content: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xxl,
+  },
+  quickRequest: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: radii.xl,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xl,
+    gap: spacing.md,
+    ...shadows.sm,
+  },
+  quickRequestIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quickRequestTextWrap: {
+    flex: 1,
+  },
+  quickRequestTitle: {
+    fontFamily: typography.fontFamily.semibold,
+    fontSize: typography.presets.body.fontSize,
+    color: colors.primaryContrast,
+    marginBottom: spacing.xs / 2,
+  },
+  quickRequestSubtitle: {
+    fontFamily: typography.fontFamily.regular,
+    fontSize: typography.presets.caption.fontSize,
+    color: 'rgba(255,255,255,0.9)',
+  },
+  inputRow: {
+    gap: spacing.md,
+    marginBottom: spacing.xl,
+  },
+  inputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    ...shadows.sm,
+  },
+  input: {
+    flex: 1,
+    marginLeft: spacing.sm,
+    fontFamily: typography.fontFamily.regular,
+    fontSize: typography.presets.body.fontSize,
+    color: colors.text,
+    paddingVertical: 0,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+    marginBottom: spacing.xl,
+  },
+  serviceCard: {
+    flex: 1,
+    backgroundColor: colors.navDark,
+    borderRadius: radii.lg,
+    padding: spacing.md,
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    minHeight: 120,
+    ...shadows.sm,
+  },
+  serviceCardTitle: {
+    marginTop: spacing.sm,
+    fontFamily: typography.fontFamily.semibold,
+    fontSize: typography.presets.body.fontSize,
+    color: colors.primaryContrast,
+  },
+  serviceCardSubtitle: {
+    marginTop: spacing.xs,
+    fontFamily: typography.fontFamily.regular,
+    fontSize: typography.presets.caption.fontSize,
+    color: 'rgba(255,255,255,0.85)',
+  },
+  sectionTitle: {
+    fontFamily: typography.fontFamily.semibold,
+    fontSize: typography.presets.titleSmall.fontSize,
+    color: colors.text,
+    marginBottom: spacing.md,
+  },
+  riderCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    ...shadows.sm,
+  },
+  riderAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: radii.xl,
+    backgroundColor: colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  riderInfo: {
+    flex: 1,
+    minWidth: 0,
+  },
+  riderName: {
+    fontFamily: typography.fontFamily.semibold,
+    fontSize: typography.presets.body.fontSize,
+    color: colors.text,
+  },
+  riderMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.xs,
+    gap: spacing.sm,
+  },
+  stars: {
+    flexDirection: 'row',
+    gap: 2,
+  },
+  riderDistance: {
+    fontFamily: typography.fontFamily.regular,
+    fontSize: typography.presets.caption.fontSize,
+    color: colors.textSecondary,
+  },
+  riderCta: {
+    width: 44,
+    height: 44,
+    borderRadius: radii.xl,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});

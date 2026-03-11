@@ -1,282 +1,248 @@
 /**
- * Web version of MapScreen.
- *
- * Native (iOS/Android) uses `MapScreen.tsx` with the real map.
- * Here we recreate the same **visual language** (search bar, filters,
- * provider preview and list) so that the web view still feels like
- * a modern on‑demand map experience, just without the native map.
+ * Web map screen: search, filters, OSM map, sheet with providers. No component > 200 lines.
  */
-import React, { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { View, TouchableOpacity, Platform, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
 
-import { colors } from '../../../../shared/theme/colors';
-import { spacing, typography, radii, shadows } from '../../../../shared/theme';
+import { useTheme } from '../../../../shared/theme';
 import type { Provider } from '../../../providers/domain/types';
-import { useUserLocation } from '../../../location/hooks/useUserLocation';
-import { useNearbyProviders } from '../../../providers/hooks/useNearbyProviders';
-import { NearbyProvidersList } from '../../../providers/presentation/NearbyProvidersList';
-import { ProviderCard } from '../../../../shared/components/ProviderCard';
+import { ROLES } from '../../../../shared/constants/roles';
+import { AppText } from '../../../../shared/components/AppText';
+import { AppHeader } from '../../../../shared/components/AppHeader';
+import { BottomNavBar, type NavTabId } from '../../../../shared/components/BottomNavBar';
 import { LoadingSpinner } from '../../../../shared/components/LoadingSpinner';
+import { ProviderBottomSheet } from '../../../../shared/components/ProviderBottomSheet';
+import { WebMapView } from '../components/WebMapView';
+import { MapSearchBar } from '../components/MapSearchBar';
+import { MapFiltersBar } from '../components/MapFiltersBar';
+import { MapSheetContent } from '../components/MapSheetContent';
+import { MapLocationDeniedView } from '../components/MapLocationDeniedView';
+import { MapLegend } from '../components/MapLegend';
+import { t } from '../../../../shared/i18n/t';
+import { useAuthStore } from '../../../../store/authStore';
+import { useUIStore } from '../../../../store/uiStore';
+import { useMapFilters } from '../../hooks/useMapFilters';
+import { useSortedNearbyProviders } from '../../hooks/useSortedNearbyProviders';
+import { usePlacesSearch } from '../../hooks/usePlacesSearch';
+import { providerRoleToServiceType } from '../../utils/providerToServiceType';
+import type { CustomerStackParamList } from '../../../../navigation/CustomerStack';
+import { mapScreenWebStyles as styles } from './mapScreenWeb.styles';
+
+const DEFAULT_CENTER = { latitude: 25.2048, longitude: 55.2708 };
+
+function getFilterLabel(role: ReturnType<typeof useMapFilters>['filterRole']): string {
+  if (role === null) return t('map.filter.all');
+  if (role === 'mechanic') return t('map.filter.mechanic');
+  if (role === 'mechanic_tow') return t('map.filter.tow');
+  if (role === 'car_rental') return t('map.filter.rental');
+  return t('map.filter.all');
+}
+
+type Nav = NativeStackNavigationProp<CustomerStackParamList, 'Map'>;
 
 export function MapScreen() {
-  const [selected, setSelected] = useState<Provider | null>(null);
+  const { colors } = useTheme();
+  const navigation = useNavigation<Nav>();
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const userRole = useAuthStore((s) => s.user?.role ?? null);
+  const isCustomer = userRole === ROLES.USER;
+  const { filterRole, setFilter, filterOptions } = useMapFilters();
+  const { query: searchQuery, setQuery: setSearchQuery, selectedPlace, suggestions, selectPlace } = usePlacesSearch();
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
+  const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
 
-  const { coords, isLoading, fetchLocation } = useUserLocation();
+  const { sortedProviders, nearest, userCoords: coords, isLoading, isRefetching, error: locationError, isProvidersError, refetchLocation: fetchLocation, refetchProviders, getDistanceKm } =
+    useSortedNearbyProviders({ role: filterRole, enabled: true });
 
   useEffect(() => {
-    if (!coords) {
-      void fetchLocation();
-    }
+    if (!coords) void fetchLocation();
   }, [coords, fetchLocation]);
+  useEffect(() => {
+    if (coords) setMapCenter({ latitude: coords.latitude, longitude: coords.longitude });
+  }, [coords?.latitude, coords?.longitude]);
+  useEffect(() => {
+    if (selectedPlace) setMapCenter({ latitude: selectedPlace.latitude, longitude: selectedPlace.longitude });
+  }, [selectedPlace]);
 
-  const { data, isLoading: isLoadingProviders } = useNearbyProviders(
-    coords
-      ? {
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-          radiusKm: 10,
-          availableOnly: true,
-          page: 1,
-          limit: 20,
-        }
-      : null,
+  const showEmptyProviders = !isLoading && sortedProviders.length === 0;
+  const selectedProviderDistanceKm = selectedProvider ? getDistanceKm(selectedProvider) ?? null : null;
+  const nearestDistanceKm = nearest ? getDistanceKm(nearest) ?? null : null;
+
+  const handleSelectProvider = useCallback((provider: Provider | null | undefined) => {
+    if (!provider) return;
+    setSelectedProvider(provider);
+    const loc = provider.location;
+    if (loc && typeof loc.latitude === 'number' && typeof loc.longitude === 'number') {
+      setMapCenter({ latitude: loc.latitude, longitude: loc.longitude });
+    }
+    try {
+      bottomSheetRef.current?.present();
+    } catch (_) {}
+  }, []);
+
+  const toast = useUIStore((s) => s.toast);
+  const handleRequestService = useCallback(
+    (provider: Provider | null | undefined) => {
+      if (!provider) return;
+      const serviceType = providerRoleToServiceType(provider.role);
+      if (!serviceType) {
+        try {
+          navigation.goBack();
+        } catch (_) {}
+        return;
+      }
+      if (!isCustomer) {
+        toast({ type: 'info', message: t('map.onlyCustomersCanRequest') });
+        return;
+      }
+      try {
+        bottomSheetRef.current?.dismiss();
+      } catch (_) {}
+      setSelectedProvider(null);
+      toast({ type: 'info', message: t('map.confirmOnNextScreen'), durationMs: 3000 });
+      try {
+        navigation.navigate('Request', { serviceType, providerId: provider.id });
+      } catch (_) {
+        try {
+          navigation.goBack();
+        } catch (_) {}
+      }
+    },
+    [navigation, isCustomer, toast]
   );
 
-  const providers = useMemo(() => data?.items ?? [], [data]);
+  const handleMyLocation = useCallback(() => {
+    if (coords) setMapCenter({ latitude: coords.latitude, longitude: coords.longitude });
+    else void fetchLocation();
+  }, [coords, fetchLocation]);
 
-  const nearest = providers[0];
+  const handleOpenMapFromSheet = useCallback(() => {
+    if (selectedProvider?.location) {
+      setMapCenter({ latitude: selectedProvider.location.latitude, longitude: selectedProvider.location.longitude });
+    } else {
+      handleMyLocation();
+    }
+  }, [selectedProvider, handleMyLocation]);
 
-  if (isLoading && !coords) {
-    return <LoadingSpinner />;
+  const handleTab = useCallback(
+    (tab: NavTabId) => {
+      if (tab === 'Home') navigation.navigate('Map');
+      else if (tab === 'Profile') navigation.navigate('Profile');
+      else if (tab === 'Chat') navigation.navigate('Chat');
+      else if (tab === 'Notifications') navigation.navigate('Notifications');
+      else if (tab === 'Settings') navigation.navigate('Settings');
+    },
+    [navigation]
+  );
+
+  const showLocationOverlay = isLoading && !coords && !locationError;
+
+  if (locationError && !coords) {
+    return (
+      <MapLocationDeniedView
+        onBack={() => navigation.goBack()}
+        onRetry={() => fetchLocation()}
+        onOpenSettings={Platform.OS !== 'web' ? () => Linking.openSettings() : undefined}
+      />
+    );
   }
 
   return (
-    <View style={styles.root}>
-      {/* Fake map background */}
-      <View style={styles.mapArea}>
-        <SafeAreaView style={styles.overlay} pointerEvents="box-none" edges={['top', 'left', 'right']}>
-          <View style={styles.topBar} pointerEvents="box-none">
-            <View style={styles.searchBar}>
-              <MaterialCommunityIcons name="magnify" size={20} color={colors.textSecondary} />
-              <Text style={styles.searchPlaceholder}>Search mechanics, tow, rentals</Text>
-            </View>
-            <TouchableOpacity style={styles.iconButton} accessibilityRole="button" accessibilityLabel="Filters">
-              <MaterialCommunityIcons name="tune-variant" size={20} color={colors.text} />
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity
-            style={styles.locationButton}
-            accessibilityRole="button"
-            accessibilityLabel="Center on my location"
-            onPress={() => {
-              // On web we don't move a real map, but we can re-trigger location.
-              void fetchLocation();
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={styles.searchBarContainer}>
+          <MapSearchBar
+            query={searchQuery}
+            onQueryChange={(text) => {
+              setSearchQuery(text);
+              setShowSuggestions(true);
             }}
-          >
-            <MaterialCommunityIcons name="crosshairs-gps" size={22} color={colors.text} />
-          </TouchableOpacity>
-        </SafeAreaView>
-
-        <View style={styles.mapHint}>
-          <MaterialCommunityIcons name="map-outline" size={24} color={colors.primary} />
-          <View style={styles.mapHintText}>
-            <Text style={styles.mapHintTitle}>Map preview</Text>
-            <Text style={styles.mapHintSubtitle}>
-              Full live map is available on the mobile app. Here you can still browse nearby providers.
-            </Text>
-          </View>
+            onFocus={() => setShowSuggestions(true)}
+            suggestions={suggestions}
+            onSelectSuggestion={(s) => {
+              selectPlace(s);
+              setShowSuggestions(false);
+            }}
+            showSuggestions={showSuggestions}
+          />
         </View>
-      </View>
 
-      {/* Sheet-style content */}
-      <View style={styles.sheet}>
-        <ScrollView
-          contentContainerStyle={styles.sheetContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {selected ? (
-            <View style={styles.detailContainer}>
-              <ProviderCard
-                title={selected.name}
-                subtitle={selected.role}
-                distanceText={undefined}
-                isAvailable={selected.isAvailable}
-                onRequest={() => {
-                  // Placeholder for future request flow; keep UI only.
-                  setSelected(selected);
-                }}
-              />
-              <View style={styles.detailActions}>
-                <TouchableOpacity
-                  onPress={() => setSelected(null)}
-                  style={styles.backButton}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.backButtonText}>Back to list</Text>
-                </TouchableOpacity>
+        <View style={styles.mapCard}>
+          {isProvidersError && sortedProviders.length > 0 && (
+            <View style={styles.fallbackBanner}>
+              <AppText variant="caption" style={styles.fallbackBannerText}>{t('map.showingCachedData')}</AppText>
+            </View>
+          )}
+          {coords && nearest && nearestDistanceKm != null && (
+            <View style={styles.userInfoChip}>
+              <AppText variant="caption" style={styles.userInfoText}>
+                {t('map.youAreHere')}{' '}
+                {coords.latitude.toFixed(3)}, {coords.longitude.toFixed(3)} • {nearestDistanceKm.toFixed(1)} km
+              </AppText>
+            </View>
+          )}
+          <WebMapView
+            center={mapCenter}
+            providers={sortedProviders}
+            userLocation={coords}
+            selectedProviderId={selectedProvider?.id ?? null}
+            nearestProviderId={nearest?.id ?? null}
+            onProviderPress={handleSelectProvider}
+          />
+          <View style={styles.legendWrap}>
+            <MapLegend compact />
+          </View>
+          <MapFiltersBar filterRole={filterRole} onFilterChange={setFilter} filterOptions={filterOptions} getLabel={getFilterLabel} />
+          <TouchableOpacity style={styles.createRequestButton} onPress={() => (isCustomer ? navigation.navigate('Request', { serviceType: 'mechanic' }) : toast({ type: 'info', message: t('map.onlyCustomersCanRequest') }))}>
+            <MaterialCommunityIcons name="plus" size={20} color={colors.primaryContrast} />
+            <AppText variant="caption" style={styles.createRequestButtonText}>{t('map.createRequest')}</AppText>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.locationButton} onPress={handleMyLocation}>
+            <MaterialCommunityIcons name="crosshairs-gps" size={24} color={colors.primaryContrast} />
+          </TouchableOpacity>
+          {showLocationOverlay && (
+            <View style={styles.loadingOverlay}>
+              <View style={styles.loadingOverlayContent}>
+                <LoadingSpinner />
+                <AppText variant="callout" color={colors.textSecondary} style={styles.loadingOverlayText}>{t('map.gettingLocation')}</AppText>
               </View>
             </View>
-          ) : (
-            <>
-              {nearest && !isLoadingProviders ? (
-                <View style={styles.previewSection}>
-                  <Text style={styles.previewLabel}>Nearest provider</Text>
-                  <ProviderCard
-                    title={nearest.name}
-                    subtitle={nearest.role}
-                    distanceText={undefined}
-                    isAvailable={nearest.isAvailable}
-                    onPress={() => setSelected(nearest)}
-                    onRequest={() => {
-                      // Placeholder: hook into request flow later.
-                      setSelected(nearest);
-                    }}
-                  />
-                </View>
-              ) : null}
-              <NearbyProvidersList
-                providers={providers}
-                onSelect={(p) => setSelected(p)}
-                onRequest={(p) => {
-                  // Placeholder: keep UI only.
-                  setSelected(p);
-                }}
-                loading={isLoadingProviders}
-              />
-            </>
           )}
-        </ScrollView>
-      </View>
+        </View>
+
+        <View style={styles.sheet}>
+          <MapSheetContent
+            isLoading={isLoading}
+            isError={isProvidersError}
+            isRefetching={isRefetching}
+            onRetry={() => refetchProviders()}
+            showEmpty={showEmptyProviders}
+            nearest={nearest}
+            providers={sortedProviders}
+            onSelectProvider={handleSelectProvider}
+            onRequestService={handleRequestService}
+            isCustomer={isCustomer}
+          />
+        </View>
+
+        <BottomNavBar activeTab="Home" onSelect={handleTab} />
+      </SafeAreaView>
+
+      <ProviderBottomSheet
+        ref={bottomSheetRef}
+        provider={selectedProvider}
+        onRequestService={handleRequestService}
+        onOpenMap={handleOpenMapFromSheet}
+        onClose={() => setSelectedProvider(null)}
+        requestServiceDisabled={!isCustomer}
+        distanceKm={selectedProviderDistanceKm ?? undefined}
+      />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  mapArea: {
-    height: '48%',
-    backgroundColor: colors.primaryDark,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'space-between',
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.lg,
-    gap: spacing.sm,
-  },
-  searchBar: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    ...shadows.sm,
-  },
-  searchPlaceholder: {
-    marginLeft: spacing.sm,
-    color: colors.textSecondary,
-    fontSize: typography.fontSize.callout,
-  },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: radii.full,
-    backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...shadows.sm,
-  },
-  locationButton: {
-    position: 'absolute',
-    right: spacing.xl,
-    bottom: spacing.lg,
-    width: 44,
-    height: 44,
-    borderRadius: radii.full,
-    backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...shadows.sm,
-  },
-  mapHint: {
-    position: 'absolute',
-    left: spacing.xl,
-    right: spacing.xl,
-    bottom: spacing.xl * 2,
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    ...shadows.sm,
-  },
-  mapHintText: {
-    marginLeft: spacing.md,
-    flex: 1,
-  },
-  mapHintTitle: {
-    color: colors.text,
-    fontSize: typography.fontSize.callout,
-    fontWeight: typography.fontWeight.semibold,
-    marginBottom: spacing.xs,
-  },
-  mapHintSubtitle: {
-    color: colors.textSecondary,
-    fontSize: typography.fontSize.caption,
-    lineHeight: typography.fontSize.caption * typography.lineHeight.normal,
-  },
-  sheet: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    marginTop: -spacing.lg,
-    ...shadows.lg,
-  },
-  sheetContent: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.lg,
-  },
-  detailContainer: {
-    flex: 1,
-    paddingVertical: spacing.md,
-  },
-  detailActions: {
-    marginTop: spacing.lg,
-  },
-  backButton: {
-    alignSelf: 'stretch',
-    borderRadius: radii.lg,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    backgroundColor: colors.background,
-  },
-  backButtonText: {
-    color: colors.text,
-    fontSize: typography.fontSize.callout,
-    fontWeight: typography.fontWeight.semibold,
-  },
-  previewSection: {
-    marginBottom: spacing.md,
-  },
-  previewLabel: {
-    marginBottom: spacing.xs,
-    color: colors.textSecondary,
-    fontSize: typography.fontSize.caption,
-  },
-});
-

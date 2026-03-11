@@ -1,44 +1,28 @@
 import React from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
-import { colors } from '../theme/colors';
-import { spacing } from '../theme';
+import { useTheme, spacing } from '../theme';
 
 type ScreenWrapperProps = {
   children: React.ReactNode;
-  /**
-   * Background color for the whole screen. Defaults to canvas background.
-   */
+  /** Background color; defaults to theme background (respects light/dark). */
   backgroundColor?: string;
-  /**
-   * Edges for SafeAreaView. Defaults to top + bottom.
-   */
   edges?: Edge[];
-  /**
-   * Apply standard horizontal/vertical padding. Defaults to true.
-   */
   padded?: boolean;
-  /**
-   * Additional styles for the content container.
-   */
   contentStyle?: StyleProp<ViewStyle>;
 };
 
-/**
- * Standard screen layout wrapper:
- * - SafeAreaView with consistent background
- * - Optional standard padding
- * - Inner content container for layout
- */
 export function ScreenWrapper({
   children,
-  backgroundColor = colors.background,
+  backgroundColor,
   edges = ['top', 'bottom'],
   padded = true,
   contentStyle,
 }: ScreenWrapperProps) {
+  const { colors } = useTheme();
+  const bg = backgroundColor ?? colors.background;
   return (
-    <SafeAreaView style={[styles.root, { backgroundColor }]} edges={edges}>
+    <SafeAreaView style={[styles.root, { backgroundColor: bg }]} edges={edges}>
       <View style={[styles.content, padded && styles.padded, contentStyle]}>{children}</View>
     </SafeAreaView>
   );

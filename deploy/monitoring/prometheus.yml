@@ -1,0 +1,14 @@
+# Prometheus – scrape backend and Node exporter when used
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: mechnow-backend
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['backend:4000']
+    # Uncomment when backend exposes /metrics (e.g. prom-client)
+    #  - job_name: node
+    #    static_configs:
+    #      - targets: ['node-exporter:9100']

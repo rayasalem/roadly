@@ -121,8 +121,8 @@ const styles = StyleSheet.create({
   },
   title: {
     flexShrink: 1,
+    fontFamily: typography.fontFamily.semibold,
     fontSize: typography.fontSize.md,
-    fontWeight: typography.fontWeight.semibold,
     color: colors.text,
   },
   badge: {
@@ -132,6 +132,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   badgeText: {
+    fontFamily: typography.fontFamily.regular,
     fontSize: typography.fontSize.caption,
     color: colors.textSecondary,
   },
@@ -147,18 +148,22 @@ const styles = StyleSheet.create({
     gap: spacing.xs / 2,
   },
   ratingText: {
+    fontFamily: typography.fontFamily.medium,
     fontSize: typography.fontSize.caption,
     color: colors.text,
   },
   ratingCount: {
+    fontFamily: typography.fontFamily.regular,
     fontSize: typography.fontSize.caption,
     color: colors.textMuted,
   },
   distance: {
+    fontFamily: typography.fontFamily.regular,
     fontSize: typography.fontSize.caption,
     color: colors.textMuted,
   },
   unavailable: {
+    fontFamily: typography.fontFamily.regular,
     fontSize: typography.fontSize.caption,
     color: colors.error,
   },

@@ -1,306 +1,241 @@
+/**
+ * Native map screen: logic and layout only; UI split into MapContainerNative, MapBottomCard, MapLocationDeniedView.
+ */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
-import type { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { BottomSheetModal as GorhomBottomSheet, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
-import { colors } from '../../../../shared/theme/colors';
-import { spacing, radii, shadows } from '../../../../shared/theme';
+import { View, Platform, Animated, Linking } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import MapView from 'react-native-maps';
+
+import { useTheme } from '../../../../shared/theme';
 import type { Provider } from '../../../providers/domain/types';
+import { ROLES } from '../../../../shared/constants/roles';
+import { AppHeader } from '../../../../shared/components/AppHeader';
+import { ProviderBottomSheet } from '../../../../shared/components/ProviderBottomSheet';
+import { MapContainerNative } from '../components/MapContainerNative';
+import { MapBottomCard } from '../components/MapBottomCard';
+import { MapLocationDeniedView } from '../components/MapLocationDeniedView';
+import { MapDockWithFAB } from '../components/MapDockWithFAB';
+import { t } from '../../../../shared/i18n/t';
+import { useAuthStore } from '../../../../store/authStore';
+import { useUIStore } from '../../../../store/uiStore';
 import { useUserLocation } from '../../../location/hooks/useUserLocation';
 import { useNearbyProviders } from '../../../providers/hooks/useNearbyProviders';
-import type { GeoPoint } from '../../../../shared/types/geo';
-import { NearbyProvidersList } from '../../../providers/presentation/NearbyProvidersList';
-import { ProviderCard } from '../../../../shared/components/ProviderCard';
-import { Button } from '../../../../shared/components/Button';
-import { LoadingSpinner } from '../../../../shared/components/LoadingSpinner';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useMapFilters } from '../../hooks/useMapFilters';
+import { usePlacesSearch } from '../../hooks/usePlacesSearch';
+import { providerRoleToServiceType } from '../../utils/providerToServiceType';
+import { sortByNearest } from '../../../location/data/haversine';
+import { DEFAULT_MAP_CENTER, MOCK_PROVIDERS, toRegion, filterRoleToArcId, arcIdToFilterRole, getFilterLabel } from '../../utils/mapHelpers';
+import { useMapScreenDerivedData } from '../../hooks/useMapScreenDerivedData';
+import type { MapFilterRole } from '../../hooks/useMapFilters';
+import type { CustomerStackParamList } from '../../../../navigation/CustomerStack';
+import { mapScreenStyles as styles } from './mapScreen.styles';
 
-const DEFAULT_REGION_DELTA = {
-  latitudeDelta: 0.05,
-  longitudeDelta: 0.05,
-};
-
-function toRegion(coords: GeoPoint): Region {
-  return {
-    latitude: coords.latitude,
-    longitude: coords.longitude,
-    latitudeDelta: DEFAULT_REGION_DELTA.latitudeDelta,
-    longitudeDelta: DEFAULT_REGION_DELTA.longitudeDelta,
-  };
-}
+type Nav = NativeStackNavigationProp<CustomerStackParamList, 'Map'>;
 
 export function MapScreen() {
+  const { colors } = useTheme();
+  const navigation = useNavigation<Nav>();
   const mapRef = useRef<MapView | null>(null);
-  const sheetRef = useRef<BottomSheetModal | null>(null);
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const cardAnimated = useRef(new Animated.Value(0)).current;
 
-  const [selected, setSelected] = useState<Provider | null>(null);
-
-  const { coords, isLoading, error, fetchLocation } = useUserLocation();
+  const { coords, isLoading, error: locationError, fetchLocation } = useUserLocation();
+  const userRole = useAuthStore((s) => s.user?.role ?? null);
+  const isCustomer = userRole === ROLES.USER;
+  const { filterRole, setFilter, filterOptions } = useMapFilters();
+  const { query: searchQuery, setQuery: setSearchQuery, selectedPlace } = usePlacesSearch();
+  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
 
   useEffect(() => {
-    if (!coords) {
+    if (selectedPlace && mapRef.current) {
+      mapRef.current.animateToRegion(
+        { latitude: selectedPlace.latitude, longitude: selectedPlace.longitude, latitudeDelta: 0.05, longitudeDelta: 0.05 },
+        300
+      );
+    }
+  }, [selectedPlace]);
+
+  const nearbyParams = useMemo(
+    () =>
+      coords
+        ? { latitude: coords.latitude, longitude: coords.longitude, radiusKm: 10, availableOnly: true, role: filterRole ?? undefined, page: 1, limit: 20 }
+        : null,
+    [coords, filterRole]
+  );
+  const { data, isLoading: isLoadingProviders, isError: isProvidersError, isRefetching, refetch: refetchProviders } = useNearbyProviders(nearbyParams, true, isCustomer);
+  const providers = (isProvidersError ? MOCK_PROVIDERS : (data?.items ?? [])) as Provider[];
+  const providersWithLocation = useMemo(
+    () =>
+      providers.filter(
+        (p) => p?.location && typeof (p.location as { latitude?: unknown }).latitude === 'number' && typeof (p.location as { longitude?: unknown }).longitude === 'number'
+      ),
+    [providers]
+  );
+  const referencePoint = coords ?? DEFAULT_MAP_CENTER;
+  const sortedProviders = useMemo(() => sortByNearest(providersWithLocation, (p) => p.location, referencePoint), [providersWithLocation, referencePoint.latitude, referencePoint.longitude]);
+  const nearest = sortedProviders[0] ?? providers[0] ?? null;
+  const showEmptyProviders = !isLoadingProviders && !isProvidersError && providers.length === 0;
+
+  const { region, routeCoordinates, clusterItems, selectedProviderDistanceKm } = useMapScreenDerivedData({
+    coords,
+    selectedProvider,
+    nearest,
+    sortedProviders,
+  });
+
+  const hasCenteredOnUser = useRef(false);
+  useEffect(() => {
+    if (!coords || !mapRef.current) return;
+    if (hasCenteredOnUser.current) return;
+    hasCenteredOnUser.current = true;
+    mapRef.current.animateToRegion(toRegion(coords), 400);
+  }, [coords]);
+
+  useEffect(() => {
+    if (nearest) {
+      Animated.spring(cardAnimated, { toValue: 1, useNativeDriver: Platform.OS !== 'web', tension: 65, friction: 11 }).start();
+    } else {
+      cardAnimated.setValue(0);
+    }
+  }, [!!nearest, cardAnimated]);
+
+  useEffect(() => {
+    if (!coords) void fetchLocation();
+  }, [coords, fetchLocation]);
+
+  const handleSelectProvider = useCallback((provider: Provider | null | undefined) => {
+    if (!provider) return;
+    setSelectedProvider(provider);
+    const loc = provider.location;
+    if (loc && typeof loc.latitude === 'number' && typeof loc.longitude === 'number' && mapRef.current) {
+      try {
+        mapRef.current.animateToRegion({ latitude: loc.latitude, longitude: loc.longitude, latitudeDelta: 0.05, longitudeDelta: 0.05 }, 300);
+      } catch (_) {}
+    }
+    try {
+      bottomSheetRef.current?.present();
+    } catch (_) {}
+  }, []);
+
+  const toast = useUIStore((s) => s.toast);
+  const handleRequestService = useCallback(
+    (provider: Provider | null | undefined) => {
+      if (!provider) return;
+      const serviceType = providerRoleToServiceType(provider.role);
+      if (!serviceType) {
+        if (typeof navigation.goBack === 'function') navigation.goBack();
+        return;
+      }
+      if (!isCustomer) {
+        toast({ type: 'info', message: t('map.onlyCustomersCanRequest') });
+        return;
+      }
+      try {
+        bottomSheetRef.current?.dismiss();
+      } catch (_) {}
+      setSelectedProvider(null);
+      toast({ type: 'info', message: t('map.confirmOnNextScreen'), durationMs: 3000 });
+      try {
+        navigation.navigate('Request', { serviceType: serviceType === 'mechanic' || serviceType === 'tow' || serviceType === 'rental' ? serviceType : 'mechanic', providerId: provider.id });
+      } catch (_) {
+        if (typeof navigation.goBack === 'function') navigation.goBack();
+      }
+    },
+    [navigation, isCustomer, toast]
+  );
+
+  const handleMyLocation = useCallback(() => {
+    if (coords && mapRef.current) {
+      try {
+        mapRef.current.animateToRegion(toRegion(coords), 300);
+      } catch (_) {}
+    } else {
       void fetchLocation();
     }
   }, [coords, fetchLocation]);
 
-  const region = useMemo<Region | undefined>(() => {
-    if (!coords) return undefined;
-    return toRegion(coords);
-  }, [coords]);
+  const handleOpenMapFromSheet = useCallback(() => {
+    const loc = selectedProvider?.location;
+    if (loc && typeof loc.latitude === 'number' && typeof loc.longitude === 'number' && mapRef.current) {
+      try {
+        mapRef.current.animateToRegion({ latitude: loc.latitude, longitude: loc.longitude, latitudeDelta: 0.05, longitudeDelta: 0.05 }, 300);
+      } catch (_) {
+        handleMyLocation();
+      }
+    } else {
+      handleMyLocation();
+    }
+  }, [selectedProvider, handleMyLocation]);
 
-  const { data, isLoading: isLoadingProviders } = useNearbyProviders(
-    coords
-      ? {
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-          radiusKm: 10,
-          availableOnly: true,
-          page: 1,
-          limit: 20,
-        }
-      : null,
+  const handleDockTabPress = useCallback(
+    (tab: 'home' | 'notifications' | 'bookmark' | 'settings') => {
+      if (tab === 'home') navigation.navigate('Map');
+      else if (tab === 'notifications') navigation.navigate('Notifications');
+      else if (tab === 'bookmark') navigation.navigate('Profile');
+      else navigation.navigate('Settings');
+    },
+    [navigation]
   );
 
-  const providers = data?.items ?? [];
-
-  const handleSelectProvider = useCallback((provider: Provider) => {
-    setSelected(provider);
-    if (provider.location) {
-      const r = {
-        latitude: provider.location.latitude,
-        longitude: provider.location.longitude,
-        latitudeDelta: DEFAULT_REGION_DELTA.latitudeDelta,
-        longitudeDelta: DEFAULT_REGION_DELTA.longitudeDelta,
-      };
-      mapRef.current?.animateToRegion(r, 300);
-    }
-  }, []);
-
-  const handleRequestProvider = useCallback((provider: Provider) => {
-    // Placeholder: hook into request flow later.
-    setSelected(provider);
-  }, []);
-
-  const snapPoints = useMemo(() => ['20%', '50%'], []);
-
-  const renderBackdrop = useCallback(
-    (props: any) => <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} />,
-    [],
-  );
-
-  useEffect(() => {
-    if (sheetRef.current) {
-      sheetRef.current.present();
-    }
-  }, []);
-
-  if (isLoading && !coords) {
-    return <LoadingSpinner />;
-  }
-
-  if (!region) {
-    return <View style={styles.container} />;
+  if (locationError && !coords) {
+    return (
+      <MapLocationDeniedView
+        onBack={() => navigation.goBack()}
+        onRetry={() => fetchLocation()}
+        onOpenSettings={Platform.OS === 'ios' || Platform.OS === 'android' ? () => Linking.openSettings() : undefined}
+      />
+    );
   }
 
   return (
-    <View style={styles.container}>
-      <MapView
-        ref={(ref) => {
-          mapRef.current = ref;
-        }}
-        style={styles.map}
-        provider={PROVIDER_GOOGLE}
-        initialRegion={region}
-        showsUserLocation
-        showsMyLocationButton
-      >
-        {providers.map((provider) => (
-          <Marker
-            key={provider.id}
-            coordinate={{
-              latitude: provider.location.latitude,
-              longitude: provider.location.longitude,
-            }}
-            pinColor={provider.role === 'mechanic_tow' ? colors.mapTow : provider.role === 'car_rental' ? colors.mapRental : colors.mapMechanic}
-            onPress={() => handleSelectProvider(provider)}
-          />
-        ))}
-      </MapView>
-
-      {/* Overlay controls (search, filter, location) */}
-      <SafeAreaView style={styles.overlay} pointerEvents="box-none" edges={['top', 'left', 'right']}>
-        <View style={styles.topBar} pointerEvents="box-none">
-          <View style={styles.searchBar}>
-            <MaterialCommunityIcons
-              name="magnify"
-              size={20}
-              color={colors.textSecondary}
-            />
-            <Text style={styles.searchPlaceholder}>Search mechanics, tow, rentals</Text>
-          </View>
-          <TouchableOpacity style={styles.iconButton} accessibilityRole="button" accessibilityLabel="Filters">
-            <MaterialCommunityIcons
-              name="tune-variant"
-              size={20}
-              color={colors.text}
-            />
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity
-          style={styles.locationButton}
-          accessibilityRole="button"
-          accessibilityLabel="Center on my location"
-          onPress={() => {
-            if (coords) {
-              const r = toRegion(coords);
-              mapRef.current?.animateToRegion(r, 300);
-            }
-          }}
-        >
-          <MaterialCommunityIcons
-            name="crosshairs-gps"
-            size={22}
-            color={colors.text}
-          />
-        </TouchableOpacity>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
+      <View style={styles.greenCircle} />
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <AppHeader title={t('map.title')} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} rightIcon="calendar" onRightPress={() => navigation.navigate('Notifications')} />
+        <MapContainerNative
+          mapRef={mapRef}
+          region={region}
+          routeCoordinates={routeCoordinates}
+          clusterItems={clusterItems}
+          selectedProvider={selectedProvider}
+          filterRole={filterRole}
+          filterOptions={filterOptions}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onFilterChange={(role: MapFilterRole) => setFilter(role)}
+          onSelectProvider={handleSelectProvider}
+          onRequestService={handleRequestService}
+          onMyLocation={handleMyLocation}
+          onCreateRequest={() => (isCustomer ? navigation.navigate('Request', { serviceType: 'mechanic' }) : toast({ type: 'info', message: t('map.onlyCustomersCanRequest') }))}
+          onRetry={() => refetchProviders()}
+          showLocationOverlay={Boolean(isLoading && !coords && !locationError)}
+          isProvidersError={isProvidersError}
+          isRefetching={isRefetching}
+          isCustomer={isCustomer}
+          getFilterLabel={getFilterLabel}
+        />
+        <MapBottomCard
+          nearest={nearest}
+          isLoading={isLoadingProviders}
+          isError={isProvidersError}
+          isRefetching={isRefetching}
+          showEmpty={showEmptyProviders}
+          onRetry={() => refetchProviders()}
+          onDirectionsPress={handleSelectProvider}
+          cardAnimated={cardAnimated}
+        />
+        <MapDockWithFAB
+          activeId={filterRoleToArcId(filterRole)}
+          onArcIconPress={(id) => setFilter(arcIdToFilterRole(id))}
+          onFABPress={() => nearest && handleSelectProvider(nearest)}
+          onDockTabPress={handleDockTabPress}
+        />
       </SafeAreaView>
-
-      <GorhomBottomSheet
-        ref={sheetRef}
-        index={0}
-        snapPoints={snapPoints}
-        backdropComponent={renderBackdrop}
-        handleIndicatorStyle={styles.handle}
-        enablePanDownToClose={false}
-      >
-        <View style={styles.sheetContent}>
-          {selected ? (
-            <View style={styles.detailContainer}>
-              <ProviderCard
-                title={selected.name}
-                subtitle={selected.role}
-                distanceText={undefined}
-                isAvailable={selected.isAvailable}
-                onRequest={() => handleRequestProvider(selected)}
-              />
-              <View style={styles.detailActions}>
-                <Button
-                  title="Back to list"
-                  variant="ghost"
-                  onPress={() => setSelected(null)}
-                  fullWidth
-                />
-              </View>
-            </View>
-          ) : (
-            <>
-              {providers[0] && !isLoadingProviders ? (
-                <View style={styles.previewSection}>
-                  <Text style={styles.previewLabel}>Nearest provider</Text>
-                  <ProviderCard
-                    title={providers[0].name}
-                    subtitle={providers[0].role}
-                    distanceText={undefined}
-                    isAvailable={providers[0].isAvailable}
-                    onPress={() => handleSelectProvider(providers[0])}
-                    onRequest={() => handleRequestProvider(providers[0])}
-                  />
-                </View>
-              ) : null}
-              <NearbyProvidersList
-                providers={providers}
-                onSelect={handleSelectProvider}
-                onRequest={handleRequestProvider}
-                loading={isLoadingProviders}
-              />
-            </>
-          )}
-        </View>
-      </GorhomBottomSheet>
+      <ProviderBottomSheet ref={bottomSheetRef} provider={selectedProvider} onRequestService={handleRequestService} onOpenMap={handleOpenMapFromSheet} onClose={() => setSelectedProvider(null)} requestServiceDisabled={!isCustomer} distanceKm={selectedProviderDistanceKm ?? undefined} />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  map: {
-    flex: 1,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'space-between',
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.lg,
-    gap: spacing.sm,
-  },
-  searchBar: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    ...shadows.sm,
-  },
-  searchPlaceholder: {
-    marginLeft: spacing.sm,
-    color: colors.textSecondary,
-    fontSize: typography.fontSize.callout,
-  },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: radii.full,
-    backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...shadows.sm,
-  },
-  locationButton: {
-    position: 'absolute',
-    right: spacing.xl,
-    bottom: spacing.xxxl,
-    width: 44,
-    height: 44,
-    borderRadius: radii.full,
-    backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...shadows.sm,
-  },
-  sheetContent: {
-    flex: 1,
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
-  },
-  detailContainer: {
-    flex: 1,
-    justifyContent: 'space-between',
-    paddingVertical: spacing.md,
-  },
-  detailActions: {
-    marginTop: spacing.lg,
-  },
-  previewSection: {
-    marginBottom: spacing.md,
-  },
-  previewLabel: {
-    marginBottom: spacing.xs,
-    color: colors.textSecondary,
-    fontSize: typography.fontSize.caption,
-  },
-  handle: {
-    backgroundColor: colors.border,
-    width: 40,
-    borderRadius: radii.full,
-  },
-});

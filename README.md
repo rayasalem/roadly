@@ -20,8 +20,8 @@ roadly/
 ├── App.tsx                 # نقطة الدخول: QueryClient + Navigation
 ├── src/
 │   ├── shared/             # مشترك بين الميزات
-│   │   ├── api/client.ts   # Axios + setAuthToken + getErrorMessage
-│   │   ├── config/api.ts   # BASE URL
+│   │   ├── constants/env.ts        # API_BASE_URL, APP_ENV
+│   │   ├── services/http/         # api, httpClient, errorMessage (i18n)
 │   │   ├── theme/colors.ts
 │   │   ├── types/common.ts
 │   │   └── components/     # LoadingSpinner, ErrorView, Button
@@ -58,7 +58,7 @@ roadly/
 
 ## الخطوة 4: Error handling و Loading
 
-- **getErrorMessage(error)** في `shared/api/client.ts`: نستخرج رسالة من استجابة Axios أو نعيد رسالة افتراضية.
+- **getErrorMessage(error)** في `shared/services/http/errorMessage.ts`: تحويل أي خطأ (Axios / HttpError) إلى رسالة مستخدم مع دعم i18n.
 - **Loading**: شاشات تستخدم `LoadingSpinner` عند `isLoading` أو `locLoading`.
 - **Error**: شاشات تعرض `ErrorView` مع رسالة وزر "إعادة المحاولة" يستدعي `refetch` أو `refetchLoc`.
 

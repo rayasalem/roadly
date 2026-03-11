@@ -1,0 +1,21 @@
+# Backend (deploy separately)
+backend/
+
+# Tests and E2E (not needed for frontend build)
+__tests__/
+cypress/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# Docs (optional; remove to include in deploy)
+# docs/
+
+# Local dev
+.expo/
+node_modules/
+.env
+.env.local
+.env.*.local
+*.log

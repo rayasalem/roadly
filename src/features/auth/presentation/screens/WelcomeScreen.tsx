@@ -1,6 +1,5 @@
 /**
- * Welcome / Landing — single purpose: route to Login or Register.
- * Premium layout: brand, subtitle, two clear CTAs, balanced spacing.
+ * Welcome — route to Login or Register. Card uses design system radii and shadows.
  */
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -10,7 +9,7 @@ import { Button } from '../../../../shared/components/Button';
 import { ScreenWrapper } from '../../../../shared/components/ScreenWrapper';
 import { t } from '../../../../shared/i18n/t';
 import { colors } from '../../../../shared/theme/colors';
-import { spacing, typography } from '../../../../shared/theme';
+import { spacing, typography, radii, shadows } from '../../../../shared/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Welcome'>;
 
@@ -30,6 +29,7 @@ export function WelcomeScreen({ navigation }: Props) {
               onPress={() => navigation.navigate('Login')}
               fullWidth
               size="lg"
+              style={styles.btn}
             />
             <Button
               title={t('auth.register.title')}
@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.xxxl,
+    paddingVertical: spacing.xxl,
     justifyContent: 'center',
   },
   hero: {
@@ -58,29 +58,30 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 24,
+    borderRadius: radii.xxl,
     padding: spacing.xl,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 4,
+    ...shadows.md,
   },
   brand: {
+    fontFamily: typography.fontFamily.bold,
+    fontSize: typography.presets.display.fontSize,
+    lineHeight: typography.presets.display.lineHeight,
     color: colors.text,
-    fontSize: typography.fontSize.display,
-    fontWeight: typography.fontWeight.bold,
     textAlign: 'center',
     marginBottom: spacing.sm,
   },
   subtitle: {
+    fontFamily: typography.fontFamily.regular,
+    fontSize: typography.presets.body.fontSize,
+    lineHeight: typography.presets.body.lineHeight,
     color: colors.textSecondary,
-    fontSize: typography.fontSize.body,
-    lineHeight: typography.fontSize.body * typography.lineHeight.relaxed,
     textAlign: 'center',
     marginBottom: spacing.xl,
   },
   actions: {
     gap: spacing.md,
+  },
+  btn: {
+    marginBottom: 0,
   },
 });

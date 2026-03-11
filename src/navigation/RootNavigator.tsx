@@ -1,19 +1,43 @@
+import { useEffect, useRef } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { colors } from '../shared/theme/colors';
-import { t } from '../shared/i18n/t';
+import { RoleNavigator } from './RoleNavigator';
+import { LaunchScreen } from '../features/auth/presentation/screens/LaunchScreen';
+import { WelcomeScreen } from '../features/auth/presentation/screens/WelcomeScreen';
+import { LoginScreen } from '../features/auth/presentation/screens/LoginScreen';
+import { RegisterScreen } from '../features/auth/presentation/screens/RegisterScreen';
+import { useAuthStore } from '../store/authStore';
+import { navigationRef } from './navigationRef';
 
 export type RootStackParamList = {
   Launch: undefined;
   Welcome: undefined;
   Login: undefined;
   Register: undefined;
-  Home: undefined;
-  Map: undefined;
+  App: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+/**
+ * When hydration finishes and the user is authenticated, redirect to App once.
+ * Launch stays the initial route for first load and unauthenticated users only.
+ */
 export function RootNavigator() {
+  const hasHydrated = useAuthStore((s) => s.hasHydrated);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const hasRedirectedToApp = useRef(false);
+
+  useEffect(() => {
+    if (!hasHydrated || !isAuthenticated || hasRedirectedToApp.current) return;
+    if (!navigationRef.isReady()) return;
+    hasRedirectedToApp.current = true;
+    navigationRef.reset({
+      index: 0,
+      routes: [{ name: 'App' }],
+    });
+  }, [hasHydrated, isAuthenticated]);
+
   return (
     <Stack.Navigator
       initialRouteName="Launch"
@@ -26,32 +50,27 @@ export function RootNavigator() {
       <Stack.Screen
         name="Launch"
         options={{ headerShown: false }}
-        getComponent={() => require('../features/auth/presentation/screens/LaunchScreen').LaunchScreen}
+        component={LaunchScreen}
       />
       <Stack.Screen
         name="Welcome"
         options={{ headerShown: false }}
-        getComponent={() => require('../features/auth/presentation/screens/WelcomeScreen').WelcomeScreen}
+        component={WelcomeScreen}
       />
       <Stack.Screen
         name="Login"
-        options={{ title: t('auth.login.title') }}
-        getComponent={() => require('../features/auth/presentation/screens/LoginScreen').LoginScreen}
+        options={{ headerShown: false }}
+        component={LoginScreen}
       />
       <Stack.Screen
         name="Register"
-        options={{ title: t('auth.register.title') }}
-        getComponent={() => require('../features/auth/presentation/screens/RegisterScreen').RegisterScreen}
+        options={{ headerShown: false }}
+        component={RegisterScreen}
       />
       <Stack.Screen
-        name="Home"
-        options={{ title: t('home.title') }}
-        getComponent={() => require('../features/home/presentation/screens/HomeScreen').HomeScreen}
-      />
-      <Stack.Screen
-        name="Map"
-        options={{ title: 'Map' }}
-        getComponent={() => require('../features/map/presentation/screens/MapScreen').MapScreen}
+        name="App"
+        options={{ headerShown: false }}
+        component={RoleNavigator}
       />
     </Stack.Navigator>
   );

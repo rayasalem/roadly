@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Platform, StyleSheet, Text, View } from 'react-native';
 import { useUIStore } from '../../store/uiStore';
 import { colors } from '../theme/colors';
+import { typography } from '../theme';
+import { TOAST_ENTER_DURATION, TOAST_EXIT_DURATION } from '../utils/animations';
 
 function toastColor(type: 'success' | 'error' | 'info'): string {
   switch (type) {
@@ -26,12 +28,23 @@ export const ToastHost = React.memo(function ToastHost() {
   useEffect(() => {
     if (!latest) return;
 
+    const useNativeDriver = Platform.OS !== 'web';
     anim.setValue(0);
-    Animated.timing(anim, { toValue: 1, duration: 180, useNativeDriver: true }).start();
+    Animated.timing(anim, {
+      toValue: 1,
+      duration: TOAST_ENTER_DURATION,
+      useNativeDriver,
+      easing: Easing.out(Easing.cubic),
+    }).start();
 
     const duration = latest.durationMs ?? 2500;
     const timer = setTimeout(() => {
-      Animated.timing(anim, { toValue: 0, duration: 180, useNativeDriver: true }).start(({ finished }) => {
+      Animated.timing(anim, {
+        toValue: 0,
+        duration: TOAST_EXIT_DURATION,
+        useNativeDriver,
+        easing: Easing.in(Easing.cubic),
+      }).start(({ finished }) => {
         if (finished) dismissToast(latest.id);
       });
     }, duration);
@@ -43,14 +56,14 @@ export const ToastHost = React.memo(function ToastHost() {
 
   return (
     <Animated.View
-      pointerEvents="none"
       style={[
         styles.container,
+        { pointerEvents: 'none' },
         {
           opacity: anim,
           transform: [
             {
-              translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }),
+              translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }),
             },
           ],
         },
@@ -80,9 +93,9 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   text: {
+    fontFamily: typography.fontFamily.semibold,
+    fontSize: typography.fontSize.callout,
     color: colors.text,
-    fontSize: 14,
-    fontWeight: '600',
     textAlign: 'center',
   },
 });

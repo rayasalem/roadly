@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { colors } from '../theme/colors';
+import { typography, radii, spacing } from '../theme';
 import { t } from '../i18n/t';
 
 interface ErrorViewProps {
@@ -32,19 +33,21 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   message: {
+    fontFamily: typography.fontFamily.regular,
+    fontSize: typography.fontSize.body,
     color: colors.textSecondary,
     textAlign: 'center',
-    fontSize: 15,
   },
   button: {
-    marginTop: 16,
+    marginTop: spacing.lg,
     backgroundColor: colors.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xl,
+    borderRadius: radii.md,
   },
   buttonText: {
-    color: '#fff',
-    fontWeight: '600',
+    fontFamily: typography.fontFamily.semibold,
+    fontSize: typography.fontSize.md,
+    color: colors.primaryContrast,
   },
 });

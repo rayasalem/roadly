@@ -11,7 +11,12 @@
       "resizeMode": "contain",
       "backgroundColor": "#f1f5f9"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "web": {
+      "bundler": "metro"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.mechnow.app"
@@ -22,6 +27,11 @@
         "backgroundColor": "#1a1a2e"
       },
       "package": "com.mechnow.app"
-    }
+    },
+    "plugins": [
+      "expo-asset",
+      "expo-font",
+      "expo-secure-store"
+    ]
   }
 }

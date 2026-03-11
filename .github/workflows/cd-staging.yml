@@ -1,0 +1,30 @@
+# MechNow – CD: deploy to staging on push to develop
+name: CD Staging
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - name: Build backend image
+        run: docker build -t mechnow-backend:${{ github.sha }} -f backend/Dockerfile backend
+      - name: Build frontend image
+        run: |
+          docker build -t mechnow-frontend:${{ github.sha }} -f frontend.Dockerfile \
+            --build-arg EXPO_PUBLIC_API_URL=${{ vars.EXPO_PUBLIC_API_URL || 'https://staging.mechnow.example.com/api' }} \
+            --build-arg EXPO_PUBLIC_ENVIRONMENT=staging .
+      - name: Deploy to staging
+        run: |
+          echo "Deploy to your staging (e.g. docker compose pull && up, or k8s apply)"
+          echo "Use secrets: JWT_SECRET, JWT_REFRESH_SECRET, POSTGRES_PASSWORD"
+          echo "Backend image: mechnow-backend:${{ github.sha }}"
+          echo "Frontend image: mechnow-frontend:${{ github.sha }}"

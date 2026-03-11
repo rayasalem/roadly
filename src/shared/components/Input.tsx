@@ -1,6 +1,7 @@
 /**
- * Reusable text input — design system.
- * Supports label, error, hint, focus state, and accessibility.
+ * Design system text input.
+ * Label, focus state (ring + optional shadow), error state (border + background tint), helper text.
+ * Accessibility: label, live region for error, disabled state.
  */
 import React, { useCallback, useState } from 'react';
 import {
@@ -10,6 +11,7 @@ import {
   StyleSheet,
   TextInputProps,
   ViewStyle,
+  Platform,
 } from 'react-native';
 import { colors } from '../theme/colors';
 import { spacing, typography, radii } from '../theme';
@@ -17,11 +19,15 @@ import { spacing, typography, radii } from '../theme';
 export interface InputProps extends Omit<TextInputProps, 'style'> {
   label?: string;
   error?: string;
+  /** Helper text below input (hint); hidden when error is shown */
   hint?: string;
   containerStyle?: ViewStyle;
   leftAdornment?: React.ReactNode;
   rightAdornment?: React.ReactNode;
 }
+
+const FOCUS_RING_WIDTH = 2;
+const ERROR_RING_WIDTH = 2;
 
 export const Input = React.memo(function Input({
   label,
@@ -77,12 +83,27 @@ export const Input = React.memo(function Input({
           onFocus={handleFocus}
           onBlur={handleBlur}
           accessibilityLabel={label ?? rest.placeholder}
+          accessibilityState={{ disabled: rest.editable === false }}
+          accessibilityHint={hint ?? undefined}
           {...rest}
         />
         {rightAdornment ? <View style={styles.adornment}>{rightAdornment}</View> : null}
       </View>
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      {hint && !error ? <Text style={styles.hint}>{hint}</Text> : null}
+      {error ? (
+        <Text
+          style={styles.error}
+          numberOfLines={2}
+          accessibilityLiveRegion="polite"
+          accessibilityRole="alert"
+        >
+          {error}
+        </Text>
+      ) : null}
+      {hint && !error ? (
+        <Text style={styles.helper} numberOfLines={2}>
+          {hint}
+        </Text>
+      ) : null}
     </View>
   );
 });
@@ -92,8 +113,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   label: {
-    fontSize: typography.fontSize.sm,
-    fontWeight: typography.fontWeight.medium,
+    fontFamily: typography.fontFamily.medium,
+    fontSize: typography.presets.caption.fontSize,
     color: colors.text,
     marginBottom: spacing.xs,
   },
@@ -105,18 +126,32 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: radii.md,
     minHeight: 48,
-  },
-  inputWrapError: {
-    borderColor: colors.error,
+    ...(Platform.OS === 'web' && {
+      outlineStyle: 'none',
+    }),
   },
   inputWrapFocused: {
+    borderWidth: FOCUS_RING_WIDTH,
     borderColor: colors.borderFocus,
+    ...(Platform.OS === 'ios' && {
+      shadowColor: colors.primary,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.15,
+      shadowRadius: 4,
+      elevation: 2,
+    }),
+  },
+  inputWrapError: {
+    borderWidth: ERROR_RING_WIDTH,
+    borderColor: colors.error,
+    backgroundColor: colors.errorLight,
   },
   input: {
     flex: 1,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    fontSize: typography.fontSize.md,
+    fontFamily: typography.fontFamily.regular,
+    fontSize: typography.presets.body.fontSize,
     color: colors.text,
   },
   inputWithLeft: { paddingLeft: spacing.xs },
@@ -125,12 +160,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
   },
   error: {
-    fontSize: typography.fontSize.xs,
+    fontFamily: typography.fontFamily.regular,
+    fontSize: typography.presets.caption.fontSize,
     color: colors.error,
     marginTop: spacing.xs,
   },
-  hint: {
-    fontSize: typography.fontSize.xs,
+  helper: {
+    fontFamily: typography.fontFamily.regular,
+    fontSize: typography.presets.caption.fontSize,
     color: colors.textMuted,
     marginTop: spacing.xs,
   },

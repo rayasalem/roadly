@@ -1,14 +1,15 @@
 /**
- * Reusable button — design system.
- * Variants: primary (brand), accent (urgent action), outline, ghost.
- * Includes a subtle scale animation on press.
+ * Design system button.
+ * Variants: primary, secondary, outline, ghost. Accent maps to primary.
+ * Min touch target: 44pt (md/lg). Uses spacing scale and typography presets.
+ * Press feedback: scale 0.97 + opacity 0.92 (lightweight RN Animated).
  */
 import React, { useRef } from 'react';
-import { Animated, Pressable, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { colors } from '../theme/colors';
-import { spacing, typography, radii } from '../theme';
+import { Animated, Platform, Pressable, Text, StyleSheet, ActivityIndicator, type ViewStyle } from 'react-native';
+import { useTheme, spacing, typography, radii } from '../theme';
+import { springPress, PRESS_SCALE } from '../utils/animations';
 
-export type ButtonVariant = 'primary' | 'accent' | 'outline' | 'ghost';
+export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'accent' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps {
@@ -19,6 +20,50 @@ export interface ButtonProps {
   variant?: ButtonVariant;
   size?: ButtonSize;
   fullWidth?: boolean;
+  style?: ViewStyle;
+  testID?: string;
+}
+
+const BORDER_WIDTH = 2;
+
+function getBtnVariantStyles(colors: ReturnType<typeof useTheme>['colors']) {
+  return {
+    primary: {
+      backgroundColor: colors.primary,
+      borderWidth: 0,
+      borderColor: 'transparent' as const,
+    },
+    secondary: {
+      backgroundColor: colors.secondary,
+      borderWidth: 0,
+      borderColor: 'transparent' as const,
+    },
+    danger: {
+      backgroundColor: colors.error,
+      borderWidth: 0,
+      borderColor: 'transparent' as const,
+    },
+    outline: {
+      backgroundColor: 'transparent' as const,
+      borderWidth: BORDER_WIDTH,
+      borderColor: colors.primary,
+    },
+    ghost: {
+      backgroundColor: 'transparent' as const,
+      borderWidth: 0,
+      borderColor: 'transparent' as const,
+    },
+  };
+}
+
+function getTextVariantStyles(colors: ReturnType<typeof useTheme>['colors']) {
+  return {
+    primary: { color: colors.primaryContrast },
+    secondary: { color: colors.secondaryContrast },
+    danger: { color: colors.primaryContrast },
+    outline: { color: colors.primary },
+    ghost: { color: colors.primary },
+  };
 }
 
 export const Button = React.memo(function Button({
@@ -29,38 +74,57 @@ export const Button = React.memo(function Button({
   variant = 'primary',
   size = 'md',
   fullWidth,
+  style,
+  testID,
 }: ButtonProps) {
+  const { colors } = useTheme();
+  const btnVariantStyles = getBtnVariantStyles(colors);
+  const textVariantStyles = getTextVariantStyles(colors);
   const isDisabled = loading || disabled;
+  const effectiveVariant = variant === 'accent' ? 'primary' : variant;
   const sizeStyle = size === 'sm' ? styles.sm : size === 'lg' ? styles.lg : styles.md;
+  const textSizeStyle = size === 'sm' ? styles.textSm : size === 'lg' ? styles.textLg : styles.textMd;
 
   const scale = useRef(new Animated.Value(1)).current;
+  const opacity = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
-    Animated.spring(scale, {
-      toValue: 0.97,
-      useNativeDriver: true,
-      friction: 6,
-      tension: 160,
-    }).start();
+    Animated.parallel([
+      Animated.spring(scale, { toValue: PRESS_SCALE, ...springPress }),
+      Animated.timing(opacity, { toValue: 0.92, duration: 80, useNativeDriver: Platform.OS !== 'web' }),
+    ]).start();
   };
 
   const handlePressOut = () => {
-    Animated.spring(scale, {
-      toValue: 1,
-      useNativeDriver: true,
-      friction: 6,
-      tension: 160,
-    }).start();
+    Animated.parallel([
+      Animated.spring(scale, { toValue: 1, ...springPress }),
+      Animated.timing(opacity, { toValue: 1, duration: 120, useNativeDriver: Platform.OS !== 'web' }),
+    ]).start();
   };
 
+  const btnStyle = [
+    styles.btn,
+    btnVariantStyles[effectiveVariant],
+    sizeStyle,
+    isDisabled && styles.disabled,
+  ];
+  const textStyle = [
+    styles.text,
+    textVariantStyles[effectiveVariant],
+    textSizeStyle,
+  ];
+
+  const loaderColor =
+    effectiveVariant === 'outline' || effectiveVariant === 'ghost'
+      ? colors.primary
+      : colors.primaryContrast;
+
   return (
-    <Animated.View style={[fullWidth && styles.fullWidth, { transform: [{ scale }] }]}>
+    <Animated.View style={[fullWidth && styles.fullWidth, style, { opacity, transform: [{ scale }] }]}>
       <Pressable
+        testID={testID}
         style={({ pressed }) => [
-          styles.btn,
-          styles[`btn_${variant}`],
-          sizeStyle,
-          isDisabled && styles.disabled,
+          btnStyle,
           pressed && !isDisabled && styles.pressed,
         ]}
         onPress={onPress}
@@ -72,14 +136,9 @@ export const Button = React.memo(function Button({
         accessibilityState={{ disabled: isDisabled }}
       >
         {loading ? (
-          <ActivityIndicator
-            size="small"
-            color={variant === 'outline' || variant === 'ghost' ? colors.primary : colors.primaryContrast}
-          />
+          <ActivityIndicator size="small" color={loaderColor} />
         ) : (
-          <Text style={[styles.text, styles[`text_${variant}`], size === 'sm' && styles.textSm, size === 'lg' && styles.textLg]}>
-            {title}
-          </Text>
+          <Text style={textStyle}>{title}</Text>
         )}
       </Pressable>
     </Animated.View>
@@ -92,34 +151,34 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: radii.md,
   },
-  btn_primary: {
-    backgroundColor: colors.primary,
+  sm: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    minHeight: 36,
   },
-  btn_accent: {
-    backgroundColor: colors.accent,
+  md: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    minHeight: 48,
   },
-  btn_outline: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: colors.primary,
+  lg: {
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xl,
+    minHeight: 52,
   },
-  btn_ghost: {
-    backgroundColor: 'transparent',
-  },
-  sm: { paddingVertical: spacing.sm, paddingHorizontal: spacing.md, minHeight: 36 },
-  md: { paddingVertical: 14, paddingHorizontal: spacing.lg, minHeight: 48 },
-  lg: { paddingVertical: spacing.md, paddingHorizontal: spacing.xl, minHeight: 52 },
   fullWidth: { width: '100%' },
   disabled: { opacity: 0.6 },
   pressed: { opacity: 0.9 },
   text: {
-    fontWeight: typography.fontWeight.semibold,
-    fontSize: typography.fontSize.md,
+    fontFamily: typography.fontFamily.semibold,
   },
-  text_primary: { color: colors.primaryContrast },
-  text_accent: { color: colors.accentContrast },
-  text_outline: { color: colors.primary },
-  text_ghost: { color: colors.primary },
-  textSm: { fontSize: typography.fontSize.sm },
-  textLg: { fontSize: typography.fontSize.lg },
+  textSm: {
+    fontSize: typography.presets.bodySmall.fontSize,
+  },
+  textMd: {
+    fontSize: typography.presets.body.fontSize,
+  },
+  textLg: {
+    fontSize: typography.presets.subtitle.fontSize,
+  },
 });

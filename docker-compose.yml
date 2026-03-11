@@ -1,0 +1,99 @@
+# MechNow – full stack for staging/production-like runs
+# Run: docker compose up -d
+# Backend: in-memory store (no DB required). Add DATABASE_URL when persisting.
+
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mechnow-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-staging}
+      PORT: 4000
+      CLIENT_URL: ${CLIENT_URL:-http://localhost}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-12}
+      # Optional: uncomment when DB/Redis are used
+      # DATABASE_URL: postgresql://mechnow:${POSTGRES_PASSWORD}@db:5432/mechnow
+      # REDIS_URL: redis://redis:6379
+    env_file:
+      - ./backend/.env
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    expose:
+      - "4000"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend.Dockerfile
+      args:
+        EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:-http://localhost/api}
+        EXPO_PUBLIC_ENVIRONMENT: ${EXPO_PUBLIC_ENVIRONMENT:-staging}
+    container_name: mechnow-frontend
+    restart: unless-stopped
+    expose:
+      - "80"
+
+  nginx:
+    image: nginx:alpine
+    container_name: mechnow-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./deploy/nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+
+  db:
+    image: postgres:16-alpine
+    container_name: mechnow-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mechnow
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mechnow_secret}
+      POSTGRES_DB: mechnow
+    volumes:
+      - mechnow_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mechnow -d mechnow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - with-db
+
+  redis:
+    image: redis:7-alpine
+    container_name: mechnow-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - mechnow_redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    profiles:
+      - with-redis
+
+volumes:
+  mechnow_pgdata:
+  mechnow_redis:

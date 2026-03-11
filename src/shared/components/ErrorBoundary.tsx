@@ -59,12 +59,13 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   title: {
+    fontFamily: typography.fontFamily.bold,
     color: colors.text,
     fontSize: typography.fontSize.body,
-    fontWeight: typography.fontWeight.bold,
     textAlign: 'center',
   },
   message: {
+    fontFamily: typography.fontFamily.regular,
     color: colors.textSecondary,
     fontSize: typography.fontSize.callout,
     textAlign: 'center',
@@ -77,8 +78,9 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
   },
   buttonText: {
-    color: '#fff',
-    fontWeight: typography.fontWeight.semibold,
+    fontFamily: typography.fontFamily.semibold,
+    color: colors.primaryContrast,
+    fontSize: typography.fontSize.md,
   },
 });
 
