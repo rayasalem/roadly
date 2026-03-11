@@ -8,6 +8,8 @@
     { "source": "/:path*", "destination": "/" }
   ],
   "env": {
+    "CI": "1",
+    "NODE_OPTIONS": "--max-old-space-size=4096",
     "EXPO_PUBLIC_ENVIRONMENT": "production",
     "EXPO_PUBLIC_PLATFORM": "web"
   },
