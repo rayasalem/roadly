@@ -5,6 +5,10 @@ import { createHttpClient } from './httpClient';
 import { httpEvents } from './httpEvents';
 import { useUIStore } from '../../../store/uiStore';
 
+if (typeof __DEV__ !== 'undefined' && __DEV__) {
+  console.info('[MechNow] API base URL:', API_BASE_URL);
+}
+
 /** Guard so onUnauthorized (and thus redirect) only runs once; reset on login */
 let unauthorizedTriggered = false;
 

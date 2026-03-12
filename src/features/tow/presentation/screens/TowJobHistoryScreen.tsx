@@ -1,0 +1,34 @@
+/**
+ * Tow: completed jobs history.
+ */
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { AppHeader } from '../../../../shared/components/AppHeader';
+import { useTheme, spacing, typography } from '../../../../shared/theme';
+import { t } from '../../../../shared/i18n/t';
+
+export function TowJobHistoryScreen() {
+  const navigation = useNavigation<any>();
+  const { colors } = useTheme();
+
+  return (
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
+      <AppHeader title={t('tow.jobHistory')} onBack={() => navigation.goBack()} rightIcon="none" />
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={[styles.empty, { backgroundColor: colors.surface }]}>
+          <MaterialCommunityIcons name="clipboard-check-outline" size={56} color={colors.textMuted} />
+          <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('mechanic.noJobHistory')}</Text>
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  content: { flexGrow: 1, padding: spacing.lg, paddingTop: spacing.xl },
+  empty: { borderRadius: 16, padding: spacing.xxl, alignItems: 'center' },
+  emptyTitle: { fontFamily: typography.fontFamily.semibold, fontSize: typography.fontSize.body, marginTop: spacing.md },
+});

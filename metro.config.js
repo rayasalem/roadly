@@ -5,17 +5,32 @@ const config = getDefaultConfig(__dirname);
 
 const projectRoot = __dirname;
 
-// Use AppEntry.web.js for web bundle so serverBootstrap is never included
+// Ensure react-native-reanimated is resolvable from @gorhom/bottom-sheet (native bundle)
+const reanimatedPath = path.resolve(projectRoot, 'node_modules', 'react-native-reanimated');
+config.resolver.extraNodeModules = { ...config.resolver.extraNodeModules, 'react-native-reanimated': reanimatedPath };
+
+// Use platform-specific entry so serverBootstrap is never bundled (only run via "node expo/AppEntry.js" on Render)
 const defaultResolveRequest = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   const isAppEntry =
-    platform === 'web' &&
     (moduleName === 'expo/AppEntry.js' ||
       moduleName === './expo/AppEntry.js' ||
       moduleName.replace(/\\/g, '/').endsWith('expo/AppEntry.js'));
   if (isAppEntry) {
-    const webEntry = path.join(projectRoot, 'expo', 'AppEntry.web.js');
-    return { type: 'sourceFile', filePath: webEntry };
+    const entry =
+      platform === 'web'
+        ? path.join(projectRoot, 'expo', 'AppEntry.web.js')
+        : path.join(projectRoot, 'expo', 'AppEntry.native.js');
+    return { type: 'sourceFile', filePath: entry };
+  }
+  // Force resolve react-native-reanimated from project root (fix for @gorhom/bottom-sheet in node_modules)
+  if (moduleName === 'react-native-reanimated' || moduleName.startsWith('react-native-reanimated/')) {
+    try {
+      const resolved = require.resolve(moduleName, { paths: [projectRoot] });
+      return { type: 'sourceFile', filePath: resolved };
+    } catch (_) {
+      // fall through
+    }
   }
   return defaultResolveRequest
     ? defaultResolveRequest(context, moduleName, platform)

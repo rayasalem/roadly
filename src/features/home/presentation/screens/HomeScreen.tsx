@@ -16,6 +16,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { CustomerStackParamList } from '../../../../navigation/CustomerStack';
+import { safeNavigateToSettings } from '../../../../navigation/navigationRef';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { t } from '../../../../shared/i18n/t';
@@ -51,7 +52,7 @@ export function HomeScreen() {
     else if (tab === 'Profile') navigation.navigate('Profile');
     else if (tab === 'Chat') navigation.navigate('Chat');
     else if (tab === 'Notifications') navigation.navigate('Notifications');
-    else if (tab === 'Settings') navigation.navigate('Settings');
+    else if (tab === 'Settings') safeNavigateToSettings(navigation);
   };
 
   return (
@@ -59,12 +60,14 @@ export function HomeScreen() {
       <AppHeader
         title={t('home.startJourney')}
         rightIcon="settings"
-        onProfile={() => navigation.navigate('Settings')}
+        onProfile={() => safeNavigateToSettings(navigation)}
       />
       <Animated.View style={[styles.content, { opacity: fade, transform: [{ translateY }] }]}>
         <ScrollView
+          style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={true}
+          bounces={true}
         >
           {/* Pickup / Destination inputs */}
           <View style={styles.inputRow}>
@@ -211,14 +214,21 @@ const RiderCard = memo(function RiderCard({ name, distance, rating, onPress }: R
   );
 });
 
+const BOTTOM_NAV_HEIGHT = 72;
+const EXTRA_SCROLL_PADDING = 24;
+
 const styles = StyleSheet.create({
   content: {
+    flex: 1,
+  },
+  scrollView: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.lg,
-    paddingBottom: spacing.xxl,
+    paddingBottom: BOTTOM_NAV_HEIGHT + EXTRA_SCROLL_PADDING,
+    flexGrow: 1,
   },
   quickRequest: {
     flexDirection: 'row',

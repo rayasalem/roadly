@@ -48,11 +48,28 @@ export const colors = {
   info: '#0284C7',
   infoLight: '#E0F2FE',
 
-  // —— Map & role (marker colors: mechanic=blue, tow=red, rental=green) ——
+  // —— Map & role (all green: available = green, busy = warning/orange) ——
   mapUser: '#22C55E',
-  mapMechanic: '#0EA5E9',
-  mapTow: '#EF4444',
-  mapRental: '#10B981',
+  mapMechanic: '#22C55E',
+  mapTow: '#16A34A',
+  mapRental: '#15803D',
+
+  // —— Design system (unified theme for map & provider cards) ——
+  designPrimary: '#1E3A8A',
+  designSecondary: '#0EA5E9',
+  designBackground: '#F8FAFC',
+
+  // —— Green design system (do not replace primary; use for consistency) ——
+  /** Primary green — main CTAs (brand). */
+  greenPrimary: '#22C55E',
+  /** Dark green — pressed states, headers. */
+  greenDark: '#16A34A',
+  /** Light green — availability badges, success backgrounds. */
+  greenLight: '#D1FAE5',
+  /** Soft gray — screen background. */
+  backgroundSoft: '#F3F4F6',
+  /** White cards — cards, inputs, sheets. */
+  cardWhite: '#FFFFFF',
 } as const;
 
 export type ColorPalette = typeof colors;

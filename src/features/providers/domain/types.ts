@@ -1,8 +1,8 @@
 import type { Role } from '../../../shared/constants/roles';
 import type { GeoLocationWithTimestamp } from '../../../shared/types/geo';
 
-/** Display status for map callout / bottom sheet */
-export type ProviderDisplayStatus = 'available' | 'busy' | 'on_the_way';
+/** Display status for map: available (normal), busy (orange), offline (hidden from map). */
+export type ProviderDisplayStatus = 'available' | 'busy' | 'on_the_way' | 'offline';
 
 /** Service type for filter and request (mechanic | tow | rental) */
 export type ProviderServiceType = 'mechanic' | 'tow' | 'rental';

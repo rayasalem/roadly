@@ -26,6 +26,25 @@ export async function fetchCustomerRequests(): Promise<CustomerRequestsResponse>
   }
 }
 
+export interface ProviderRequestsResponse {
+  items: ServiceRequest[];
+  total: number;
+}
+
+export async function fetchProviderRequests(): Promise<ProviderRequestsResponse> {
+  try {
+    const res = await api.get<ProviderRequestsResponse>(ENDPOINTS.requestsProvider);
+    if (!res || typeof res !== 'object' || res.data == null) return { items: [], total: 0 };
+    const data = res.data;
+    const items = Array.isArray(data.items) ? (data.items as ServiceRequest[]) : [];
+    return { items, total: data.total ?? items.length };
+  } catch (error) {
+    const msg = getErrorMessage(error);
+    if (__DEV__) console.warn('[requestApi] fetchProviderRequests failed:', msg);
+    throw new Error(msg);
+  }
+}
+
 export async function createRequest(
   input: CreateRequestInput,
 ): Promise<ServiceRequest> {

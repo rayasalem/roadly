@@ -17,7 +17,7 @@ const STALE_TIME_MS = 60 * 1000;
 
 export type { MechanicRequestStatus, MechanicJob, RequesterItem };
 
-export function useMechanicDashboard() {
+export function useMechanicDashboard(enabled = true) {
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<MechanicRequestStatus | 'all'>('all');
 
@@ -32,6 +32,7 @@ export function useMechanicDashboard() {
     queryFn: fetchMechanicDashboard,
     staleTime: STALE_TIME_MS,
     retry: 2,
+    enabled,
   });
 
   const acceptMutation = useMutation({

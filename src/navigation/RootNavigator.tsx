@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { colors } from '../shared/theme/colors';
 import { RoleNavigator } from './RoleNavigator';
 import { LaunchScreen } from '../features/auth/presentation/screens/LaunchScreen';
+import { OnboardingScreen } from '../features/auth/presentation/screens/OnboardingScreen';
 import { WelcomeScreen } from '../features/auth/presentation/screens/WelcomeScreen';
 import { LoginScreen } from '../features/auth/presentation/screens/LoginScreen';
 import { RegisterScreen } from '../features/auth/presentation/screens/RegisterScreen';
@@ -11,6 +12,7 @@ import { navigationRef } from './navigationRef';
 
 export type RootStackParamList = {
   Launch: undefined;
+  Onboarding: undefined;
   Welcome: undefined;
   Login: undefined;
   Register: undefined;
@@ -51,6 +53,11 @@ export function RootNavigator() {
         name="Launch"
         options={{ headerShown: false }}
         component={LaunchScreen}
+      />
+      <Stack.Screen
+        name="Onboarding"
+        options={{ headerShown: false }}
+        component={OnboardingScreen}
       />
       <Stack.Screen
         name="Welcome"

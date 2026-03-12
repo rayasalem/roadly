@@ -1,6 +1,6 @@
 /**
- * Per-role color and icon theme for dashboards.
- * Mechanic: blue, Tow: orange, Rental: purple, Admin: slate.
+ * Per-role color and icon theme — unified green for all roles.
+ * User: green (primary). Mechanic / Tow / Rental / Admin: green variations.
  */
 import { colors } from './colors';
 
@@ -11,27 +11,27 @@ export const ROLE_THEMES: Record<
   { primary: string; primaryLight: string; icon: string; gradient: [string, string] }
 > = {
   mechanic: {
-    primary: colors.mapMechanic,
-    primaryLight: '#E0F2FE',
+    primary: colors.primary,
+    primaryLight: colors.greenLight,
     icon: 'wrench',
-    gradient: ['#0EA5E9', '#38BDF8'],
+    gradient: [colors.primary, colors.primaryDark],
   },
   tow: {
-    primary: colors.mapTow,
-    primaryLight: '#FFEDD5',
+    primary: colors.primary,
+    primaryLight: colors.greenLight,
     icon: 'tow-truck',
-    gradient: ['#EA580C', '#F97316'],
+    gradient: [colors.primary, colors.primaryDark],
   },
   rental: {
-    primary: colors.mapRental,
-    primaryLight: '#E0E7FF',
+    primary: colors.primary,
+    primaryLight: colors.greenLight,
     icon: 'car-estate',
-    gradient: ['#4F46E5', '#6366F1'],
+    gradient: [colors.primary, colors.primaryDark],
   },
   admin: {
-    primary: '#475569',
-    primaryLight: '#F1F5F9',
+    primary: colors.primaryDark,
+    primaryLight: colors.greenLight,
     icon: 'shield-account',
-    gradient: ['#334155', '#64748B'],
+    gradient: [colors.primaryDark, colors.primary],
   },
 };

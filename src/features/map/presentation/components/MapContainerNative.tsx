@@ -1,8 +1,8 @@
 /**
- * Native map card: MapView, polyline, markers, search bar, filters, floating buttons, overlay, retry banner.
+ * Native map card: MapView, polyline, markers, search bar with suggestions, filters, draggable service pin, floating buttons.
  */
 import React from 'react';
-import { View, TextInput, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
+import { View, TextInput, TouchableOpacity, Text, StyleSheet, Platform, ScrollView } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppText } from '../../../../shared/components/AppText';
@@ -15,6 +15,7 @@ import type { MapFilterRole } from '../../hooks/useMapFilters';
 import type { MapClusterItem } from '../../utils/mapClustering';
 import { SILVER_MAP_STYLE } from '../../constants/silverMapStyle';
 import { colors } from '../../../../shared/theme/colors';
+import type { PlaceSuggestion } from '../../data/placesApi';
 
 interface MapContainerNativeProps {
   mapRef: React.RefObject<MapView | null>;
@@ -37,6 +38,14 @@ interface MapContainerNativeProps {
   isRefetching: boolean;
   isCustomer: boolean;
   getFilterLabel: (role: MapFilterRole) => string;
+  /** When true, map fills screen (no border radius). */
+  fullScreen?: boolean;
+  /** Center used for provider search; when set with onDragPin, show draggable service-location pin. */
+  effectiveCenter?: { latitude: number; longitude: number };
+  onDragPin?: (latitude: number, longitude: number) => void;
+  onUseCurrentLocation?: () => void;
+  placeSuggestions?: PlaceSuggestion[];
+  onSelectPlace?: (suggestion: PlaceSuggestion) => void;
 }
 
 export function MapContainerNative(props: MapContainerNativeProps) {
@@ -64,8 +73,12 @@ export function MapContainerNative(props: MapContainerNativeProps) {
     getFilterLabel,
   } = props;
 
+  const fullScreen = props.fullScreen === true;
+  const { effectiveCenter, onDragPin, onUseCurrentLocation, placeSuggestions = [], onSelectPlace } = props;
+  const showServicePin = isCustomer && effectiveCenter && onDragPin;
+
   return (
-    <View style={[styles.mapCard, { backgroundColor: themeColors.surface }, shadows.lg]}>
+    <View style={[styles.mapCard, fullScreen && styles.mapCardFullScreen, { backgroundColor: themeColors.surface }, !fullScreen && shadows.lg]}>
       <MapView
         ref={mapRef}
         style={styles.map}
@@ -76,6 +89,19 @@ export function MapContainerNative(props: MapContainerNativeProps) {
       >
         {routeCoordinates.length >= 2 && (
           <Polyline coordinates={routeCoordinates} strokeColor={themeColors.primary} strokeWidth={4} lineDashPattern={[1, 0]} />
+        )}
+        {showServicePin && (
+          <Marker
+            coordinate={effectiveCenter}
+            draggable
+            onDragEnd={(e) => onDragPin(e.nativeEvent.coordinate.latitude, e.nativeEvent.coordinate.longitude)}
+            anchor={{ x: 0.5, y: 1 }}
+            tracksViewChanges={false}
+          >
+            <View style={markerStyles.servicePin}>
+              <MaterialCommunityIcons name="map-marker" size={36} color={colors.primary} />
+            </View>
+          </Marker>
         )}
         {clusterItems.map((item, index) => {
           if (item.type === 'provider') {
@@ -121,7 +147,7 @@ export function MapContainerNative(props: MapContainerNativeProps) {
         />
       </View>
 
-      <View style={styles.filtersRow}>
+      <View style={[styles.filtersRow, { top: spacing.md + 48 + spacing.sm + 44 + spacing.sm + (placeSuggestions.length > 0 ? 180 + spacing.sm : 0) }]}>
         {filterOptions.map((role) => (
           <TouchableOpacity
             key={role ?? 'all'}
@@ -166,12 +192,16 @@ export function MapContainerNative(props: MapContainerNativeProps) {
 
 const styles = StyleSheet.create({
   mapCard: { flex: 1, borderRadius: 32, overflow: 'hidden' },
+  mapCardFullScreen: { borderRadius: 0 },
   map: { flex: 1 },
-  searchWrap: {
+  searchRow: {
     position: 'absolute',
     top: spacing.md,
     left: spacing.md,
     right: spacing.md,
+    gap: spacing.sm,
+  },
+  searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: radii.lg,
@@ -179,9 +209,43 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   searchInput: { flex: 1, marginLeft: spacing.sm, fontFamily: typography.fontFamily.regular, fontSize: typography.fontSize.callout, paddingVertical: Platform.OS === 'android' ? 4 : 0 },
+  useCurrentLocationBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: radii.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.xs,
+  },
+  useCurrentLocationText: {
+    fontFamily: typography.fontFamily.medium,
+    fontSize: typography.fontSize.caption,
+  },
+  suggestionsWrap: {
+    position: 'absolute',
+    top: spacing.md + 48 + spacing.sm + 44 + spacing.sm,
+    left: spacing.md,
+    right: spacing.md,
+    maxHeight: 180,
+    borderRadius: radii.lg,
+    overflow: 'hidden',
+  },
+  suggestionsScroll: { maxHeight: 180 },
+  suggestionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  suggestionText: {
+    flex: 1,
+    fontFamily: typography.fontFamily.regular,
+    fontSize: typography.fontSize.callout,
+  },
   filtersRow: {
     position: 'absolute',
-    top: spacing.md + 48 + spacing.sm,
     left: spacing.md,
     right: spacing.md,
     flexDirection: 'row',
@@ -246,6 +310,10 @@ const styles = StyleSheet.create({
 });
 
 const markerStyles = StyleSheet.create({
+  servicePin: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   cluster: {
     minWidth: 36,
     height: 36,

@@ -26,19 +26,11 @@ app.use(requestIdMiddleware);
 app.use(requestLoggerMiddleware);
 const isDev = env.NODE_ENV !== 'production';
 const productionOrigins = env.CLIENT_URL.split(',').map((u) => u.trim()).filter(Boolean);
+// In dev: allow any origin so Expo Go / device (exp://, http from LAN) can connect
 app.use(
   cors({
     origin: isDev
-      ? [
-          'http://localhost:8081',
-          'http://localhost:8082',
-          'http://localhost:8083',
-          'http://127.0.0.1:8081',
-          'http://127.0.0.1:8082',
-          'http://127.0.0.1:8083',
-          'https://roadmapapp.vercel.app',
-          env.CLIENT_URL,
-        ]
+      ? true
       : productionOrigins.length > 0
         ? productionOrigins
         : ['https://roadmapapp.vercel.app'],

@@ -76,17 +76,35 @@ export function SettingsScreen() {
   const navigation = useNavigation<any>();
   const toast = useUIStore((s) => s.toast);
   const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+  const role = user?.role ?? 'user';
   const { colors } = useTheme();
   const colorSchemePreference = useThemeStore((s) => s.colorSchemePreference);
   const setColorSchemePreference = useThemeStore((s) => s.setColorSchemePreference);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   const handleTab = (tab: NavTabId) => {
-    if (tab === 'Home') navigation.navigate('Home');
-    if (tab === 'Chat') navigation.navigate('Chat');
-    if (tab === 'Notifications') navigation.navigate('Notifications');
-    if (tab === 'Profile') navigation.navigate('Profile');
     if (tab === 'Settings') return;
+    if (tab === 'Notifications') {
+      navigation.navigate('Notifications');
+      return;
+    }
+    if (tab === 'Profile') {
+      navigation.navigate('Profile');
+      return;
+    }
+    if (tab === 'Home') {
+      if (role === 'mechanic') navigation.navigate('MechanicDashboard');
+      else if (role === 'mechanic_tow') navigation.navigate('TowDashboard');
+      else if (role === 'car_rental') navigation.navigate('RentalDashboard');
+      else if (role === 'admin') navigation.navigate('AdminDashboard');
+      else navigation.navigate('Map');
+      return;
+    }
+    if (tab === 'Chat') {
+      if (role === 'user') navigation.navigate('Chat');
+      else toast({ type: 'info', message: t('common.notImplemented') });
+    }
   };
 
   const handlePressItem = (item: SettingsItem) => {
@@ -108,7 +126,7 @@ export function SettingsScreen() {
     <ScreenWrapper>
       <AppHeader
         title={t('nav.settings')}
-        onBack={() => navigation.navigate('Home')}
+        onBack={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Profile')}
         rightIcon="none"
       />
       <ScrollView
@@ -189,6 +207,16 @@ export function SettingsScreen() {
             <SettingsRow key={item.id} item={item} onPress={handlePressItem} colors={colors} />
           ))}
         </View>
+
+        {/* Logout */}
+        <TouchableOpacity
+          style={[styles.logoutBtn, { backgroundColor: colors.surface, borderColor: colors.error }]}
+          onPress={() => void logout()}
+          activeOpacity={0.85}
+        >
+          <MaterialCommunityIcons name="logout" size={22} color={colors.error} />
+          <Text style={[styles.logoutBtnText, { color: colors.error }]}>{t('auth.logout')}</Text>
+        </TouchableOpacity>
       </ScrollView>
       <BottomNavBar activeTab="Settings" onSelect={handleTab} />
     </ScreenWrapper>
@@ -300,5 +328,19 @@ const styles = StyleSheet.create({
   rowValue: {
     fontFamily: typography.fontFamily.regular,
     fontSize: typography.fontSize.caption,
+  },
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    borderRadius: radii.lg,
+    borderWidth: 1.5,
+    marginTop: spacing.lg,
+  },
+  logoutBtnText: {
+    fontFamily: typography.fontFamily.semibold,
+    fontSize: typography.fontSize.callout,
   },
 });

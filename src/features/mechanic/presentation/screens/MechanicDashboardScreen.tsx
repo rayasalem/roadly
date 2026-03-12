@@ -30,6 +30,11 @@ import {
   type MechanicJob,
   type MechanicRequestStatus,
 } from '../../hooks/useMechanicDashboard';
+import { useProviderProfile } from '../../../profile/hooks/useProviderProfile';
+import { updateProviderAvailability } from '../../../profile/data/providerProfileApi';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ROLES } from '../../../../shared/constants/roles';
+import { useAuthStore } from '../../../../store/authStore';
 
 type Nav = NativeStackNavigationProp<MechanicStackParamList, 'MechanicDashboard'>;
 const THEME = ROLE_THEMES.mechanic;
@@ -133,11 +138,12 @@ export function MechanicDashboardScreen() {
       try {
         await acceptJob(requestId);
         toast({ type: 'success', message: t('mechanic.accepted') });
+        navigation.navigate('Map');
       } catch (e) {
         toast({ type: 'error', message: e instanceof Error ? e.message : t('common.error') });
       }
     },
-    [acceptJob, toast],
+    [acceptJob, toast, navigation],
   );
 
   const handleDecline = useCallback(
@@ -191,6 +197,32 @@ export function MechanicDashboardScreen() {
           windowSize={5}
           ListHeaderComponent={
             <>
+              <View style={styles.availabilityRow}>
+                <Text style={styles.availabilityLabel}>{t('mechanic.availability')}</Text>
+                <View style={styles.availabilityChips}>
+                  <TouchableOpacity
+                    style={[styles.availabilityChip, isAvailable && styles.availabilityChipOn]}
+                    onPress={() => !availabilityMutation.isPending && availabilityMutation.mutate(true)}
+                    disabled={availabilityMutation.isPending}
+                  >
+                    <View style={[styles.availabilityDot, isAvailable && { backgroundColor: colors.primary }]} />
+                    <AppText variant="callout" style={[styles.availabilityChipText, isAvailable && styles.availabilityChipTextOn]}>
+                      {t('map.status.available')}
+                    </AppText>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.availabilityChip, !isAvailable && styles.availabilityChipOff]}
+                    onPress={() => !availabilityMutation.isPending && availabilityMutation.mutate(false)}
+                    disabled={availabilityMutation.isPending}
+                  >
+                    <View style={[styles.availabilityDot, !isAvailable && { backgroundColor: colors.textMuted }]} />
+                    <AppText variant="callout" style={[styles.availabilityChipText, !isAvailable && styles.availabilityChipTextOff]}>
+                      {t('mechanic.unavailable')}
+                    </AppText>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
               <GlassCard role="mechanic">
                 <View style={styles.statsRow}>
                   <StatCard value={stats.jobsToday} label={t('mechanic.stats.jobsToday')} accentColor={THEME.primary} />
@@ -226,6 +258,10 @@ export function MechanicDashboardScreen() {
                 <TouchableOpacity style={[styles.actionCard, { backgroundColor: THEME.primaryLight }]} onPress={() => navigation.navigate('MechanicSkills')} activeOpacity={0.85}>
                   <MaterialCommunityIcons name="certificate-outline" size={24} color={THEME.primary} />
                   <AppText variant="title3" style={styles.actionCardTitle}>{t('mechanic.mySkills')}</AppText>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.actionCard, { backgroundColor: THEME.primaryLight }]} onPress={() => navigation.navigate('MechanicJobHistory')} activeOpacity={0.85}>
+                  <MaterialCommunityIcons name="clipboard-text-outline" size={24} color={THEME.primary} />
+                  <AppText variant="title3" style={styles.actionCardTitle}>{t('mechanic.jobHistory')}</AppText>
                 </TouchableOpacity>
               </View>
 
@@ -338,6 +374,35 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   safe: { flex: 1 },
   scroll: { paddingHorizontal: spacing.xl, paddingBottom: 100 },
+  availabilityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
+  availabilityLabel: {
+    fontFamily: typography.fontFamily.semibold,
+    fontSize: typography.presets.body.fontSize,
+    color: colors.text,
+  },
+  availabilityChips: { flexDirection: 'row', gap: spacing.sm },
+  availabilityChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface,
+    gap: spacing.xs,
+    ...shadows.sm,
+  },
+  availabilityChipOn: { backgroundColor: colors.primary },
+  availabilityChipOff: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  availabilityDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.border },
+  availabilityChipText: { fontFamily: typography.fontFamily.medium, fontSize: typography.presets.caption.fontSize, color: colors.text },
+  availabilityChipTextOn: { color: colors.primaryContrast },
+  availabilityChipTextOff: { color: colors.textSecondary },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -403,11 +468,13 @@ const styles = StyleSheet.create({
   requesterPillText: { fontFamily: typography.fontFamily.medium, fontSize: typography.presets.caption.fontSize },
   actionCardsRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: spacing.md,
     marginBottom: spacing.lg,
   },
   actionCard: {
     flex: 1,
+    minWidth: 100,
     padding: spacing.lg,
     borderRadius: radii.lg,
     alignItems: 'center',

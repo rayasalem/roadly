@@ -17,6 +17,7 @@ import { spacing, typography, radii, shadows } from '../../../../shared/theme';
 import { t } from '../../../../shared/i18n/t';
 import { useChatConversations } from '../../hooks/useChatConversations';
 import type { CustomerStackParamList } from '../../../../navigation/CustomerStack';
+import { safeNavigateToSettings } from '../../../../navigation/navigationRef';
 
 type Nav = NativeStackNavigationProp<CustomerStackParamList, 'Chat'>;
 
@@ -38,7 +39,7 @@ export function ChatScreen() {
     if (tab === 'Home') navigation.navigate('Home');
     if (tab === 'Profile') navigation.navigate('Profile');
     if (tab === 'Notifications') navigation.navigate('Notifications');
-    if (tab === 'Settings') navigation.navigate('Settings');
+    if (tab === 'Settings') safeNavigateToSettings(navigation);
   };
 
   const handleOpenChat = (conversationId: string, name: string) => {

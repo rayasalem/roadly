@@ -113,11 +113,30 @@ export type StringKey =
   | 'request.submitRating'
   | 'request.ratingSubmitted'
   | 'map.title'
+  | 'map.incomingRequests'
   | 'map.nearest'
   | 'map.noProviders'
   | 'map.cta.start'
   | 'auth.getStarted'
   | 'auth.tagline'
+  | 'splash.tagline1'
+  | 'splash.tagline2'
+  | 'splash.tagline3'
+  | 'splash.tagline4'
+  | 'onboarding.mechanic.title'
+  | 'onboarding.mechanic.subtitle'
+  | 'onboarding.tow.title'
+  | 'onboarding.tow.subtitle'
+  | 'onboarding.rental.title'
+  | 'onboarding.rental.subtitle'
+  | 'onboarding.cta.next'
+  | 'onboarding.cta.skip'
+  | 'onboarding.cta.getStarted'
+  | 'welcome.headline'
+  | 'welcome.subtitle'
+  | 'welcome.signUp'
+  | 'welcome.login'
+  | 'welcome.continueAsGuest'
   | 'nav.home'
   | 'nav.chat'
   | 'chat.placeholder'
@@ -130,6 +149,30 @@ export type StringKey =
   | 'nav.profile'
   | 'nav.settings'
   | 'settings.appearance'
+  | 'customer.liveTracking'
+  | 'customer.liveTrackingTitle'
+  | 'customer.liveTrackingSubtitle'
+  | 'customer.ratings'
+  | 'customer.ratingsEmpty'
+  | 'customer.ratingsEmptySubtitle'
+  | 'customer.payment'
+  | 'customer.addPaymentMethod'
+  | 'customer.paymentHint'
+  | 'customer.favorites'
+  | 'customer.favoritesEmpty'
+  | 'customer.favoritesEmptySubtitle'
+  | 'customer.helpSupport'
+  | 'customer.faq'
+  | 'customer.contactUs'
+  | 'tow.requests'
+  | 'tow.jobHistory'
+  | 'tow.settings'
+  | 'rental.carList'
+  | 'rental.bookings'
+  | 'rental.history'
+  | 'rental.settings'
+  | 'admin.reports'
+  | 'admin.systemSettings'
   | 'home.startJourney'
   | 'home.pickupPlaceholder'
   | 'home.destinationPlaceholder'
@@ -158,6 +201,7 @@ export type StringKey =
   | 'map.legend.you'
   | 'map.searchPlaceholder'
   | 'map.searchHerePlaceholder'
+  | 'map.useCurrentLocation'
   | 'map.requestService'
   | 'map.createRequest'
   | 'map.onlyCustomersCanRequest'
@@ -169,11 +213,15 @@ export type StringKey =
   | 'map.status.available'
   | 'map.status.busy'
   | 'map.status.onTheWay'
+  | 'map.status.offline'
+  | 'map.viewProfile'
   | 'map.ratingStars'
   | 'map.locationDeniedTitle'
   | 'map.locationDeniedMessage'
   | 'map.locationEnableInstructions'
   | 'map.noProvidersSubtitle'
+  | 'map.noRequestsYet'
+  | 'map.noRequestsSubtitle'
   | 'map.openSettings'
   | 'map.loadingProviders'
   | 'map.showingCachedData'
@@ -265,6 +313,9 @@ export type StringKey =
   | 'request.statusUpdated'
   | 'request.trackBelow'
   | 'map.requestHint'
+  | 'map.call'
+  | 'map.chat'
+  | 'map.noPhone'
   | 'profile.servicesSaved'
   | 'mechanic.accepted'
   | 'mechanic.declined'
@@ -272,6 +323,8 @@ export type StringKey =
   | 'mechanic.completed'
   | 'mechanic.navigate'
   | 'mechanic.noJobs'
+  | 'mechanic.jobHistory'
+  | 'mechanic.noJobHistory'
   | 'tow.noJobs'
   | 'tow.declined'
   | 'tow.accepted'
@@ -396,11 +449,32 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'request.submitRating': 'Submit rating',
     'request.ratingSubmitted': 'Thank you for your rating!',
     'map.title': 'Get direction',
+    'map.incomingRequests': 'Incoming requests',
     'map.nearest': 'Nearest provider',
     'map.noProviders': 'No providers nearby yet.',
+    'map.noRequestsYet': 'No requests yet.',
+    'map.noRequestsSubtitle': 'New service requests will appear here.',
     'map.cta.start': 'Start',
     'auth.getStarted': 'Get Started',
     'auth.tagline': 'Rent Your Vehicle & Earn Some Extra Money.',
+    'splash.tagline1': "Your car's best friend, anytime, anywhere!",
+    'splash.tagline2': 'Fast. Reliable. On-demand car services.',
+    'splash.tagline3': "From a tow to a tune-up, we've got you covered.",
+    'splash.tagline4': 'One tap. Real help. Every time.',
+    'onboarding.mechanic.title': 'Find skilled mechanics instantly, wherever you are!',
+    'onboarding.mechanic.subtitle': 'Car trouble? We bring the experts to your door!',
+    'onboarding.tow.title': 'Stranded? A tow truck is just a tap away!',
+    'onboarding.tow.subtitle': 'Quick, safe, and reliable roadside assistance.',
+    'onboarding.rental.title': 'Need a car? Rent with ease in minutes!',
+    'onboarding.rental.subtitle': 'Choose your ride and get moving instantly.',
+    'onboarding.cta.next': 'Next',
+    'onboarding.cta.skip': 'Skip',
+    'onboarding.cta.getStarted': 'Get Started',
+    'welcome.headline': 'Join thousands of drivers and car owners today!',
+    'welcome.subtitle': 'Fast, easy, and secure car services at your fingertips.',
+    'welcome.signUp': 'Sign Up',
+    'welcome.login': 'Login',
+    'welcome.continueAsGuest': 'Continue as Guest',
     'nav.home': 'Home',
     'nav.chat': 'Chat',
     'chat.placeholder': 'Type a message…',
@@ -412,6 +486,30 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'notifications.empty': 'No notifications yet.',
     'nav.profile': 'Profile',
     'nav.settings': 'Settings',
+    'customer.liveTracking': 'Live Tracking',
+    'customer.liveTrackingTitle': 'Track your provider',
+    'customer.liveTrackingSubtitle': 'See ETA and open the map to follow the journey.',
+    'customer.ratings': 'Ratings',
+    'customer.ratingsEmpty': 'No ratings yet',
+    'customer.ratingsEmptySubtitle': 'Rate your completed services from Request History.',
+    'customer.payment': 'Payment',
+    'customer.addPaymentMethod': 'Add payment method',
+    'customer.paymentHint': 'Add a card to pay for services quickly.',
+    'customer.favorites': 'Favorites',
+    'customer.favoritesEmpty': 'No favorites yet',
+    'customer.favoritesEmptySubtitle': 'Save providers from the map to request them faster.',
+    'customer.helpSupport': 'Help & Support',
+    'customer.faq': 'FAQ',
+    'customer.contactUs': 'Contact us',
+    'tow.requests': 'Requests',
+    'tow.jobHistory': 'Job history',
+    'tow.settings': 'Settings',
+    'rental.carList': 'Car list',
+    'rental.bookings': 'Bookings',
+    'rental.history': 'Rental history',
+    'rental.settings': 'Settings',
+    'admin.reports': 'Reports',
+    'admin.systemSettings': 'System settings',
     'settings.appearance': 'Appearance',
     'home.startJourney': 'Start Your Journey',
     'home.pickupPlaceholder': 'Choose Pickup Point',
@@ -423,15 +521,16 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'tow.dashboard.title': 'Tow dashboard',
     'rental.dashboard.title': 'Rental dashboard',
     'map.filter.all': 'All',
-    'map.filter.mechanic': 'Mechanic',
-    'map.filter.tow': 'Tow',
-    'map.filter.rental': 'Rental',
+    'map.filter.mechanic': 'Mechanics',
+    'map.filter.tow': 'Tow Trucks',
+    'map.filter.rental': 'Car Rentals',
     'map.legend.available': 'Available',
     'map.legend.busy': 'Busy',
     'map.legend.offline': 'Offline',
     'map.legend.you': 'You',
     'map.searchPlaceholder': 'Search area or address',
     'map.searchHerePlaceholder': 'Search here or enter address and area',
+    'map.useCurrentLocation': 'Use current location',
     'map.requestService': 'Request service',
     'map.createRequest': 'Create request',
     'map.onlyCustomersCanRequest': 'Only customers can request services',
@@ -443,6 +542,8 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'map.status.available': 'Available',
     'map.status.busy': 'Busy',
     'map.status.onTheWay': 'On the way',
+    'map.status.offline': 'Offline',
+    'map.viewProfile': 'View Profile',
     'map.ratingStars': 'Stars',
     'map.locationDeniedTitle': 'Location access needed',
     'map.locationDeniedMessage': 'To show nearby providers and your position on the map, please allow location access.',
@@ -538,6 +639,9 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'request.statusUpdated': 'Status updated.',
     'request.trackBelow': 'Track your request status below.',
     'map.requestHint': 'Tap Request service to confirm and get help.',
+    'map.call': 'Call',
+    'map.chat': 'Chat',
+    'map.noPhone': 'No phone number available.',
     'profile.servicesSaved': 'Services updated.',
     'mechanic.accepted': 'Request accepted.',
     'mechanic.declined': 'Request declined.',
@@ -545,6 +649,10 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'mechanic.completed': 'Service completed.',
     'mechanic.navigate': 'Navigate',
     'mechanic.noJobs': 'No jobs yet. New requests will appear here when customers need help.',
+    'mechanic.jobHistory': 'Job history',
+    'mechanic.noJobHistory': 'No completed jobs yet.',
+    'mechanic.availability': 'Availability',
+    'mechanic.unavailable': 'Offline',
     'tow.noJobs': 'No tow jobs yet. New requests will appear here.',
     'tow.declined': 'Request declined.',
     'tow.accepted': 'Request accepted.',
@@ -668,11 +776,30 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'request.submitRating': 'إرسال التقييم',
     'request.ratingSubmitted': 'شكراً لتقييمك!',
     'map.title': 'الحصول على الاتجاه',
+    'map.incomingRequests': 'الطلبات الواردة',
     'map.nearest': 'أقرب مزود',
     'map.noProviders': 'لا يوجد مزودون قريبون بعد.',
     'map.cta.start': 'ابدأ',
     'auth.getStarted': 'ابدأ',
     'auth.tagline': 'أجر سيارتك واكسب مالاً إضافياً.',
+    'splash.tagline1': 'أفضل صديق لسيارتك، في أي وقت وأي مكان!',
+    'splash.tagline2': 'سريع. موثوق. خدمات سيارات عند الطلب.',
+    'splash.tagline3': 'من السحب إلى الصيانة، نحن معك.',
+    'splash.tagline4': 'ضغطة واحدة. مساعدة حقيقية. كل مرة.',
+    'onboarding.mechanic.title': 'اعثر على ميكانيكيين مهرة فوراً، أينما كنت!',
+    'onboarding.mechanic.subtitle': 'مشكلة في السيارة؟ نُحضر الخبراء إلى بابك!',
+    'onboarding.tow.title': 'علقت؟ ونش على بُعد ضغطة واحدة!',
+    'onboarding.tow.subtitle': 'مساعدة طرق سريعة وآمنة وموثوقة.',
+    'onboarding.rental.title': 'تحتاج سيارة؟ استأجر بسهولة خلال دقائق!',
+    'onboarding.rental.subtitle': 'اختر سيارتك وانطلق فوراً.',
+    'onboarding.cta.next': 'التالي',
+    'onboarding.cta.skip': 'تخطي',
+    'onboarding.cta.getStarted': 'ابدأ الآن',
+    'welcome.headline': 'انضم إلى آلاف السائقين وأصحاب السيارات اليوم!',
+    'welcome.subtitle': 'خدمات سيارات سريعة وسهلة وآمنة بين يديك.',
+    'welcome.signUp': 'إنشاء حساب',
+    'welcome.login': 'تسجيل الدخول',
+    'welcome.continueAsGuest': 'متابعة كزائر',
     'nav.home': 'الرئيسية',
     'nav.chat': 'الدردشة',
     'chat.placeholder': 'اكتب رسالة…',
@@ -684,6 +811,35 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'notifications.empty': 'لا توجد إشعارات بعد.',
     'nav.profile': 'الملف',
     'nav.settings': 'الإعدادات',
+    'customer.liveTracking': 'التتبع المباشر',
+    'customer.liveTrackingTitle': 'تتبع مزود الخدمة',
+    'customer.liveTrackingSubtitle': 'اعرض وقت الوصول وافتح الخريطة لمتابعة الرحلة.',
+    'customer.ratings': 'التقييمات',
+    'customer.ratingsEmpty': 'لا توجد تقييمات بعد',
+    'customer.ratingsEmptySubtitle': 'قيّم الخدمات المكتملة من سجل الطلبات.',
+    'customer.payment': 'الدفع',
+    'customer.addPaymentMethod': 'إضافة طريقة دفع',
+    'customer.paymentHint': 'أضف بطاقة للدفع بسرعة.',
+    'customer.favorites': 'المفضلة',
+    'customer.favoritesEmpty': 'لا مفضلات بعد',
+    'customer.favoritesEmptySubtitle': 'احفظ المزودين من الخريطة لطلبهم بسرعة.',
+    'customer.helpSupport': 'المساعدة والدعم',
+    'customer.faq': 'الأسئلة الشائعة',
+    'customer.contactUs': 'تواصل معنا',
+    'tow.requests': 'الطلبات',
+    'tow.jobHistory': 'سجل المهام',
+    'tow.settings': 'الإعدادات',
+    'rental.carList': 'قائمة السيارات',
+    'rental.bookings': 'الحجوزات',
+    'rental.history': 'سجل التأجير',
+    'rental.settings': 'الإعدادات',
+    'admin.reports': 'التقارير',
+    'admin.systemSettings': 'إعدادات النظام',
+    'admin.reportsEmpty': 'صدّر واعرض تقارير الاستخدام من هنا.',
+    'admin.systemSettingsHint': 'ضبط الخيارات العامة والإشعارات.',
+    'rental.addCar': 'إضافة سيارة',
+    'rental.noBookings': 'لا توجد طلبات حجز بعد.',
+    'rental.noHistory': 'لا يوجد سجل تأجير بعد.',
     'settings.appearance': 'المظهر',
     'home.startJourney': 'ابدأ رحلتك',
     'home.pickupPlaceholder': 'اختر نقطة الانطلاق',
@@ -704,15 +860,16 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'tow.dashboard.title': 'لوحة تحكم الونش',
     'rental.dashboard.title': 'لوحة تحكم التأجير',
     'map.filter.all': 'الكل',
-    'map.filter.mechanic': 'ميكانيكي',
+    'map.filter.mechanic': 'ميكانيكيون',
     'map.filter.tow': 'ونش',
-    'map.filter.rental': 'تأجير',
+    'map.filter.rental': 'تأجير سيارات',
     'map.legend.available': 'متاح',
     'map.legend.busy': 'مشغول',
     'map.legend.offline': 'غير متصل',
     'map.legend.you': 'أنت',
     'map.searchPlaceholder': 'البحث عن منطقة أو عنوان',
     'map.searchHerePlaceholder': 'البحث هنا أو أدخل العنوان والمنطقة',
+    'map.useCurrentLocation': 'استخدم موقعي الحالي',
     'map.requestService': 'طلب خدمة',
     'map.createRequest': 'إنشاء طلب',
     'map.onlyCustomersCanRequest': 'يمكن للعملاء فقط طلب الخدمات',
@@ -724,11 +881,15 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'map.status.available': 'متاح',
     'map.status.busy': 'مشغول',
     'map.status.onTheWay': 'في الطريق',
+    'map.status.offline': 'غير متصل',
+    'map.viewProfile': 'عرض الملف',
     'map.ratingStars': 'نجوم',
     'map.locationDeniedTitle': 'الوصول إلى الموقع مطلوب',
     'map.locationDeniedMessage': 'لعرض مزودي الخدمة القريبين وموقعك على الخريطة، يرجى السماح بالوصول إلى الموقع.',
     'map.locationEnableInstructions': 'افتح الإعدادات → Roadly → الموقع → اختر "أثناء استخدام التطبيق" أو "دائماً". ثم عد هنا واضغط إعادة المحاولة.',
     'map.noProvidersSubtitle': 'حاول مرة أخرى بعد قليل أو غيّر الفلاتر لعرض المزيد.',
+    'map.noRequestsYet': 'لا توجد طلبات بعد.',
+    'map.noRequestsSubtitle': 'ستظهر طلبات الخدمة الجديدة هنا.',
     'map.openSettings': 'فتح الإعدادات',
     'map.loadingProviders': 'جاري تحميل المزودين…',
     'map.showingCachedData': 'عرض مواقع مزودين من الذاكرة المؤقتة.',
@@ -820,6 +981,9 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'request.statusUpdated': 'تم تحديث الحالة.',
     'request.trackBelow': 'تتبع حالة طلبك أدناه.',
     'map.requestHint': 'اضغط "طلب خدمة" للتأكيد والحصول على المساعدة.',
+    'map.call': 'اتصال',
+    'map.chat': 'دردشة',
+    'map.noPhone': 'لا يوجد رقم هاتف.',
     'profile.servicesSaved': 'تم تحديث الخدمات.',
     'mechanic.accepted': 'تم قبول الطلب.',
     'mechanic.declined': 'تم رفض الطلب.',
@@ -827,6 +991,10 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'mechanic.completed': 'تم إتمام الخدمة.',
     'mechanic.navigate': 'التنقل',
     'mechanic.noJobs': 'لا توجد مهام بعد. ستظهر الطلبات هنا عندما يحتاج العملاء مساعدة.',
+    'mechanic.jobHistory': 'سجل المهام',
+    'mechanic.noJobHistory': 'لا توجد مهام مكتملة بعد.',
+    'mechanic.availability': 'الحالة',
+    'mechanic.unavailable': 'غير متاح',
     'tow.noJobs': 'لا توجد مهام ونش بعد. ستظهر الطلبات هنا.',
     'tow.declined': 'تم رفض الطلب.',
     'tow.accepted': 'تم قبول الطلب.',

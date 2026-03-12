@@ -80,3 +80,24 @@ export function flushPendingNavigateToLogin(): void {
   stopPendingFlushPoll();
   doResetToLogin();
 }
+
+/**
+ * Type for any navigation object that can navigate to 'Settings'.
+ * Used so we only call navigate('Settings') when we're inside a role stack (nested navigator).
+ */
+type NavWithSettings = { navigate: (name: 'Settings') => void; getParent?: () => unknown };
+
+/**
+ * Navigate to Settings only when the current navigator is a nested one (role stack).
+ * Avoids "NAVIGATE with payload { name: 'Settings' } was not handled" when
+ * the root navigator (Launch/Login/Register) is active.
+ */
+export function safeNavigateToSettings(navigation: NavWithSettings): void {
+  try {
+    if (navigation.getParent?.()) {
+      navigation.navigate('Settings');
+    }
+  } catch {
+    // Ignore if navigator not ready or screen not in stack
+  }
+}

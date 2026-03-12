@@ -12,6 +12,7 @@ import { spacing, typography, radii, shadows } from '../../../../shared/theme';
 import { t } from '../../../../shared/i18n/t';
 import { usePressScaleAnimation } from '../../../../shared/utils/animations';
 import { useNotifications, type Notification } from '../../hooks/useNotifications';
+import { safeNavigateToSettings } from '../../../../navigation/navigationRef';
 
 function formatTime(createdAt: string): string {
   try {
@@ -78,7 +79,7 @@ export function NotificationsScreen() {
     if (tab === 'Home') navigation.navigate('Home');
     if (tab === 'Chat') navigation.navigate('Chat');
     if (tab === 'Profile') navigation.navigate('Profile');
-    if (tab === 'Settings') navigation.navigate('Settings');
+    if (tab === 'Settings') safeNavigateToSettings(navigation);
   }, [navigation]);
 
   const handleNotificationPress = useCallback(

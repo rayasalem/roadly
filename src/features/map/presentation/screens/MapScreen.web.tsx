@@ -1,7 +1,7 @@
 /**
  * Web map screen: search, filters, OSM map, sheet with providers. No component > 200 lines.
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, TouchableOpacity, Platform, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -31,6 +31,7 @@ import { useSortedNearbyProviders } from '../../hooks/useSortedNearbyProviders';
 import { usePlacesSearch } from '../../hooks/usePlacesSearch';
 import { providerRoleToServiceType } from '../../utils/providerToServiceType';
 import type { CustomerStackParamList } from '../../../../navigation/CustomerStack';
+import { safeNavigateToSettings } from '../../../../navigation/navigationRef';
 import { mapScreenWebStyles as styles } from './mapScreenWeb.styles';
 
 const DEFAULT_CENTER = { latitude: 25.2048, longitude: 55.2708 };
@@ -70,9 +71,17 @@ export function MapScreen() {
     if (selectedPlace) setMapCenter({ latitude: selectedPlace.latitude, longitude: selectedPlace.longitude });
   }, [selectedPlace]);
 
-  const showEmptyProviders = !isLoading && sortedProviders.length === 0;
+  const visibleProviders = useMemo(
+    () =>
+      sortedProviders.filter(
+        (p) => p.displayStatus !== 'offline' && (p as { status?: string }).status !== 'offline'
+      ),
+    [sortedProviders]
+  );
+  const nearestVisible = visibleProviders[0] ?? null;
+  const showEmptyProviders = !isLoading && visibleProviders.length === 0;
   const selectedProviderDistanceKm = selectedProvider ? getDistanceKm(selectedProvider) ?? null : null;
-  const nearestDistanceKm = nearest ? getDistanceKm(nearest) ?? null : null;
+  const nearestDistanceKm = nearestVisible ? getDistanceKm(nearestVisible) ?? null : nearest ? getDistanceKm(nearest) ?? null : null;
 
   const handleSelectProvider = useCallback((provider: Provider | null | undefined) => {
     if (!provider) return;
@@ -136,7 +145,7 @@ export function MapScreen() {
       else if (tab === 'Profile') navigation.navigate('Profile');
       else if (tab === 'Chat') navigation.navigate('Chat');
       else if (tab === 'Notifications') navigation.navigate('Notifications');
-      else if (tab === 'Settings') navigation.navigate('Settings');
+      else if (tab === 'Settings') safeNavigateToSettings(navigation);
     },
     [navigation]
   );
@@ -174,7 +183,7 @@ export function MapScreen() {
         </View>
 
         <View style={styles.mapCard}>
-          {isProvidersError && sortedProviders.length > 0 && (
+          {isProvidersError && visibleProviders.length > 0 && (
             <View style={styles.fallbackBanner}>
               <AppText variant="caption" style={styles.fallbackBannerText}>{t('map.showingCachedData')}</AppText>
             </View>
@@ -223,8 +232,8 @@ export function MapScreen() {
             isRefetching={isRefetching}
             onRetry={() => refetchProviders()}
             showEmpty={showEmptyProviders}
-            nearest={nearest}
-            providers={sortedProviders}
+            nearest={nearestVisible}
+            providers={visibleProviders}
             onSelectProvider={handleSelectProvider}
             onRequestService={handleRequestService}
             isCustomer={isCustomer}
@@ -239,6 +248,7 @@ export function MapScreen() {
         provider={selectedProvider}
         onRequestService={handleRequestService}
         onOpenMap={handleOpenMapFromSheet}
+        onViewProfile={() => { try { bottomSheetRef.current?.dismiss(); } catch (_) {} setSelectedProvider(null); navigation.navigate('Profile'); }}
         onClose={() => setSelectedProvider(null)}
         requestServiceDisabled={!isCustomer}
         distanceKm={selectedProviderDistanceKm ?? undefined}

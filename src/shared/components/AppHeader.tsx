@@ -1,13 +1,17 @@
 /**
- * Ride-style header: back (optional), centered title, profile badge right.
+ * Ride-style header: back (optional), centered title or logo (icon + app name), profile badge right.
+ * Use centerLogo to show icon + app name instead of a bare image, so the logo never appears empty.
  */
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, type ViewStyle } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme, spacing, typography } from '../theme';
+import { t } from '../i18n/t';
 
 type AppHeaderProps = {
   title: string;
+  /** When true, center shows icon + app name (no image), so logo is never empty. */
+  centerLogo?: boolean;
   onBack?: () => void;
   onProfile?: () => void;
   /** Called when right icon is pressed (e.g. calendar). If not set, calendar icon has no action. */
@@ -18,6 +22,7 @@ type AppHeaderProps = {
 
 export function AppHeader({
   title,
+  centerLogo = false,
   onBack,
   onProfile,
   onRightPress,
@@ -25,6 +30,18 @@ export function AppHeader({
   style,
 }: AppHeaderProps) {
   const { colors } = useTheme();
+  const centerContent = centerLogo ? (
+    <View style={styles.logoRow}>
+      <MaterialCommunityIcons name="car-side" size={24} color={colors.primary} style={styles.logoIcon} />
+      <Text style={[styles.title, styles.logoTitle, { color: colors.text }]} numberOfLines={1}>
+        {t('app.name')}
+      </Text>
+    </View>
+  ) : (
+    <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+      {title ?? ''}
+    </Text>
+  );
   return (
     <View style={[styles.root, style]}>
       <View style={styles.side}>
@@ -36,9 +53,7 @@ export function AppHeader({
           <View style={styles.placeholder} />
         )}
       </View>
-      <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
-        {title ?? ''}
-      </Text>
+      {centerContent}
       <View style={styles.side}>
         {rightIcon === 'profile' ? (
           <TouchableOpacity
@@ -104,5 +119,18 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.bold,
     fontSize: typography.fontSize.title3,
     textAlign: 'center',
+  },
+  logoRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+  },
+  logoIcon: {
+    marginRight: spacing.xs,
+  },
+  logoTitle: {
+    flex: 0,
   },
 });

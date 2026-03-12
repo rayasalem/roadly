@@ -34,6 +34,7 @@ import { t } from '../../../../shared/i18n/t';
 import { useProviderProfile } from '../../hooks/useProviderProfile';
 import { ROLES } from '../../../../shared/constants/roles';
 import type { CustomerStackParamList } from '../../../../navigation/CustomerStack';
+import { safeNavigateToSettings } from '../../../../navigation/navigationRef';
 import { updateProviderAvailability } from '../../data/providerProfileApi';
 import { useMutation } from '@tanstack/react-query';
 
@@ -128,13 +129,13 @@ export function ProfileScreen() {
     if (tab === 'Profile') return;
     if (tab === 'Chat') navigation.navigate('Chat');
     if (tab === 'Notifications') navigation.navigate('Notifications');
-    if (tab === 'Settings') navigation.navigate('Settings');
+    if (tab === 'Settings') safeNavigateToSettings(navigation);
   };
 
   if (!user) {
     return (
       <ScreenWrapper>
-        <AppHeader title={t('profile.title')} onBack={() => navigation.goBack()} onProfile={() => navigation.navigate('Settings')} />
+        <AppHeader title={t('profile.title')} onBack={() => navigation.goBack()} onProfile={() => safeNavigateToSettings(navigation)} />
         <View style={styles.container} />
       </ScreenWrapper>
     );
@@ -143,7 +144,7 @@ export function ProfileScreen() {
   if (isProvider && hookIsProvider && profileLoading) {
     return (
       <ScreenWrapper>
-        <AppHeader title={t('profile.title')} onBack={() => navigation.goBack()} onProfile={() => navigation.navigate('Settings')} />
+        <AppHeader title={t('profile.title')} onBack={() => navigation.goBack()} onProfile={() => safeNavigateToSettings(navigation)} />
         <LoadingSpinner />
       </ScreenWrapper>
     );
@@ -152,7 +153,7 @@ export function ProfileScreen() {
   if (isProvider && hookIsProvider && profileError) {
     return (
       <ScreenWrapper>
-        <AppHeader title={t('profile.title')} onBack={() => navigation.goBack()} onProfile={() => navigation.navigate('Settings')} />
+        <AppHeader title={t('profile.title')} onBack={() => navigation.goBack()} onProfile={() => safeNavigateToSettings(navigation)} />
         <ErrorWithRetry
           message={profileErrorDetail?.message ?? ''}
           onRetry={() => void refetchProfile()}
@@ -168,7 +169,7 @@ export function ProfileScreen() {
   if (isProvider && hookIsProvider && displayProfile) {
     return (
       <ScreenWrapper>
-        <AppHeader title={t('profile.title')} onBack={() => navigation.goBack()} onProfile={() => navigation.navigate('Settings')} />
+        <AppHeader title={t('profile.title')} onBack={() => navigation.goBack()} onProfile={() => safeNavigateToSettings(navigation)} />
         <ScreenFadeIn style={styles.fadeWrap}>
         <ScrollView
           style={styles.scroll}
@@ -284,7 +285,7 @@ export function ProfileScreen() {
 
   return (
     <ScreenWrapper>
-      <AppHeader title={t('profile.title')} onBack={() => navigation.goBack()} onProfile={() => navigation.navigate('Settings')} />
+      <AppHeader title={t('profile.title')} onBack={() => navigation.goBack()} onProfile={() => safeNavigateToSettings(navigation)} />
       <View style={styles.container}>
         {user && (
           <View style={styles.card}>

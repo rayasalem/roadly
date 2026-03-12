@@ -10,7 +10,7 @@ const optional = (key: string, def: string): string => process.env[key] ?? def;
 
 export const env = {
   NODE_ENV: optional('NODE_ENV', 'development'),
-  PORT: parseInt(optional('PORT', '4000'), 10),
+  PORT: parseInt(optional('PORT', '8082'), 10),
   /** In production set CLIENT_URL. In development defaults to allow common localhost ports. */
   CLIENT_URL: optional('CLIENT_URL', 'http://localhost:8081'),
   JWT_SECRET: required('JWT_SECRET'),

@@ -18,6 +18,7 @@ import { t } from '../../../../shared/i18n/t';
 import { useRequestHistory } from '../../hooks/useRequestHistory';
 import type { ServiceRequest } from '../../domain/types';
 import type { CustomerStackParamList } from '../../../../navigation/CustomerStack';
+import { safeNavigateToSettings } from '../../../../navigation/navigationRef';
 
 type Nav = NativeStackNavigationProp<CustomerStackParamList, 'RequestHistory'>;
 
@@ -72,7 +73,7 @@ export function RequestHistoryScreen() {
     else if (tab === 'Profile') navigation.navigate('Profile');
     else if (tab === 'Chat') navigation.navigate('Chat');
     else if (tab === 'Notifications') navigation.navigate('Notifications');
-    else if (tab === 'Settings') navigation.navigate('Settings');
+    else if (tab === 'Settings') safeNavigateToSettings(navigation);
   }, [navigation]);
 
   const openRequest = useCallback((requestId: string) => {

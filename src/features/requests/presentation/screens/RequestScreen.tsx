@@ -8,6 +8,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMutation } from '@tanstack/react-query';
 
 import type { CustomerStackParamList } from '../../../../navigation/CustomerStack';
+import { safeNavigateToSettings } from '../../../../navigation/navigationRef';
 import { ScreenWrapper } from '../../../../shared/components/ScreenWrapper';
 import { ScreenFadeIn } from '../../../../shared/components/ScreenFadeIn';
 import { AppText } from '../../../../shared/components/AppText';
@@ -126,7 +127,7 @@ export function RequestScreen({ route, navigation }: Props) {
       else if (tab === 'Profile') navigation.navigate('Profile');
       else if (tab === 'Chat') navigation.navigate('Chat');
       else if (tab === 'Notifications') navigation.navigate('Notifications');
-      else if (tab === 'Settings') navigation.navigate('Settings');
+      else if (tab === 'Settings') safeNavigateToSettings(navigation);
     },
     [navigation]
   );

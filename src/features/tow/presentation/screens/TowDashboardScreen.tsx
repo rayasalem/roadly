@@ -134,6 +134,10 @@ export function TowDashboardScreen() {
               <MaterialCommunityIcons name="certificate-outline" size={24} color={THEME.primary} />
               <Text style={styles.actionCardTitle}>{t('tow.mySkills')}</Text>
             </TouchableOpacity>
+            <TouchableOpacity style={[styles.actionCard, { backgroundColor: THEME.primaryLight }]} onPress={() => navigation.navigate('TowJobHistory')} activeOpacity={0.85}>
+              <MaterialCommunityIcons name="clipboard-check-outline" size={24} color={THEME.primary} />
+              <Text style={styles.actionCardTitle}>{t('tow.jobHistory')}</Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.filterRow}>

@@ -1,6 +1,6 @@
 /**
- * Reusable provider map marker (native): uses latitude/longitude, colored by status,
- * callout with photo, name, rating, and Request Service action.
+ * Reusable provider map marker (native): service-type icon (🔧/🚛/🚗), colored by status,
+ * callout with photo, name, service type, rating, phone, distance, and Request Service.
  */
 import React, { memo } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
@@ -9,7 +9,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { Provider } from '../../../providers/domain/types';
 import { colors } from '../../../../shared/theme/colors';
 import { spacing, typography, radii, shadows } from '../../../../shared/theme';
-import { getMarkerColorByStatus } from '../../utils/mapMarkerUtils';
+import { getMarkerColorByStatus, getServiceTypeEmoji } from '../../utils/mapMarkerUtils';
+import { t } from '../../../../shared/i18n/t';
 
 export interface ProviderMarkerProps {
   provider: Provider;
@@ -24,9 +25,11 @@ function getCoord(provider: Provider): { latitude: number; longitude: number } |
   return { latitude: (loc as { latitude: number }).latitude, longitude: (loc as { longitude: number }).longitude };
 }
 
-const PinView = memo(function PinView({ color }: { color: string }) {
+const PinView = memo(function PinView({ color, emoji }: { color: string; emoji: string }) {
   return (
-    <View style={[styles.pin, { backgroundColor: color }]} />
+    <View style={[styles.pin, { backgroundColor: color }]}>
+      <Text style={styles.pinEmoji}>{emoji}</Text>
+    </View>
   );
 });
 
@@ -36,13 +39,17 @@ export const ProviderMarker = memo(function ProviderMarker({
   onPress,
   onRequestService,
 }: ProviderMarkerProps) {
+  const [imageFailed, setImageFailed] = React.useState(false);
   const coord = getCoord(provider);
   if (!coord) return null;
 
   const color = getMarkerColorByStatus(provider, selected);
   const photoUri = provider.photo ?? provider.avatarUri ?? null;
+  const showImage = photoUri && !imageFailed;
   const rating = provider.rating ?? 0;
   const services = Array.isArray(provider.services) ? provider.services.slice(0, 3) : [];
+  const serviceEmoji = getServiceTypeEmoji(provider);
+  const phone = provider.phone ?? provider.contact ?? '—';
 
   return (
     <Marker
@@ -51,12 +58,12 @@ export const ProviderMarker = memo(function ProviderMarker({
       tracksViewChanges={false}
       anchor={{ x: 0.5, y: 0.5 }}
     >
-      <PinView color={color} />
+      <PinView color={color} emoji={serviceEmoji} />
       <Callout tooltip onPress={() => onPress(provider)}>
         <View style={styles.callout}>
           <View style={styles.calloutRow}>
-            {photoUri ? (
-              <Image source={{ uri: photoUri }} style={styles.avatar} />
+            {showImage ? (
+              <Image source={{ uri: photoUri! }} style={styles.avatar} onError={() => setImageFailed(true)} />
             ) : (
               <View style={styles.avatarPlaceholder}>
                 <MaterialCommunityIcons name="account" size={24} color={colors.textMuted} />
@@ -64,7 +71,9 @@ export const ProviderMarker = memo(function ProviderMarker({
             )}
             <View style={styles.calloutInfo}>
               <Text style={styles.name} numberOfLines={1}>{provider.name}</Text>
+              <Text style={styles.serviceType}>{serviceEmoji} {provider.serviceType ?? (provider.role === 'mechanic_tow' ? 'tow' : provider.role === 'car_rental' ? 'rental' : 'mechanic')}</Text>
               <Text style={styles.rating}>{rating > 0 ? `${rating.toFixed(1)} ★` : '—'}</Text>
+              <Text style={styles.phone} numberOfLines={1}>{phone}</Text>
               {services.length > 0 && (
                 <Text style={styles.services} numberOfLines={2}>{services.join(', ')}</Text>
               )}
@@ -76,7 +85,7 @@ export const ProviderMarker = memo(function ProviderMarker({
               onPress={() => onRequestService(provider)}
               activeOpacity={0.8}
             >
-              <Text style={styles.requestBtnText}>طلب خدمة</Text>
+              <Text style={styles.requestBtnText}>{t('map.requestService')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -87,12 +96,29 @@ export const ProviderMarker = memo(function ProviderMarker({
 
 const styles = StyleSheet.create({
   pin: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     borderWidth: 3,
     borderColor: colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
     ...shadows.sm,
+  },
+  pinEmoji: {
+    fontSize: 14,
+  },
+  serviceType: {
+    fontFamily: typography.fontFamily.medium,
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  phone: {
+    fontFamily: typography.fontFamily.regular,
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   callout: {
     minWidth: 200,

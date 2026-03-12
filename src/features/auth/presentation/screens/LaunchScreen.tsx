@@ -1,8 +1,8 @@
 /**
- * Launch — dark hero, headline, two CTAs. Design system spacing, radii, typography.
- * Buttons use scale press feedback (lightweight RN Animated).
+ * Launch — green hero, animated logo, headline, tagline, two CTAs.
+ * Green gradient feel (primary dark), marketing copy from i18n.
  */
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -18,6 +18,15 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Launch'>;
 export function LaunchScreen({ navigation }: Props) {
   const scale1 = useRef(new Animated.Value(1)).current;
   const scale2 = useRef(new Animated.Value(1)).current;
+  const logoScale = useRef(new Animated.Value(0.8)).current;
+  const logoOpacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(logoOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+      Animated.spring(logoScale, { toValue: 1, useNativeDriver: true, speed: 24, bounciness: 8 }),
+    ]).start();
+  }, [logoOpacity, logoScale]);
 
   const onPressIn = (s: Animated.Value) => {
     Animated.spring(s, { toValue: PRESS_SCALE, ...springPress }).start();
@@ -30,17 +39,18 @@ export function LaunchScreen({ navigation }: Props) {
     <View style={styles.container}>
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <View style={styles.topSection}>
-          <View style={styles.carAccent}>
+          <Animated.View style={[styles.carAccent, { opacity: logoOpacity, transform: [{ scale: logoScale }] }]}>
             <MaterialCommunityIcons
               name="car-side"
               size={120}
               color={colors.primaryContrast}
               style={styles.carIcon}
             />
-          </View>
+          </Animated.View>
           <Text style={styles.headline} accessibilityRole="header">
             {t('auth.welcomeHeadline')}
           </Text>
+          <Text style={styles.tagline}>{t('splash.tagline1')}</Text>
         </View>
 
         <View style={styles.bottomSection}>
@@ -60,7 +70,7 @@ export function LaunchScreen({ navigation }: Props) {
           <Animated.View style={{ transform: [{ scale: scale2 }] }}>
             <TouchableOpacity
               style={styles.secondaryBtn}
-              onPress={() => navigation.navigate('Register')}
+              onPress={() => navigation.navigate('Onboarding')}
               onPressIn={() => onPressIn(scale2)}
               onPressOut={() => onPressOut(scale2)}
               activeOpacity={1}
@@ -107,15 +117,22 @@ const styles = StyleSheet.create({
     color: colors.primaryContrast,
     maxWidth: 280,
   },
+  tagline: {
+    fontFamily: typography.fontFamily.regular,
+    fontSize: typography.presets.body.fontSize,
+    color: 'rgba(255,255,255,0.9)',
+    maxWidth: 300,
+    marginTop: spacing.md,
+  },
   bottomSection: {
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.xxl,
     gap: spacing.md,
   },
   primaryBtn: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderWidth: 2,
-    borderColor: colors.primaryContrast,
+    backgroundColor: colors.primaryContrast,
+    borderWidth: 0,
+    borderColor: 'transparent',
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.xl,
     borderRadius: radii.lg,
@@ -126,7 +143,7 @@ const styles = StyleSheet.create({
   primaryBtnText: {
     fontFamily: typography.fontFamily.semibold,
     fontSize: typography.presets.body.fontSize,
-    color: colors.primaryContrast,
+    color: colors.primaryDark,
   },
   secondaryBtn: {
     paddingVertical: spacing.lg,
@@ -134,6 +151,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 52,
+    borderWidth: 2,
+    borderColor: colors.primaryContrast,
+    borderRadius: radii.lg,
   },
   secondaryBtnText: {
     fontFamily: typography.fontFamily.regular,

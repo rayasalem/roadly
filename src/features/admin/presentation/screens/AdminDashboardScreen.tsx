@@ -177,6 +177,32 @@ export function AdminDashboardScreen() {
             <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
           </TouchableOpacity>
 
+          <TouchableOpacity
+            style={styles.manageUsersCard}
+            onPress={() => navigation.navigate('AdminReports')}
+            activeOpacity={0.85}
+          >
+            <MaterialCommunityIcons name="chart-box-outline" size={28} color={THEME.primary} />
+            <View style={styles.manageUsersTextWrap}>
+              <Text style={styles.manageUsersTitle}>{t('admin.reports')}</Text>
+              <Text style={styles.manageUsersSubtitle}>{t('admin.reportsEmpty')}</Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.manageUsersCard}
+            onPress={() => navigation.navigate('AdminSystemSettings')}
+            activeOpacity={0.85}
+          >
+            <MaterialCommunityIcons name="cog-outline" size={28} color={THEME.primary} />
+            <View style={styles.manageUsersTextWrap}>
+              <Text style={styles.manageUsersTitle}>{t('admin.systemSettings')}</Text>
+              <Text style={styles.manageUsersSubtitle}>{t('admin.systemSettingsHint')}</Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+          </TouchableOpacity>
+
           {/* Tabs */}
           <View style={styles.tabBar}>
             {tabs.map((tab) => (

@@ -12,12 +12,19 @@ export function getMarkerColorByRole(provider: Provider): string {
   return colors.mapMechanic;
 }
 
-/** Marker color by status: available (role color), busy (orange), offline (gray). */
+/** Marker color by status: available (role color), busy (orange), offline (gray, caller should hide). */
 export function getMarkerColorByStatus(provider: Provider, selected?: boolean): string {
   if (selected) return colors.primary;
-  if (!provider.isAvailable) return colors.textMuted;
+  if (provider.displayStatus === 'offline' || !provider.isAvailable) return colors.textMuted;
   if (provider.displayStatus === 'busy') return colors.warning;
   return getMarkerColorByRole(provider);
+}
+
+/** Service type icon for map markers: Mechanic 🔧, Tow 🚛, Car Rental 🚗. */
+export function getServiceTypeEmoji(provider: Provider): string {
+  if (provider.role === 'mechanic_tow') return '🚛';
+  if (provider.role === 'car_rental') return '🚗';
+  return '🔧';
 }
 
 /** Escape for safe HTML in popup. */
@@ -25,7 +32,7 @@ function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-/** Build Leaflet popup HTML: photo, name, rating, services, Request Service button. */
+/** Build Leaflet popup HTML: photo, name, service type icon, rating, phone, services, Request Service button. */
 export function buildProviderPopupHtml(provider: Provider, requestButtonLabel: string = 'Request service'): string {
   const name = esc(provider.name || '');
   const phone = esc(String(provider.phone || provider.contact || ''));
@@ -33,6 +40,7 @@ export function buildProviderPopupHtml(provider: Provider, requestButtonLabel: s
   const ratingText = `${rating.toFixed(1)} ★`;
   const services = Array.isArray(provider.services) ? provider.services.slice(0, 5) : [];
   const servicesText = services.length ? services.map((s) => esc(String(s))).join(', ') : '—';
+  const serviceEmoji = getServiceTypeEmoji(provider);
   const photoUri = provider.photo ?? provider.avatarUri ?? null;
   const imgHtml = photoUri
     ? `<img src="${esc(String(photoUri))}" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:8px;margin-right:8px;" />`
@@ -44,6 +52,7 @@ export function buildProviderPopupHtml(provider: Provider, requestButtonLabel: s
         ${imgHtml}
         <div style="flex:1;min-width:0;">
           <strong style="display:block;font-size:14px;margin-bottom:2px;">${name}</strong>
+          <div style="font-size:12px;color:#6b7280;">${serviceEmoji} ${provider.role === 'mechanic_tow' ? 'Tow' : provider.role === 'car_rental' ? 'Rental' : 'Mechanic'}</div>
           ${phone ? `<div style="font-size:12px;color:#6b7280;">${phone}</div>` : ''}
           <div style="font-size:12px;color:#f59e0b;margin-top:2px;">${ratingText}</div>
           <div style="font-size:11px;color:#6b7280;margin-top:4px;">${servicesText}</div>

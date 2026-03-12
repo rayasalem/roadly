@@ -34,6 +34,12 @@ function statusLabel(s: VehicleStatus): string {
   return t('rental.maintenance');
 }
 
+function statusVariant(s: VehicleStatus): 'available' | 'rented' | 'maintenance' {
+  if (s === 'available') return 'available';
+  if (s === 'rented') return 'rented';
+  return 'maintenance';
+}
+
 const RentalVehicleCard = memo(function RentalVehicleCard({
   vehicle,
   onPress,
@@ -111,6 +117,18 @@ export function RentalDashboardScreen() {
             <TouchableOpacity style={[styles.actionCard, { backgroundColor: THEME.primaryLight }]} onPress={() => navigation.navigate('RentalSkills')} activeOpacity={0.85}>
               <MaterialCommunityIcons name="certificate-outline" size={24} color={THEME.primary} />
               <Text style={styles.actionCardTitle}>{t('rental.mySkills')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.actionCard, { backgroundColor: THEME.primaryLight }]} onPress={() => navigation.navigate('RentalCarList')} activeOpacity={0.85}>
+              <MaterialCommunityIcons name="car-multiple" size={24} color={THEME.primary} />
+              <Text style={styles.actionCardTitle}>{t('rental.carList')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.actionCard, { backgroundColor: THEME.primaryLight }]} onPress={() => navigation.navigate('RentalBookings')} activeOpacity={0.85}>
+              <MaterialCommunityIcons name="calendar-clock" size={24} color={THEME.primary} />
+              <Text style={styles.actionCardTitle}>{t('rental.bookings')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.actionCard, { backgroundColor: THEME.primaryLight }]} onPress={() => navigation.navigate('RentalHistory')} activeOpacity={0.85}>
+              <MaterialCommunityIcons name="history" size={24} color={THEME.primary} />
+              <Text style={styles.actionCardTitle}>{t('rental.history')}</Text>
             </TouchableOpacity>
           </View>
 

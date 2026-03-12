@@ -31,10 +31,13 @@ export function LocationInfoCard({
   status,
   onDirectionsPress,
 }: LocationInfoCardProps) {
+  const [imageFailed, setImageFailed] = React.useState(false);
+  const showImage = imageUri && !imageFailed;
+
   return (
     <View style={styles.card}>
-      {imageUri ? (
-        <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
+      {showImage ? (
+        <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" onError={() => setImageFailed(true)} />
       ) : (
         <View style={styles.imagePlaceholder}>
           <MaterialCommunityIcons name="image-outline" size={48} color={colors.textMuted} />

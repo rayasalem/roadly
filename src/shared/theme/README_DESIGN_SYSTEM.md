@@ -42,6 +42,8 @@ Legacy keys (`fontSize.title1`, `title2`, `title3`, `callout`) remain for backwa
 - **Surfaces:** `background`, `surface`, `border`, `borderFocus`.
 - **Text:** `text`, `textSecondary`, `textMuted`.
 
+**Green theme (brand):** Do not change primary green. Use `greenPrimary` (#22C55E), `greenDark` (#16A34A), `greenLight` (#D1FAE5), `backgroundSoft` (#F3F4F6), `cardWhite` for a consistent green design system. Full UX/UI spec: `docs/UX_UI_DESIGN_SPEC.md`.
+
 ---
 
 ## Button

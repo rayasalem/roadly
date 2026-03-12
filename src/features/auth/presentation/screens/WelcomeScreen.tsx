@@ -1,5 +1,5 @@
 /**
- * Welcome — route to Login or Register. Card uses design system radii and shadows.
+ * Welcome — marketing copy, Sign Up / Login CTAs. Green theme, card layout.
  */
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -21,22 +21,24 @@ export function WelcomeScreen({ navigation }: Props) {
           <Text style={styles.brand} accessibilityRole="header">
             {t('app.name')}
           </Text>
-          <Text style={styles.subtitle}>{t('auth.welcome.subtitle')}</Text>
+          <Text style={styles.headline}>{t('welcome.headline')}</Text>
+          <Text style={styles.subtitle}>{t('welcome.subtitle')}</Text>
 
           <View style={styles.actions}>
             <Button
-              title={t('auth.login.title')}
+              title={t('welcome.signUp')}
+              onPress={() => navigation.navigate('Register')}
+              fullWidth
+              size="lg"
+              style={styles.btnPrimary}
+            />
+            <Button
+              title={t('welcome.login')}
+              variant="outline"
               onPress={() => navigation.navigate('Login')}
               fullWidth
               size="lg"
               style={styles.btn}
-            />
-            <Button
-              title={t('auth.register.title')}
-              variant="outline"
-              onPress={() => navigation.navigate('Register')}
-              fullWidth
-              size="lg"
             />
           </View>
         </View>
@@ -66,6 +68,14 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.bold,
     fontSize: typography.presets.display.fontSize,
     lineHeight: typography.presets.display.lineHeight,
+    color: colors.primary,
+    textAlign: 'center',
+    marginBottom: spacing.sm,
+  },
+  headline: {
+    fontFamily: typography.fontFamily.semibold,
+    fontSize: typography.presets.title.fontSize,
+    lineHeight: typography.presets.title.lineHeight,
     color: colors.text,
     textAlign: 'center',
     marginBottom: spacing.sm,
@@ -80,6 +90,9 @@ const styles = StyleSheet.create({
   },
   actions: {
     gap: spacing.md,
+  },
+  btnPrimary: {
+    marginBottom: 0,
   },
   btn: {
     marginBottom: 0,
