@@ -2,7 +2,7 @@
  * Mechanic dashboard: glassmorphism stats, filter, accept/decline, FAB map, bottom sheet.
  */
 import React, { useCallback, useEffect, useRef, useState, memo } from 'react';
-import { StyleSheet, View, FlatList, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, FlatList, TouchableOpacity, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -113,6 +113,25 @@ export function MechanicDashboardScreen() {
     isCompleting,
   } = useMechanicDashboard();
   const actionLoading = isAccepting || isDeclining || isCompleting;
+
+  const user = useAuthStore((s) => s.user ?? null);
+  const role = user?.role ?? null;
+  const displayName = user?.name ?? 'Mechanic';
+  const { profile, refetch: refetchProfile } = useProviderProfile(role, displayName);
+  const queryClient = useQueryClient();
+
+  const availabilityMutation = useMutation({
+    mutationFn: (nextAvailable: boolean) => updateProviderAvailability(nextAvailable),
+    onSuccess: (data) => {
+      void refetchProfile();
+      void queryClient.invalidateQueries({ queryKey: ['provider', 'me'] });
+    },
+    onError: (error: unknown) => {
+      toast({ type: 'error', message: error instanceof Error ? error.message : t('common.error') });
+    },
+  });
+
+  const isAvailable = profile?.isAvailable ?? true;
 
   const openMap = useCallback(() => {
     navigation.navigate('Map');
