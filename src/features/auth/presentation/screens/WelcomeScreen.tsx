@@ -50,8 +50,8 @@ export function WelcomeScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.xxl,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.lg,
     justifyContent: 'center',
   },
   hero: {
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
     borderRadius: radii.xxl,
-    padding: spacing.xl,
+    padding: spacing.md,
     ...shadows.md,
   },
   brand: {
@@ -74,11 +74,11 @@ const styles = StyleSheet.create({
   },
   headline: {
     fontFamily: typography.fontFamily.semibold,
-    fontSize: typography.presets.title.fontSize,
-    lineHeight: typography.presets.title.lineHeight,
+    fontSize: 24,
+    lineHeight: 30,
     color: colors.text,
     textAlign: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   subtitle: {
     fontFamily: typography.fontFamily.regular,
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     lineHeight: typography.presets.body.lineHeight,
     color: colors.textSecondary,
     textAlign: 'center',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
   },
   actions: {
     gap: spacing.md,

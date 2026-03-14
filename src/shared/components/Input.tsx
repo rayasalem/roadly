@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radii.md,
+    borderRadius: 16,
     minHeight: 48,
     ...(Platform.OS === 'web' && {
       outlineStyle: 'none',
@@ -133,13 +133,19 @@ const styles = StyleSheet.create({
   inputWrapFocused: {
     borderWidth: FOCUS_RING_WIDTH,
     borderColor: colors.borderFocus,
-    ...(Platform.OS === 'ios' && {
-      shadowColor: colors.primary,
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.15,
-      shadowRadius: 4,
-      elevation: 2,
-    }),
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: colors.primary,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.15,
+          shadowRadius: 4,
+          elevation: 2,
+        }
+      : Platform.OS === 'web'
+      ? {
+          boxShadow: '0px 0px 6px rgba(34,197,94,0.4)',
+        }
+      : {}),
   },
   inputWrapError: {
     borderWidth: ERROR_RING_WIDTH,

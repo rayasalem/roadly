@@ -5,8 +5,9 @@
 import React, { useRef } from 'react';
 import { Animated, Pressable, View, StyleSheet, type ViewStyle } from 'react-native';
 import { colors } from '../theme/colors';
-import { radii, shadows } from '../theme';
+import { radii, shadows, spacing } from '../theme';
 import { springListItem, LIST_ITEM_PRESS_SCALE } from '../utils/animations';
+import { HIT_SLOP_DEFAULT } from '../constants/ux';
 
 export interface PressableCardProps {
   children: React.ReactNode;
@@ -33,7 +34,14 @@ export const PressableCard = React.memo(function PressableCard({
   };
 
   return (
-    <Pressable testID={testID} onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut} disabled={disabled}>
+    <Pressable
+      testID={testID}
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      disabled={disabled}
+      hitSlop={HIT_SLOP_DEFAULT}
+    >
       <Animated.View style={[styles.card, { transform: [{ scale }] }, style]}>{children}</Animated.View>
     </Pressable>
   );
@@ -42,8 +50,10 @@ export const PressableCard = React.memo(function PressableCard({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: 12,
-    ...shadows.sm,
+    borderRadius: 18,
+    padding: 16,
+    marginVertical: 10,
+    overflow: 'hidden',
+    ...shadows.md,
   },
 });

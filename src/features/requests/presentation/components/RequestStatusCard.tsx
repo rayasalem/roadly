@@ -2,12 +2,13 @@
  * Displays current request: empty state, loading, error, or request details with status/rating.
  */
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppText } from '../../../../shared/components/AppText';
 import { Button } from '../../../../shared/components/Button';
 import { ErrorWithRetry } from '../../../../shared/components/ErrorWithRetry';
 import { useTheme, spacing, typography, radii, shadows } from '../../../../shared/theme';
+import { colors } from '../../../../shared/theme/colors';
 import { t } from '../../../../shared/i18n/t';
 import type { ServiceRequest } from '../../domain/types';
 
@@ -24,6 +25,8 @@ interface RequestStatusCardProps {
   onRatingChange: (stars: number) => void;
   onSubmitRating: () => void;
   isSubmittingRating: boolean;
+  /** Optional: when provided, shows a tracking button that opens a live-tracking screen. */
+  onViewTracking?: (requestId: string) => void;
 }
 
 export function RequestStatusCard({
@@ -39,6 +42,7 @@ export function RequestStatusCard({
   onRatingChange,
   onSubmitRating,
   isSubmittingRating,
+  onViewTracking,
 }: RequestStatusCardProps) {
   const { colors } = useTheme();
 
@@ -79,6 +83,7 @@ export function RequestStatusCard({
           {t('request.currentTitle')}
         </AppText>
         <View style={styles.loadingState}>
+          <ActivityIndicator size="small" color={colors.primary} style={styles.loadingSpinner} />
           <AppText variant="body" style={{ color: colors.textSecondary }}>
             {t('request.loading')}
           </AppText>
@@ -147,6 +152,16 @@ export function RequestStatusCard({
           />
         </View>
       )}
+      {onViewTracking && (request.status === 'accepted' || request.status === 'on_the_way') && (
+        <View style={styles.trackActions}>
+          <Button
+            title={t('request.viewTracking') ?? t('map.openMap')}
+            onPress={() => onViewTracking(request.id)}
+            size="sm"
+            variant="outline"
+          />
+        </View>
+      )}
       <View style={styles.statusRow}>
         <Button
           testID="request-status-accepted"
@@ -184,13 +199,14 @@ export function RequestStatusCard({
 
 const styles = StyleSheet.create({
   card: {
-    padding: spacing.lg,
-    borderRadius: radii.lg,
+    padding: spacing.md,
+    borderRadius: radii.xl,
     ...shadows.sm,
   },
   cardTitle: {
     fontFamily: typography.fontFamily.semibold,
-    fontSize: typography.presets.body.fontSize,
+    fontSize: 18,
+    lineHeight: 24,
     marginBottom: spacing.md,
   },
   trackHint: {
@@ -200,10 +216,11 @@ const styles = StyleSheet.create({
   },
   etaText: {
     fontFamily: typography.fontFamily.semibold,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
   },
   emptyState: { paddingVertical: spacing.sm },
-  loadingState: { paddingVertical: spacing.sm },
+  loadingState: { paddingVertical: spacing.sm, alignItems: 'center' as const },
+  loadingSpinner: { marginBottom: spacing.sm },
   ratingSection: {
     marginTop: spacing.md,
     paddingTop: spacing.md,
@@ -223,5 +240,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
+  },
+  trackActions: {
+    marginTop: spacing.sm,
   },
 });

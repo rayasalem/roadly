@@ -1,7 +1,8 @@
 /**
  * Customer request history: list of user's service requests with status and provider info.
+ * FlatList with memoized row for list performance.
  */
-import React, { useCallback } from 'react';
+import React, { useCallback, memo } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -38,17 +39,17 @@ function serviceTypeLabel(st: string): string {
   return st;
 }
 
-function RequestCard({
+const RequestCard = memo(function RequestCard({
   item,
   onPress,
 }: {
   item: ServiceRequest;
-  onPress: () => void;
+  onPress: (requestId: string) => void;
 }) {
   const dateStr = item.createdAt ? new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
+    <TouchableOpacity style={styles.card} onPress={() => onPress(item.id)} activeOpacity={0.85}>
       <View style={styles.cardRow}>
         <View style={[styles.iconWrap, { backgroundColor: colors.primaryLight }]}>
           <MaterialCommunityIcons name="wrench" size={22} color={colors.primary} />
@@ -62,7 +63,7 @@ function RequestCard({
       </View>
     </TouchableOpacity>
   );
-}
+});
 
 export function RequestHistoryScreen() {
   const navigation = useNavigation<Nav>();
@@ -81,7 +82,7 @@ export function RequestHistoryScreen() {
   }, [navigation]);
 
   const header = (
-    <AppHeader title={t('request.historyTitle') ?? 'My requests'} onBack={() => navigation.goBack()} />
+    <AppHeader title={t('request.historyTitle') ?? 'My requests'} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} />
   );
   const emptyState = (
     <View style={styles.empty}>
@@ -91,17 +92,27 @@ export function RequestHistoryScreen() {
       </AppText>
     </View>
   );
+  const renderItem = useCallback(
+    ({ item }: { item: ServiceRequest }) => <RequestCard item={item} onPress={openRequest} />,
+    [openRequest],
+  );
+  const keyExtractor = useCallback((r: ServiceRequest) => r.id, []);
+
   const listContent = (
     <FlatList
       data={requests}
-      keyExtractor={(r) => r.id}
-      renderItem={({ item }) => <RequestCard item={item} onPress={() => openRequest(item.id)} />}
+      keyExtractor={keyExtractor}
+      renderItem={renderItem}
       contentContainerStyle={styles.list}
+      initialNumToRender={10}
+      maxToRenderPerBatch={10}
+      windowSize={5}
+      removeClippedSubviews
     />
   );
 
   return (
-    <ScreenWrapper>
+    <ScreenWrapper bottomNav={<BottomNavBar activeTab="Profile" onSelect={handleTab} />}>
       <ListScreenLayout
         header={header}
         isLoading={isLoading}
@@ -110,7 +121,6 @@ export function RequestHistoryScreen() {
         errorMessage={t('error.network')}
         isEmpty={requests.length === 0}
         emptyState={emptyState}
-        bottomNav={<BottomNavBar activeTab="Profile" onSelect={handleTab} />}
       >
         {listContent}
       </ListScreenLayout>
@@ -122,14 +132,16 @@ const styles = StyleSheet.create({
   list: { padding: spacing.lg, paddingBottom: 100 },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: radii.lg,
+    borderRadius: radii.xl,
     padding: spacing.md,
-    marginBottom: spacing.md,
+    marginBottom: spacing.card,
     ...shadows.sm,
   },
   cardRow: { flexDirection: 'row', alignItems: 'center' },
-  iconWrap: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', marginRight: spacing.md },
+  iconWrap: { width: 44, height: 44, borderRadius: radii.lg, justifyContent: 'center', alignItems: 'center', marginRight: spacing.md },
   cardBody: { flex: 1 },
-  empty: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl },
+  cardBodyTitle: { marginBottom: spacing.xs },
+  cardBodyLine: { marginBottom: spacing.xs },
+  empty: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.md },
   emptyText: { marginTop: spacing.md },
 });

@@ -4,6 +4,7 @@
  */
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppHeader } from '../../../../shared/components/AppHeader';
@@ -15,25 +16,26 @@ export function RatingsScreen() {
   const { colors } = useTheme();
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.background }]}>
-      <AppHeader title={t('customer.ratings')} onBack={() => navigation.goBack()} rightIcon="none" />
-      <ScrollView contentContainerStyle={styles.content}>
+    <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+      <AppHeader title={t('customer.ratings')} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} rightIcon="none" />
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator>
         <View style={[styles.empty, { backgroundColor: colors.surface }]}>
           <MaterialCommunityIcons name="star-outline" size={56} color={colors.textMuted} />
           <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('customer.ratingsEmpty')}</Text>
           <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>{t('customer.ratingsEmptySubtitle')}</Text>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  content: { flexGrow: 1, padding: spacing.lg, paddingTop: spacing.xl },
+  scroll: { flex: 1 },
+  content: { flexGrow: 1, padding: spacing.md, paddingTop: spacing.lg, paddingBottom: spacing.lg },
   empty: {
     borderRadius: 16,
-    padding: spacing.xxl,
+    padding: spacing.lg,
     alignItems: 'center',
   },
   emptyTitle: {

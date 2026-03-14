@@ -6,6 +6,7 @@ import type { Provider } from '../../providers/domain/types';
 import { ROLES } from '../../../shared/constants/roles';
 import type { MapFilterRole } from '../hooks/useMapFilters';
 import { t } from '../../../shared/i18n/t';
+import { MOCK_PROVIDERS_ALL } from '../../../mock/mockProviders';
 
 export const DEFAULT_REGION_DELTA = { latitudeDelta: 0.05, longitudeDelta: 0.05 };
 export const DEFAULT_MAP_CENTER: GeoPoint = { latitude: 25.2048, longitude: 55.2708 };
@@ -56,32 +57,4 @@ export function getFilterLabel(role: MapFilterRole): string {
   return t('map.filter.all');
 }
 
-export const MOCK_PROVIDERS: Provider[] = [
-  {
-    id: 'mock-1',
-    name: 'ورشة فاست فيكس',
-    role: ROLES.MECHANIC,
-    isAvailable: true,
-    hasTowCapability: false,
-    location: { latitude: 25.2048, longitude: 55.2708, lastUpdated: new Date().toISOString() },
-    contact: '+971 50 123 4567',
-  },
-  {
-    id: 'mock-2',
-    name: 'ونش رودلي ٢٤/٧',
-    role: ROLES.MECHANIC_TOW,
-    isAvailable: true,
-    hasTowCapability: true,
-    location: { latitude: 25.2148, longitude: 55.2808, lastUpdated: new Date().toISOString() },
-    contact: '+971 50 765 4321',
-  },
-  {
-    id: 'mock-3',
-    name: 'تأجير سيتي درايف',
-    role: ROLES.CAR_RENTAL,
-    isAvailable: true,
-    availableCars: 12,
-    location: { latitude: 25.1948, longitude: 55.2608, lastUpdated: new Date().toISOString() },
-    contact: '+971 4 111 2222',
-  },
-];
+export const MOCK_PROVIDERS: Provider[] = MOCK_PROVIDERS_ALL as Provider[];

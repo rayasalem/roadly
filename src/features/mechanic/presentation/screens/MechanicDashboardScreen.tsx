@@ -2,7 +2,7 @@
  * Mechanic dashboard: glassmorphism stats, filter, accept/decline, FAB map, bottom sheet.
  */
 import React, { useCallback, useEffect, useRef, useState, memo } from 'react';
-import { StyleSheet, View, FlatList, TouchableOpacity, Text } from 'react-native';
+import { StyleSheet, View, FlatList, TouchableOpacity, Text, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -20,6 +20,7 @@ import { FAB } from '../../../../shared/components/FAB';
 import { PressableCard } from '../../../../shared/components/PressableCard';
 import { StatCard } from '../../../../shared/components/StatCard';
 import { Button } from '../../../../shared/components/Button';
+import { BottomNavBar, type NavTabId } from '../../../../shared/components/BottomNavBar';
 import { colors } from '../../../../shared/theme/colors';
 import { spacing, typography, radii, shadows } from '../../../../shared/theme';
 import { ROLE_THEMES } from '../../../../shared/theme/roleThemes';
@@ -133,6 +134,23 @@ export function MechanicDashboardScreen() {
 
   const isAvailable = profile?.isAvailable ?? true;
 
+  const handleTab = useCallback(
+    (tab: NavTabId) => {
+      if (tab === 'Home') {
+        navigation.navigate('MechanicDashboard');
+      } else if (tab === 'Profile') {
+        navigation.navigate('Profile');
+      } else if (tab === 'Chat') {
+        (navigation as any).navigate('Chat');
+      } else if (tab === 'Notifications') {
+        (navigation as any).navigate('Notifications');
+      } else if (tab === 'Settings') {
+        (navigation as any).navigate('Settings');
+      }
+    },
+    [navigation],
+  );
+
   const openMap = useCallback(() => {
     navigation.navigate('Map');
   }, [navigation]);
@@ -216,16 +234,55 @@ export function MechanicDashboardScreen() {
           windowSize={5}
           ListHeaderComponent={
             <>
-              <View style={styles.availabilityRow}>
-                <Text style={styles.availabilityLabel}>{t('mechanic.availability')}</Text>
-                <View style={styles.availabilityChips}>
+              <GlassCard role="mechanic" style={styles.heroCard}>
+                <View style={styles.heroTopRow}>
+                  <View style={styles.heroAvatarCircle}>
+                    <MaterialCommunityIcons name="account-wrench" size={28} color={THEME.primary} />
+                  </View>
+                  <View style={styles.heroTextCol}>
+                    <AppText variant="title3" style={styles.heroTitle}>
+                      {t('mechanic.dashboard.title')}
+                    </AppText>
+                    <AppText variant="body" color={colors.textSecondary}>
+                      {t('mechanic.whoRequestedMe')}
+                    </AppText>
+                  </View>
+                  <View style={styles.heroStatusPill}>
+                    <View
+                      style={[
+                        styles.heroStatusDot,
+                        { backgroundColor: isAvailable ? colors.primary : colors.textMuted },
+                      ]}
+                    />
+                    <AppText
+                      variant="caption"
+                      style={{ color: isAvailable ? colors.primary : colors.textMuted }}
+                    >
+                      {isAvailable ? t('map.status.available') : t('mechanic.unavailable')}
+                    </AppText>
+                  </View>
+                </View>
+
+                <View style={styles.heroChipsRow}>
                   <TouchableOpacity
                     style={[styles.availabilityChip, isAvailable && styles.availabilityChipOn]}
                     onPress={() => !availabilityMutation.isPending && availabilityMutation.mutate(true)}
                     disabled={availabilityMutation.isPending}
+                    activeOpacity={0.85}
                   >
-                    <View style={[styles.availabilityDot, isAvailable && { backgroundColor: colors.primary }]} />
-                    <AppText variant="callout" style={[styles.availabilityChipText, isAvailable && styles.availabilityChipTextOn]}>
+                    <View
+                      style={[
+                        styles.availabilityDot,
+                        isAvailable && { backgroundColor: colors.primary },
+                      ]}
+                    />
+                    <AppText
+                      variant="callout"
+                      style={[
+                        styles.availabilityChipText,
+                        isAvailable && styles.availabilityChipTextOn,
+                      ]}
+                    >
                       {t('map.status.available')}
                     </AppText>
                   </TouchableOpacity>
@@ -233,25 +290,49 @@ export function MechanicDashboardScreen() {
                     style={[styles.availabilityChip, !isAvailable && styles.availabilityChipOff]}
                     onPress={() => !availabilityMutation.isPending && availabilityMutation.mutate(false)}
                     disabled={availabilityMutation.isPending}
+                    activeOpacity={0.85}
                   >
-                    <View style={[styles.availabilityDot, !isAvailable && { backgroundColor: colors.textMuted }]} />
-                    <AppText variant="callout" style={[styles.availabilityChipText, !isAvailable && styles.availabilityChipTextOff]}>
+                    <View
+                      style={[
+                        styles.availabilityDot,
+                        !isAvailable && { backgroundColor: colors.textMuted },
+                      ]}
+                    />
+                    <AppText
+                      variant="callout"
+                      style={[
+                        styles.availabilityChipText,
+                        !isAvailable && styles.availabilityChipTextOff,
+                      ]}
+                    >
                       {t('mechanic.unavailable')}
                     </AppText>
                   </TouchableOpacity>
+                  <TouchableOpacity style={styles.heroMapQuick} onPress={openMap} activeOpacity={0.85}>
+                    <MaterialCommunityIcons name="map-marker-outline" size={18} color={THEME.primary} />
+                    <AppText variant="callout" style={styles.heroMapQuickText}>
+                      {t('mechanic.viewRequestOnMap') ?? 'عرض الطلبات على الخريطة'}
+                    </AppText>
+                  </TouchableOpacity>
                 </View>
-              </View>
 
-              <GlassCard role="mechanic">
                 <View style={styles.statsRow}>
-                  <StatCard value={stats.jobsToday} label={t('mechanic.stats.jobsToday')} accentColor={THEME.primary} />
-                  <StatCard value={stats.onTheWay} label={t('mechanic.stats.onTheWay')} accentColor={THEME.primary} />
-                  <StatCard value={stats.rating} label={t('mechanic.stats.rating')} accentColor={THEME.primary} />
+                  <StatCard
+                    value={jobs.filter((j) => j.status === 'new').length}
+                    label={t('mechanic.stats.newRequests') ?? 'New requests'}
+                    accentColor={THEME.primary}
+                  />
+                  <StatCard
+                    value={jobs.filter((j) => j.status === 'on_the_way' || j.status === 'in_garage').length}
+                    label={t('mechanic.stats.activeRequests') ?? 'Active requests'}
+                    accentColor={THEME.primary}
+                  />
+                  <StatCard
+                    value={stats.jobsToday}
+                    label={t('mechanic.stats.completedJobs') ?? 'Completed jobs'}
+                    accentColor={THEME.primary}
+                  />
                 </View>
-                <TouchableOpacity style={styles.mapBtn} onPress={openMap} activeOpacity={0.85}>
-                  <MaterialCommunityIcons name="map-marker-outline" size={18} color={colors.primaryContrast} />
-                  <AppText variant="callout" weight="semibold" style={styles.mapBtnText}>{t('home.action.openMap')}</AppText>
-                </TouchableOpacity>
               </GlassCard>
 
               <AppText variant="title3" style={styles.sectionTitle}>{t('mechanic.whoRequestedMe')}</AppText>
@@ -298,7 +379,7 @@ export function MechanicDashboardScreen() {
                 ))}
               </View>
 
-              <AppText variant="title3" style={styles.sectionTitle}>{t('mechanic.activeRequests')}</AppText>
+              <AppText variant="title3" style={styles.sectionTitle}>{t('mechanic.requestsList') ?? 'Requests'}</AppText>
             </>
           }
           renderItem={({ item: job }) => (
@@ -326,7 +407,7 @@ export function MechanicDashboardScreen() {
         ref={bottomSheetRef}
         snapPoints={[280]}
         enablePanDownToClose
-        onDismiss={() => setSelectedJob(null)}
+        onDismiss={() => { blurActiveElementForA11y(); setSelectedJob(null); }}
         backgroundStyle={styles.sheetBg}
       >
         <View style={styles.sheetContent}>
@@ -378,13 +459,17 @@ export function MechanicDashboardScreen() {
               <TouchableOpacity style={styles.mapLink} onPress={openMap}>
                 <MaterialCommunityIcons name="map-marker-outline" size={20} color={THEME.primary} />
                 <AppText variant="callout" weight="semibold" style={styles.mapLinkText}>
-                  {selectedJob.status === 'on_the_way' || selectedJob.status === 'in_garage' ? t('mechanic.navigate') : t('home.action.openMap')}
+                  {t('mechanic.viewRequestLocationOnMap') ?? (selectedJob.status === 'on_the_way' || selectedJob.status === 'in_garage' ? 'Navigate to customer' : 'View request location on map')}
                 </AppText>
               </TouchableOpacity>
             </>
           ) : null}
         </View>
       </BottomSheetModal>
+
+      <View style={styles.bottomNavWrap}>
+        <BottomNavBar activeTab="Home" onSelect={handleTab} />
+      </View>
     </View>
   );
 }
@@ -392,7 +477,72 @@ export function MechanicDashboardScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   safe: { flex: 1 },
-  scroll: { paddingHorizontal: spacing.xl, paddingBottom: 100 },
+  scroll: { paddingHorizontal: spacing.md, paddingBottom: 100 },
+  heroCard: {
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  heroTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+  },
+  heroAvatarCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: THEME.primaryLight,
+  },
+  heroTextCol: {
+    flex: 1,
+    marginHorizontal: spacing.md,
+  },
+  heroTitle: {
+    fontFamily: typography.fontFamily.semibold,
+    fontSize: typography.presets.titleSmall.fontSize,
+    color: colors.text,
+    marginBottom: spacing.xs / 2,
+  },
+  heroStatusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface,
+    ...shadows.sm,
+  },
+  heroStatusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: spacing.xs,
+  },
+  heroChipsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  heroMapQuick: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface,
+    gap: spacing.xs,
+    ...shadows.sm,
+  },
+  heroMapQuickText: {
+    fontFamily: typography.fontFamily.medium,
+    fontSize: typography.presets.caption.fontSize,
+    color: THEME.primary,
+  },
   availabilityRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -468,7 +618,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: typography.fontFamily.semibold,
-    fontSize: typography.presets.titleSmall.fontSize,
+    fontSize: 18,
+    lineHeight: 24,
     color: colors.text,
     marginBottom: spacing.md,
   },
@@ -488,13 +639,13 @@ const styles = StyleSheet.create({
   actionCardsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.md,
+    gap: spacing.card,
     marginBottom: spacing.lg,
   },
   actionCard: {
     flex: 1,
     minWidth: 100,
-    padding: spacing.lg,
+    padding: spacing.md,
     borderRadius: radii.lg,
     alignItems: 'center',
     justifyContent: 'center',
@@ -502,7 +653,7 @@ const styles = StyleSheet.create({
   },
   emptyWrap: {
     alignItems: 'center',
-    paddingVertical: spacing.xxl,
+    paddingVertical: spacing.lg,
   },
   emptyText: {
     fontFamily: typography.fontFamily.regular,
@@ -517,7 +668,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   jobCard: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.card,
   },
   jobRow: {
     flexDirection: 'row',
@@ -563,13 +714,16 @@ const styles = StyleSheet.create({
     right: spacing.xl,
     bottom: spacing.xl,
   },
-  fabWrapPulse: {
-    shadowColor: THEME.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 8,
-    elevation: 8,
-  },
+  fabWrapPulse: Platform.select({
+    web: { boxShadow: '0px 0px 12px rgba(34,197,94,0.7)', elevation: 8 },
+    default: {
+      shadowColor: THEME.primary,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.6,
+      shadowRadius: 8,
+      elevation: 8,
+    },
+  }),
   sheetBg: {
     backgroundColor: colors.surface,
     borderTopLeftRadius: radii.xxl,
@@ -577,13 +731,14 @@ const styles = StyleSheet.create({
     ...shadows.lg,
   },
   sheetContent: {
-    padding: spacing.xl,
+    padding: spacing.md,
   },
   sheetTitle: {
     fontFamily: typography.fontFamily.semibold,
-    fontSize: typography.presets.titleSmall.fontSize,
+    fontSize: 18,
+    lineHeight: 24,
     color: colors.text,
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
   },
   sheetMeta: {
     fontFamily: typography.fontFamily.regular,
@@ -607,5 +762,9 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.medium,
     fontSize: typography.presets.bodySmall.fontSize,
     color: THEME.primary,
+  },
+  bottomNavWrap: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
   },
 });

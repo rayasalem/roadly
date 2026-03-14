@@ -1,34 +1,40 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, Platform, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useUIStore } from '../../store/uiStore';
 import { colors } from '../theme/colors';
-import { typography } from '../theme';
+import { typography, spacing, shadows } from '../theme';
 import { TOAST_ENTER_DURATION, TOAST_EXIT_DURATION } from '../utils/animations';
 
-function toastColor(type: 'success' | 'error' | 'info'): string {
+function toastStyle(type: 'success' | 'error' | 'info'): { bg: string; text: string } {
   switch (type) {
     case 'success':
-      return colors.success;
+      return { bg: colors.success, text: '#FFFFFF' };
     case 'error':
-      return colors.error;
+      return { bg: colors.error, text: '#FFFFFF' };
     default:
-      return colors.surface;
+      return { bg: colors.surface, text: colors.text };
   }
 }
 
 export const ToastHost = React.memo(function ToastHost() {
   const toasts = useUIStore((s) => s.toasts);
   const dismissToast = useUIStore((s) => s.dismissToast);
+  const insets = useSafeAreaInsets();
 
   const latest = toasts[toasts.length - 1];
   const anim = useRef(new Animated.Value(0)).current;
 
-  const bg = useMemo(() => (latest ? toastColor(latest.type) : colors.surface), [latest]);
+  const { bg, text: textColor } = useMemo(
+    () => (latest ? toastStyle(latest.type) : { bg: colors.surface, text: colors.text }),
+    [latest]
+  );
 
   useEffect(() => {
     if (!latest) return;
 
-    const useNativeDriver = Platform.OS !== 'web';
+    const useNativeDriver = false;
     anim.setValue(0);
     Animated.timing(anim, {
       toValue: 1,
@@ -37,7 +43,7 @@ export const ToastHost = React.memo(function ToastHost() {
       easing: Easing.out(Easing.cubic),
     }).start();
 
-    const duration = latest.durationMs ?? 2500;
+    const duration = latest.durationMs ?? 3000;
     const timer = setTimeout(() => {
       Animated.timing(anim, {
         toValue: 0,
@@ -54,23 +60,36 @@ export const ToastHost = React.memo(function ToastHost() {
 
   if (!latest) return null;
 
+  const iconName =
+    latest.type === 'success'
+      ? 'check-circle'
+      : latest.type === 'error'
+      ? 'alert-circle'
+      : 'information';
+
   return (
     <Animated.View
       style={[
         styles.container,
-        { pointerEvents: 'none' },
+        { bottom: Math.max(insets.bottom, 16) + 72, pointerEvents: 'box-none' as const },
         {
           opacity: anim,
           transform: [
             {
-              translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }),
+              translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }),
             },
           ],
         },
       ]}
     >
       <View style={[styles.toast, { backgroundColor: bg }]}>
-        <Text style={styles.text} numberOfLines={3}>
+        <MaterialCommunityIcons
+          name={iconName as any}
+          size={20}
+          color={textColor}
+          style={styles.icon}
+        />
+        <Text style={[styles.text, { color: textColor }]} numberOfLines={3}>
           {latest.message}
         </Text>
       </View>
@@ -81,22 +100,27 @@ export const ToastHost = React.memo(function ToastHost() {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    left: 12,
-    right: 12,
-    bottom: 18,
+    left: spacing.md,
+    right: spacing.md,
+    alignSelf: 'center',
   },
   toast: {
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    minHeight: 52,
+    ...shadows.lg,
+  },
+  icon: {
+    marginRight: spacing.sm,
   },
   text: {
-    fontFamily: typography.fontFamily.semibold,
+    flex: 1,
+    fontFamily: typography.fontFamily.medium,
     fontSize: typography.fontSize.callout,
-    color: colors.text,
-    textAlign: 'center',
+    textAlign: 'left',
   },
 });
 

@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 
 import { AppHeader } from '../../../../shared/components/AppHeader';
+import { BottomNavBar, type NavTabId } from '../../../../shared/components/BottomNavBar';
 import { ErrorWithRetry } from '../../../../shared/components/ErrorWithRetry';
 import { GlassCard } from '../../../../shared/components/GlassCard';
 import { LoadingSpinner } from '../../../../shared/components/LoadingSpinner';
@@ -30,6 +31,7 @@ import { spacing, typography, radii, shadows } from '../../../../shared/theme';
 import { ROLE_THEMES } from '../../../../shared/theme/roleThemes';
 import { t } from '../../../../shared/i18n/t';
 import { useUIStore } from '../../../../store/uiStore';
+import { blurActiveElementForA11y } from '../../../../shared/utils/domA11y';
 import type { AdminStackParamList } from '../../../../navigation/AdminStack';
 import {
   useAdminDashboard,
@@ -421,7 +423,7 @@ export function AdminDashboardScreen() {
         ref={sheetRef}
         snapPoints={[320]}
         enablePanDownToClose
-        onDismiss={() => setSheetPayload(null)}
+        onDismiss={() => { blurActiveElementForA11y(); setSheetPayload(null); }}
         backgroundStyle={styles.sheetBg}
       >
         <View style={styles.sheetContent}>
@@ -461,6 +463,10 @@ export function AdminDashboardScreen() {
           )}
         </View>
       </BottomSheetModal>
+
+      <View style={styles.bottomNavWrap}>
+        <BottomNavBar activeTab="Home" onSelect={handleTab} />
+      </View>
     </View>
   );
 }
@@ -468,7 +474,11 @@ export function AdminDashboardScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   safe: { flex: 1 },
-  scroll: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: 120 },
+  scroll: { paddingHorizontal: spacing.md, paddingTop: spacing.lg, paddingBottom: 120 },
+  bottomNavWrap: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+  },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: spacing.md },
   statsGridSecondary: { marginTop: spacing.md },
   manageUsersCard: {
@@ -512,7 +522,7 @@ const styles = StyleSheet.create({
   chipTextActive: { color: colors.primaryContrast },
   roleCard: { marginBottom: spacing.md },
   roleStatsRow: { flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: spacing.sm },
-  sectionTitle: { fontFamily: typography.fontFamily.semibold, fontSize: typography.presets.titleSmall.fontSize, color: colors.text, marginBottom: spacing.md },
+  sectionTitle: { fontFamily: typography.fontFamily.semibold, fontSize: 18, lineHeight: 24, color: colors.text, marginBottom: spacing.md },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
   chip: {
     paddingHorizontal: spacing.md,
@@ -561,8 +571,8 @@ const styles = StyleSheet.create({
   mapBtnText: { fontFamily: typography.fontFamily.semibold, fontSize: typography.presets.bodySmall.fontSize, color: colors.primaryContrast },
   fabWrap: { position: 'absolute', right: spacing.xl, bottom: spacing.xl },
   sheetBg: { backgroundColor: colors.surface, borderTopLeftRadius: radii.xxl, borderTopRightRadius: radii.xxl, ...shadows.lg },
-  sheetContent: { padding: spacing.xl },
-  sheetTitle: { fontFamily: typography.fontFamily.semibold, fontSize: typography.presets.titleSmall.fontSize, color: colors.text, marginBottom: spacing.xs },
+  sheetContent: { padding: spacing.md },
+  sheetTitle: { fontFamily: typography.fontFamily.semibold, fontSize: 18, lineHeight: 24, color: colors.text, marginBottom: spacing.sm },
   sheetMeta: { fontFamily: typography.fontFamily.regular, fontSize: typography.presets.bodySmall.fontSize, color: colors.textSecondary, marginBottom: spacing.sm },
   sheetActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
   sheetGap: { width: spacing.sm },

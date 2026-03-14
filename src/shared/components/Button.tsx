@@ -1,15 +1,16 @@
 /**
  * Design system button.
- * Variants: primary, secondary, outline, ghost. Accent maps to primary.
- * Min touch target: 44pt (md/lg). Uses spacing scale and typography presets.
- * Press feedback: scale 0.97 + opacity 0.92 (lightweight RN Animated).
+ * Primary: green background, white text, rounded corners, 48px height.
+ * Secondary/Outline: white background, green border, green text.
+ * Press feedback: scale + opacity for visual feedback.
  */
 import React, { useRef } from 'react';
 import { Animated, Platform, Pressable, Text, StyleSheet, ActivityIndicator, type ViewStyle } from 'react-native';
-import { useTheme, spacing, typography, radii } from '../theme';
+import { useTheme, spacing, typography, radii, shadows } from '../theme';
 import { springPress, PRESS_SCALE } from '../utils/animations';
+import { HIT_SLOP_DEFAULT } from '../constants/ux';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'accent' | 'danger';
+export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'accent' | 'danger' | 'uber';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps {
@@ -25,44 +26,51 @@ export interface ButtonProps {
 }
 
 const BORDER_WIDTH = 2;
+const PRIMARY_HEIGHT = 48;
 
 function getBtnVariantStyles(colors: ReturnType<typeof useTheme>['colors']) {
+  const secondaryStyle = {
+    backgroundColor: colors.surface,
+    borderWidth: BORDER_WIDTH,
+    borderColor: colors.primary,
+  };
+  const uberStyle = {
+    backgroundColor: (colors as { uberBlack?: string }).uberBlack ?? '#000000',
+    borderWidth: 0,
+    borderColor: 'transparent' as const,
+  };
   return {
     primary: {
       backgroundColor: colors.primary,
       borderWidth: 0,
       borderColor: 'transparent' as const,
     },
-    secondary: {
-      backgroundColor: colors.secondary,
-      borderWidth: 0,
-      borderColor: 'transparent' as const,
-    },
+    secondary: secondaryStyle,
     danger: {
       backgroundColor: colors.error,
       borderWidth: 0,
       borderColor: 'transparent' as const,
     },
-    outline: {
-      backgroundColor: 'transparent' as const,
-      borderWidth: BORDER_WIDTH,
-      borderColor: colors.primary,
-    },
+    outline: secondaryStyle,
     ghost: {
       backgroundColor: 'transparent' as const,
       borderWidth: 0,
       borderColor: 'transparent' as const,
     },
+    uber: uberStyle,
   };
 }
 
 function getTextVariantStyles(colors: ReturnType<typeof useTheme>['colors']) {
+  const secondaryText = { color: colors.primary };
+  const uberText = { color: (colors as { uberTextOnDark?: string }).uberTextOnDark ?? '#FFFFFF' };
   return {
     primary: { color: colors.primaryContrast },
-    secondary: { color: colors.secondaryContrast },
+    secondary: secondaryText,
     danger: { color: colors.primaryContrast },
-    outline: { color: colors.primary },
+    outline: secondaryText,
     ghost: { color: colors.primary },
+    uber: uberText,
   };
 }
 
@@ -89,16 +97,17 @@ export const Button = React.memo(function Button({
   const opacity = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
+    if (isDisabled) return;
     Animated.parallel([
       Animated.spring(scale, { toValue: PRESS_SCALE, ...springPress }),
-      Animated.timing(opacity, { toValue: 0.92, duration: 80, useNativeDriver: Platform.OS !== 'web' }),
+      Animated.timing(opacity, { toValue: 0.88, duration: 60, useNativeDriver: false }),
     ]).start();
   };
 
   const handlePressOut = () => {
     Animated.parallel([
       Animated.spring(scale, { toValue: 1, ...springPress }),
-      Animated.timing(opacity, { toValue: 1, duration: 120, useNativeDriver: Platform.OS !== 'web' }),
+      Animated.timing(opacity, { toValue: 1, duration: 150, useNativeDriver: false }),
     ]).start();
   };
 
@@ -115,14 +124,17 @@ export const Button = React.memo(function Button({
   ];
 
   const loaderColor =
-    effectiveVariant === 'outline' || effectiveVariant === 'ghost'
+    effectiveVariant === 'outline' || effectiveVariant === 'secondary' || effectiveVariant === 'ghost'
       ? colors.primary
+      : effectiveVariant === 'uber'
+      ? ((colors as { uberTextOnDark?: string }).uberTextOnDark ?? '#FFFFFF')
       : colors.primaryContrast;
 
   return (
     <Animated.View style={[fullWidth && styles.fullWidth, style, { opacity, transform: [{ scale }] }]}>
       <Pressable
         testID={testID}
+        hitSlop={HIT_SLOP_DEFAULT}
         style={({ pressed }) => [
           btnStyle,
           pressed && !isDisabled && styles.pressed,
@@ -149,26 +161,30 @@ const styles = StyleSheet.create({
   btn: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radii.md,
+    borderRadius: 14,
+    minHeight: PRIMARY_HEIGHT,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    ...shadows.md,
   },
   sm: {
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    minHeight: 36,
+    minHeight: 40,
   },
   md: {
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.sm + 2,
     paddingHorizontal: spacing.lg,
-    minHeight: 48,
+    minHeight: PRIMARY_HEIGHT,
   },
   lg: {
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.xl,
-    minHeight: 52,
+    minHeight: PRIMARY_HEIGHT,
   },
   fullWidth: { width: '100%' },
   disabled: { opacity: 0.6 },
-  pressed: { opacity: 0.9 },
+  pressed: { opacity: 0.85 },
   text: {
     fontFamily: typography.fontFamily.semibold,
   },

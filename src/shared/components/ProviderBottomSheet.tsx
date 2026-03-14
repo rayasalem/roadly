@@ -2,8 +2,8 @@
  * Map provider callout / bottom sheet: uses ProviderCardContent for avatar, name, role, status, rating, actions.
  */
 import React, { forwardRef } from 'react';
-import { StyleSheet } from 'react-native';
-import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import { StyleSheet, View } from 'react-native';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
 
 import { colors } from '../theme/colors';
 import { spacing, shadows } from '../theme';
@@ -38,11 +38,11 @@ export const ProviderBottomSheet = forwardRef<BottomSheetModal, ProviderBottomSh
         ref={ref}
         snapPoints={SNAP_POINTS}
         enablePanDownToClose
-        onDismiss={onClose}
+        onDismiss={() => { blurActiveElementForA11y(); onClose(); }}
         backgroundStyle={[styles.sheetBackground, { backgroundColor: colors.surface }]}
         handleIndicatorStyle={styles.handle}
       >
-        <BottomSheetView style={styles.content}>
+        <View style={styles.content}>
           <ProviderCardContent
             provider={provider}
             distanceKm={distanceKm ?? undefined}
@@ -53,7 +53,7 @@ export const ProviderBottomSheet = forwardRef<BottomSheetModal, ProviderBottomSh
             onChat={onChat}
             requestServiceDisabled={requestServiceDisabled}
           />
-        </BottomSheetView>
+        </View>
       </BottomSheetModal>
     );
   },
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     width: 40,
   },
   content: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xl,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
   },
 });

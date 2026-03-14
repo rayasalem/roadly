@@ -12,6 +12,8 @@ type AppHeaderProps = {
   title: string;
   /** When true, center shows icon + app name (no image), so logo is never empty. */
   centerLogo?: boolean;
+  /** Uber-style: dark background, white text and icons. */
+  dark?: boolean;
   onBack?: () => void;
   onProfile?: () => void;
   /** Called when right icon is pressed (e.g. calendar). If not set, calendar icon has no action. */
@@ -23,6 +25,7 @@ type AppHeaderProps = {
 export function AppHeader({
   title,
   centerLogo = false,
+  dark = false,
   onBack,
   onProfile,
   onRightPress,
@@ -30,24 +33,26 @@ export function AppHeader({
   style,
 }: AppHeaderProps) {
   const { colors } = useTheme();
+  const fg = dark ? '#FFFFFF' : colors.text;
+  const bg = dark ? '#000000' : undefined;
   const centerContent = centerLogo ? (
     <View style={styles.logoRow}>
-      <MaterialCommunityIcons name="car-side" size={24} color={colors.primary} style={styles.logoIcon} />
-      <Text style={[styles.title, styles.logoTitle, { color: colors.text }]} numberOfLines={1}>
+      <MaterialCommunityIcons name="car-side" size={24} color={dark ? '#FFFFFF' : colors.primary} style={styles.logoIcon} />
+      <Text style={[styles.title, styles.logoTitle, { color: fg }]} numberOfLines={1}>
         {t('app.name')}
       </Text>
     </View>
   ) : (
-    <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+    <Text style={[styles.title, { color: fg }]} numberOfLines={1}>
       {title ?? ''}
     </Text>
   );
   return (
-    <View style={[styles.root, style]}>
+    <View style={[styles.root, bg && { backgroundColor: bg }, style]}>
       <View style={styles.side}>
         {typeof onBack === 'function' ? (
           <TouchableOpacity onPress={onBack} style={styles.iconBtn} accessibilityRole="button">
-            <MaterialCommunityIcons name="chevron-left" size={28} color={colors.text} />
+            <MaterialCommunityIcons name="chevron-left" size={28} color={fg} />
           </TouchableOpacity>
         ) : (
           <View style={styles.placeholder} />
@@ -62,7 +67,7 @@ export function AppHeader({
             accessibilityRole="button"
             disabled={typeof onProfile !== 'function'}
           >
-            <MaterialCommunityIcons name="shield-account-outline" size={24} color={colors.text} />
+            <MaterialCommunityIcons name="shield-account-outline" size={24} color={fg} />
           </TouchableOpacity>
         ) : rightIcon === 'calendar' ? (
           <TouchableOpacity
@@ -71,7 +76,7 @@ export function AppHeader({
             accessibilityRole="button"
             disabled={typeof onRightPress !== 'function'}
           >
-            <MaterialCommunityIcons name="calendar-outline" size={24} color={colors.text} />
+            <MaterialCommunityIcons name="calendar-outline" size={24} color={fg} />
           </TouchableOpacity>
         ) : rightIcon === 'settings' ? (
           <TouchableOpacity
@@ -80,7 +85,7 @@ export function AppHeader({
             accessibilityRole="button"
             disabled={typeof onProfile !== 'function'}
           >
-            <MaterialCommunityIcons name="cog-outline" size={24} color={colors.text} />
+            <MaterialCommunityIcons name="cog-outline" size={24} color={fg} />
           </TouchableOpacity>
         ) : (
           <View style={styles.placeholder} />
@@ -97,7 +102,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    minHeight: 48,
+    paddingBottom: spacing.md,
+    minHeight: 56,
   },
   side: {
     minWidth: 44,
@@ -117,8 +123,10 @@ const styles = StyleSheet.create({
   title: {
     flex: 1,
     fontFamily: typography.fontFamily.bold,
-    fontSize: typography.fontSize.title3,
+    fontSize: 24,
+    lineHeight: 30,
     textAlign: 'center',
+    marginHorizontal: spacing.xs,
   },
   logoRow: {
     flex: 1,

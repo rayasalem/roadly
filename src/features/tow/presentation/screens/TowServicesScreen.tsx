@@ -10,11 +10,13 @@ import { Button } from '../../../../shared/components/Button';
 import { colors } from '../../../../shared/theme/colors';
 import { spacing, typography } from '../../../../shared/theme';
 import { t } from '../../../../shared/i18n/t';
+import { useUIStore } from '../../../../store/uiStore';
 
 const MOCK_SERVICES = ['سحب إلى الورشة', 'مساعدة على الطريق', 'تشغيل بطارية', 'تبديل إطارات'];
 
 export function TowServicesScreen() {
   const navigation = useNavigation();
+  const toast = useUIStore((s) => s.toast);
   const [services] = useState(MOCK_SERVICES);
 
   return (
@@ -29,8 +31,8 @@ export function TowServicesScreen() {
           ))}
         </GlassCard>
         <Button
-          title="إضافة خدمة (بيانات تجريبية)"
-          onPress={() => {}}
+          title={t('tow.addService') ?? 'Add service (demo)'}
+          onPress={() => toast({ type: 'info', message: t('common.comingSoon') ?? 'Coming soon.' })}
           variant="outline"
           fullWidth
           style={styles.addBtn}
@@ -42,7 +44,7 @@ export function TowServicesScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  scroll: { padding: spacing.xl },
+  scroll: { padding: spacing.md },
   row: { paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border },
   serviceText: { fontFamily: typography.fontFamily.medium, fontSize: typography.fontSize.body, color: colors.text },
   addBtn: { marginTop: spacing.lg },

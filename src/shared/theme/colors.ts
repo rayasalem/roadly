@@ -70,6 +70,22 @@ export const colors = {
   backgroundSoft: '#F3F4F6',
   /** White cards — cards, inputs, sheets. */
   cardWhite: '#FFFFFF',
+
+  // —— Uber-style (reference) ——
+  /** Uber primary CTA — black button. */
+  uberBlack: '#000000',
+  /** Uber header / nav background. */
+  uberNav: '#000000',
+  /** Uber card background. */
+  uberCard: '#FFFFFF',
+  /** Uber page background — light gray. */
+  uberBackground: '#F6F6F6',
+  /** Uber text on dark. */
+  uberTextOnDark: '#FFFFFF',
+  /** Uber muted / secondary on light. */
+  uberMuted: '#6B7280',
+  /** Uber border / divider. */
+  uberBorder: '#E5E7EB',
 } as const;
 
 export type ColorPalette = typeof colors;

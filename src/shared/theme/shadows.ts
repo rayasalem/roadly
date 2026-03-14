@@ -13,7 +13,9 @@ const shadowSm: ViewStyle = Platform.select({
     elevation: 2,
   },
   android: { elevation: 2 },
-  default: {},
+  default: {
+    boxShadow: '0px 1px 3px rgba(0,0,0,0.08)',
+  },
 }) as ViewStyle;
 
 const shadowMd: ViewStyle = Platform.select({
@@ -25,7 +27,9 @@ const shadowMd: ViewStyle = Platform.select({
     elevation: 4,
   },
   android: { elevation: 4 },
-  default: {},
+  default: {
+    boxShadow: '0px 4px 12px rgba(0,0,0,0.12)',
+  },
 }) as ViewStyle;
 
 const shadowLg: ViewStyle = Platform.select({
@@ -37,17 +41,24 @@ const shadowLg: ViewStyle = Platform.select({
     elevation: 8,
   },
   android: { elevation: 8 },
-  default: {},
+  default: {
+    boxShadow: '0px 12px 32px rgba(0,0,0,0.18)',
+  },
 }) as ViewStyle;
 
-export const shadows = {
-  none: {
+const shadowNone: ViewStyle = Platform.select({
+  web: { boxShadow: 'none', elevation: 0 },
+  default: {
     shadowColor: 'transparent',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0,
     shadowRadius: 0,
     elevation: 0,
   },
+}) as ViewStyle;
+
+export const shadows = {
+  none: shadowNone,
   sm: shadowSm,
   md: shadowMd,
   lg: shadowLg,

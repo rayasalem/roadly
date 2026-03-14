@@ -2,12 +2,14 @@
  * API layer for provider endpoints. No UI — used by repositories/hooks.
  * Backend implements GET /providers/nearby with geo + filters + pagination.
  * On network/CORS/parse errors, use getFallbackNearbyProviders() so the map never breaks.
+ * Uses mock data with all provider states: available, busy, on_the_way, offline.
  */
 import type { Provider, NearbyProvidersParams, NearbyProvidersResult } from '../domain/types';
 import { api } from '../../../shared/services/http/api';
 import { ENDPOINTS } from '../../../shared/constants/apiEndpoints';
 import { getErrorMessage } from '../../../shared/services/http/errorMessage';
 import { ROLES } from '../../../shared/constants/roles';
+import { MOCK_PROVIDERS_ALL } from '../../../mock/mockProviders';
 
 function buildNearbyQuery(params: NearbyProvidersParams): string {
   const q = new URLSearchParams();
@@ -21,104 +23,35 @@ function buildNearbyQuery(params: NearbyProvidersParams): string {
   return q.toString();
 }
 
-/** Mock / fallback providers when API fails or no coords yet. Matches Provider type. */
-const FALLBACK_NEARBY_PROVIDERS: Provider[] = [
-  {
-    id: 'mock-1',
-    name: 'ورشة أحمد للميكانيك',
-    role: ROLES.MECHANIC,
-    isAvailable: true,
+/** Map mock providers to Provider type (with displayStatus for map UI). */
+function mockToProvider(m: import('../../../mock/mockProviders').MockProvider): Provider {
+  const loc = m.location as { latitude: number; longitude: number; lastUpdated?: string };
+  return {
+    id: m.id,
+    name: m.name,
+    role: m.role,
+    phone: m.phone ?? undefined,
+    isAvailable: m.isAvailable ?? true,
     location: {
-      latitude: 32.3075,
-      longitude: 35.1681,
-      lastUpdated: new Date().toISOString(),
+      latitude: loc?.latitude ?? 32.22,
+      longitude: loc?.longitude ?? 35.26,
+      lastUpdated: (loc as { lastUpdated?: string })?.lastUpdated ?? new Date().toISOString(),
     },
-    rating: 4.7,
-    contact: '+972 50 123 4501',
-    phone: '+972 50 123 4501',
-  },
-  {
-    id: 'mock-2',
-    name: 'ونش سامي 24/7',
-    role: ROLES.MECHANIC_TOW,
-    isAvailable: true,
-    hasTowCapability: true,
-    location: {
-      latitude: 32.3091,
-      longitude: 35.165,
-      lastUpdated: new Date().toISOString(),
-    },
-    rating: 4.5,
-    contact: '+972 50 123 4502',
-    phone: '+972 50 123 4502',
-  },
-  {
-    id: 'mock-3',
-    name: 'تأجير سيارات النخبة',
-    role: ROLES.CAR_RENTAL,
-    isAvailable: true,
-    availableCars: 5,
-    location: {
-      latitude: 32.304,
-      longitude: 35.17,
-      lastUpdated: new Date().toISOString(),
-    },
-    rating: 4.2,
-    contact: '+972 50 123 4503',
-    phone: '+972 50 123 4503',
-  },
-  {
-    id: 'mock-4',
-    name: 'فاست فيكس',
-    role: ROLES.MECHANIC,
-    isAvailable: true,
-    location: {
-      latitude: 32.3055,
-      longitude: 35.171,
-      lastUpdated: new Date().toISOString(),
-    },
-    rating: 4.8,
-    contact: '+972 52 111 2233',
-    phone: '+972 52 111 2233',
-  },
-  {
-    id: 'mock-5',
-    name: 'ونش الطوارئ',
-    role: ROLES.MECHANIC_TOW,
-    isAvailable: true,
-    hasTowCapability: true,
-    location: {
-      latitude: 32.302,
-      longitude: 35.164,
-      lastUpdated: new Date().toISOString(),
-    },
-    rating: 4.4,
-    contact: '+972 54 222 3344',
-    phone: '+972 54 222 3344',
-  },
-  {
-    id: 'mock-6',
-    name: 'سيارات للايجار',
-    role: ROLES.CAR_RENTAL,
-    isAvailable: true,
-    availableCars: 8,
-    location: {
-      latitude: 32.31,
-      longitude: 35.172,
-      lastUpdated: new Date().toISOString(),
-    },
-    rating: 4.6,
-    contact: '+972 53 333 4455',
-    phone: '+972 53 333 4455',
-  },
-];
+    rating: m.rating,
+    displayStatus: m.displayStatus,
+    serviceType: m.role === ROLES.MECHANIC ? 'mechanic' : m.role === ROLES.MECHANIC_TOW ? 'tow' : 'rental',
+    hasTowCapability: m.role === ROLES.MECHANIC_TOW ? true : undefined,
+    availableCars: m.role === ROLES.CAR_RENTAL ? 5 : undefined,
+  };
+}
 
 /**
- * Returns fallback providers, optionally filtered by role so map filters still work.
+ * Returns fallback providers from mock data (available, busy, on_the_way, offline), optionally filtered by role.
  */
 export function getFallbackNearbyProviders(role?: NearbyProvidersParams['role']): Provider[] {
-  if (!role) return [...FALLBACK_NEARBY_PROVIDERS];
-  return FALLBACK_NEARBY_PROVIDERS.filter((p) => p.role === role);
+  const list = MOCK_PROVIDERS_ALL.map(mockToProvider);
+  if (!role) return list;
+  return list.filter((p) => p.role === role);
 }
 
 export async function fetchNearbyProviders(

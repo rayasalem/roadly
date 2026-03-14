@@ -10,11 +10,13 @@ import { Button } from '../../../../shared/components/Button';
 import { colors } from '../../../../shared/theme/colors';
 import { spacing, typography } from '../../../../shared/theme';
 import { t } from '../../../../shared/i18n/t';
+import { useUIStore } from '../../../../store/uiStore';
 
 const MOCK_SKILLS = ['سحب سيارات ثقيلة', 'مركبات خفيفة', 'دراجات نارية', 'مسافات طويلة'];
 
 export function TowSkillsScreen() {
   const navigation = useNavigation();
+  const toast = useUIStore((s) => s.toast);
   const [skills] = useState(MOCK_SKILLS);
 
   return (
@@ -29,8 +31,8 @@ export function TowSkillsScreen() {
           ))}
         </GlassCard>
         <Button
-          title="إضافة مهارة (بيانات تجريبية)"
-          onPress={() => {}}
+          title={t('tow.addSkill') ?? 'Add skill (demo)'}
+          onPress={() => toast({ type: 'info', message: t('common.comingSoon') ?? 'Coming soon.' })}
           variant="outline"
           fullWidth
           style={styles.addBtn}
@@ -42,7 +44,7 @@ export function TowSkillsScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  scroll: { padding: spacing.xl },
+  scroll: { padding: spacing.md },
   row: { paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border },
   skillText: { fontFamily: typography.fontFamily.medium, fontSize: typography.fontSize.body, color: colors.text },
   addBtn: { marginTop: spacing.lg },

@@ -31,6 +31,8 @@ function getStatusLabel(provider: Provider): string {
 
 function getStatusColor(provider: Provider): string {
   if (provider.displayStatus === 'busy') return colors.warning;
+  if (provider.displayStatus === 'on_the_way') return colors.info ?? '#0EA5E9';
+  if (provider.displayStatus === 'offline') return colors.textMuted;
   return colors.primary;
 }
 
@@ -81,7 +83,7 @@ export function ProviderCardContent({
 
   return (
     <>
-      <View style={[styles.card, { borderColor: theme.primary + '30', backgroundColor: colors.surface }]}>
+      <View style={[styles.card, { borderColor: theme.primary + '20', backgroundColor: colors.surface }]}>
         <View style={styles.cardInner}>
           <ProviderAvatar photoUri={provider.photo ?? provider.avatarUri ?? null} size={56} themeColor={theme.primary} />
           <View style={styles.info}>
@@ -101,6 +103,7 @@ export function ProviderCardContent({
                 {distanceKm < 1 ? `${(distanceKm * 1000).toFixed(0)} m away` : `${distanceKm.toFixed(1)} km away`}
               </Text>
             )}
+            <Text style={styles.availabilityLabel}>{t('map.availability') ?? 'Availability'}</Text>
             <View style={[styles.badge, { backgroundColor: provider.displayStatus === 'busy' ? colors.warningLight : colors.greenLight }]}>
               <Text style={[styles.badgeText, { color: getStatusColor(provider) }]}>{statusLabel}</Text>
             </View>
@@ -160,8 +163,9 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: radii.xl,
     borderWidth: 1,
-    padding: spacing.lg,
-    marginBottom: spacing.lg,
+    padding: spacing.md,
+    marginBottom: spacing.card,
+    ...shadows.sm,
   },
   cardInner: {
     flexDirection: 'row',
@@ -194,6 +198,12 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.caption,
     color: colors.textSecondary,
     marginBottom: spacing.sm,
+  },
+  availabilityLabel: {
+    fontFamily: typography.fontFamily.medium,
+    fontSize: typography.fontSize.caption,
+    color: colors.textSecondary,
+    marginBottom: spacing.xs / 2,
   },
   badge: {
     alignSelf: 'flex-start',
@@ -229,7 +239,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   actions: {
-    gap: spacing.sm,
+    gap: spacing.md,
   },
   actionRow: {
     flexDirection: 'row',

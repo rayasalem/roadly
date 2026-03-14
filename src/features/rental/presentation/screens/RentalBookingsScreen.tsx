@@ -15,7 +15,7 @@ export function RentalBookingsScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      <AppHeader title={t('rental.bookings')} onBack={() => navigation.goBack()} rightIcon="none" />
+      <AppHeader title={t('rental.bookings')} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} rightIcon="none" />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={[styles.empty, { backgroundColor: colors.surface }]}>
           <MaterialCommunityIcons name="calendar-clock" size={56} color={colors.textMuted} />
@@ -28,7 +28,7 @@ export function RentalBookingsScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  content: { flexGrow: 1, padding: spacing.lg, paddingTop: spacing.xl },
-  empty: { borderRadius: 16, padding: spacing.xxl, alignItems: 'center' },
+  content: { flexGrow: 1, padding: spacing.md, paddingTop: spacing.lg },
+  empty: { borderRadius: 16, padding: spacing.lg, alignItems: 'center' },
   emptyTitle: { fontFamily: typography.fontFamily.semibold, fontSize: typography.fontSize.body, marginTop: spacing.md },
 });

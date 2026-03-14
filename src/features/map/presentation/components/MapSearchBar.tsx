@@ -9,6 +9,7 @@ interface MapSearchBarProps {
   query: string;
   onQueryChange: (t: string) => void;
   onFocus?: () => void;
+  onVoicePress?: () => void;
   suggestions: Array<{ id: string; description: string; latitude: number; longitude: number }>;
   onSelectSuggestion: (p: { id: string; description: string; latitude: number; longitude: number }) => void;
   showSuggestions: boolean;
@@ -28,7 +29,7 @@ export function MapSearchBar(p: MapSearchBarProps) {
           onChangeText={p.onQueryChange}
           onFocus={p.onFocus}
         />
-        <TouchableOpacity style={styles.micButton}>
+        <TouchableOpacity style={styles.micButton} onPress={p.onVoicePress ?? (() => {})} accessible accessibilityLabel={t('map.voiceSearch') ?? 'Voice search'}>
           <MaterialCommunityIcons name="microphone" size={22} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>

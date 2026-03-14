@@ -28,7 +28,7 @@ export function TowJobHistoryScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  content: { flexGrow: 1, padding: spacing.lg, paddingTop: spacing.xl },
-  empty: { borderRadius: 16, padding: spacing.xxl, alignItems: 'center' },
+  content: { flexGrow: 1, padding: spacing.md, paddingTop: spacing.lg },
+  empty: { borderRadius: 16, padding: spacing.lg, alignItems: 'center' },
   emptyTitle: { fontFamily: typography.fontFamily.semibold, fontSize: typography.fontSize.body, marginTop: spacing.md },
 });

@@ -6,8 +6,23 @@ import type {
 } from '../domain/types';
 import { getRequestById, updateRequestStatus } from '../data/requestApi';
 import { isNetworkOrTimeoutError } from '../../../shared/services/http/errorMessage';
+import { MOCK_REQUESTS } from '../../../mock/mockRequests';
 
 const requestKey = (id: string) => ['request', id] as const;
+
+function mockToServiceRequest(m: import('../../../mock/mockRequests').MockRequest): ServiceRequest {
+  const now = m.createdAt ?? new Date().toISOString();
+  return {
+    id: m.id,
+    customerId: m.customerId,
+    providerId: m.providerId ?? null,
+    serviceType: m.service,
+    status: m.status,
+    origin: { latitude: m.customerLocation.latitude, longitude: m.customerLocation.longitude },
+    createdAt: now,
+    updatedAt: now,
+  };
+}
 
 export function useRequest(id: string | null) {
   const enabled = !!id;
@@ -20,10 +35,13 @@ export function useRequest(id: string | null) {
       try {
         return await getRequestById(id);
       } catch (error) {
+        const mock = MOCK_REQUESTS.find((r) => r.id === id);
+        if (mock) {
+          if (__DEV__) console.warn('[useRequest] API failed, using mock request', id);
+          return mockToServiceRequest(mock);
+        }
         if (isNetworkOrTimeoutError(error)) {
-          if (__DEV__) {
-            console.warn('[useRequest] Connection failed for request', id, error instanceof Error ? error.message : error);
-          }
+          if (__DEV__) console.warn('[useRequest] Connection failed for request', id);
           return null;
         }
         throw error;

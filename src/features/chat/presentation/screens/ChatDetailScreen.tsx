@@ -3,6 +3,7 @@
  */
 import React, { useCallback, useState } from 'react';
 import { View, StyleSheet, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -55,17 +56,33 @@ export function ChatDetailScreen() {
 
   if (!conversationId) {
     return (
-      <View style={styles.center}>
-        <AppText variant="body">{t('common.error')}</AppText>
-      </View>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+        <AppHeader title={name} onBack={() => navigation.goBack()} />
+        <View style={styles.center}><AppText variant="body">{t('common.error')}</AppText></View>
+      </SafeAreaView>
     );
   }
 
-  if (isLoading) return <LoadingSpinner />;
-  if (isError) return <ErrorWithRetry message="" onRetry={() => refetch()} />;
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+        <AppHeader title={name} onBack={() => navigation.goBack()} />
+        <View style={styles.center}><LoadingSpinner /></View>
+      </SafeAreaView>
+    );
+  }
+  if (isError) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+        <AppHeader title={name} onBack={() => navigation.goBack()} />
+        <View style={styles.center}><ErrorWithRetry message="" onRetry={() => refetch()} /></View>
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={80}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <KeyboardAvoidingView style={styles.keyboardWrap} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={80}>
       <AppHeader title={name} onBack={() => navigation.goBack()} />
       <FlatList
         data={messages}
@@ -97,14 +114,16 @@ export function ChatDetailScreen() {
           <MaterialCommunityIcons name="send" size={22} color={colors.primaryContrast} />
         </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl },
-  list: { padding: spacing.lg, paddingBottom: spacing.xl },
+  keyboardWrap: { flex: 1 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.md },
+  list: { padding: spacing.md, paddingBottom: spacing.lg },
   bubble: {
     maxWidth: '80%',
     padding: spacing.md,

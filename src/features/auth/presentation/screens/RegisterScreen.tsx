@@ -204,11 +204,11 @@ export function RegisterScreen({ navigation }: Props) {
               {error ? <AppText testID="register-error" variant="callout" style={styles.errorText}>{error}</AppText> : null}
 
               <View style={styles.actionRow}>
-                <TouchableOpacity style={styles.rememberRow} accessibilityRole="checkbox">
+                <TouchableOpacity style={styles.rememberRow} onPress={() => {}} accessibilityRole="checkbox">
                   <MaterialCommunityIcons name="checkbox-marked-outline" size={22} color={colors.primary} />
                   <AppText variant="callout" style={styles.rememberText}>{t('auth.rememberMe')}</AppText>
                 </TouchableOpacity>
-                <TouchableOpacity accessibilityRole="button">
+                <TouchableOpacity onPress={() => toast({ type: 'info', message: t('auth.login.forgotComingSoon') ?? 'Password reset coming soon.' })} accessibilityRole="button">
                   <AppText variant="callout" style={styles.forgotLink}>{t('auth.login.forgot')}</AppText>
                 </TouchableOpacity>
               </View>
@@ -230,13 +230,13 @@ export function RegisterScreen({ navigation }: Props) {
               <View style={styles.dividerLine} />
             </View>
             <View style={styles.socialRow}>
-              <TouchableOpacity style={styles.socialBtn} accessibilityRole="button" accessibilityLabel="Facebook">
+              <TouchableOpacity style={styles.socialBtn} onPress={() => toast({ type: 'info', message: t('common.comingSoon') ?? 'Coming soon.' })} accessibilityRole="button" accessibilityLabel="Facebook">
                 <MaterialCommunityIcons name="facebook" size={26} color="#1877F2" />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.socialBtn} accessibilityRole="button" accessibilityLabel="Google">
+              <TouchableOpacity style={styles.socialBtn} onPress={() => toast({ type: 'info', message: t('common.comingSoon') ?? 'Coming soon.' })} accessibilityRole="button" accessibilityLabel="Google">
                 <MaterialCommunityIcons name="google" size={26} color="#EA4335" />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.socialBtn} accessibilityRole="button" accessibilityLabel="Apple">
+              <TouchableOpacity style={styles.socialBtn} onPress={() => toast({ type: 'info', message: t('common.comingSoon') ?? 'Coming soon.' })} accessibilityRole="button" accessibilityLabel="Apple">
                 <MaterialCommunityIcons name="apple" size={26} color={colors.text} />
               </TouchableOpacity>
             </View>
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
-    paddingTop: spacing.xl,
+    paddingTop: spacing.lg,
     paddingBottom: spacing.sm,
     minHeight: 56,
   },
@@ -298,23 +298,23 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xxl,
-    paddingBottom: spacing.xxl,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.lg,
   },
   header: {
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    marginBottom: spacing.xs,
+    marginBottom: spacing.md,
   },
   title: {
     fontFamily: typography.fontFamily.bold,
-    fontSize: typography.presets.title.fontSize,
-    lineHeight: typography.presets.title.lineHeight,
+    fontSize: 24,
+    lineHeight: 30,
     color: colors.authTopDark,
   },
   subtitle: {
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   form: {
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
   },
   roleRow: {
     flexDirection: 'row',
@@ -423,7 +423,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: spacing.xl,
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
   },
   socialBtn: {
     width: 52,

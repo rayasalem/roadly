@@ -23,8 +23,8 @@ export function LaunchScreen({ navigation }: Props) {
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(logoOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
-      Animated.spring(logoScale, { toValue: 1, useNativeDriver: true, speed: 24, bounciness: 8 }),
+      Animated.timing(logoOpacity, { toValue: 1, duration: 400, useNativeDriver: false }),
+      Animated.spring(logoScale, { toValue: 1, useNativeDriver: false, speed: 24, bounciness: 8 }),
     ]).start();
   }, [logoOpacity, logoScale]);
 
@@ -98,8 +98,8 @@ const styles = StyleSheet.create({
   topSection: {
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xxl,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.lg,
   },
   carAccent: {
     position: 'absolute',
@@ -125,8 +125,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   bottomSection: {
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xxl,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.lg,
     gap: spacing.md,
   },
   primaryBtn: {
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     borderColor: 'transparent',
     paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.md,
     borderRadius: radii.lg,
     alignItems: 'center',
     justifyContent: 'center',
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   },
   secondaryBtn: {
     paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 52,

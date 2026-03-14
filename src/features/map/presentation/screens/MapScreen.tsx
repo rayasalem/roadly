@@ -69,12 +69,15 @@ export function MapScreen() {
   }, [customPinPosition, selectedPlace, coords]);
 
   useEffect(() => {
-    if (selectedPlace && mapRef.current) {
+    if (!selectedPlace || !mapRef.current) return;
+    const { latitude, longitude } = selectedPlace;
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+    try {
       mapRef.current.animateToRegion(
-        { latitude: selectedPlace.latitude, longitude: selectedPlace.longitude, latitudeDelta: 0.05, longitudeDelta: 0.05 },
+        { latitude, longitude, latitudeDelta: 0.05, longitudeDelta: 0.05 },
         300
       );
-    }
+    } catch (_) {}
   }, [selectedPlace]);
 
   const nearbyParams = useMemo(
@@ -113,14 +116,26 @@ export function MapScreen() {
     if (!coords || !mapRef.current) return;
     if (hasCenteredOnUser.current) return;
     hasCenteredOnUser.current = true;
-    mapRef.current.animateToRegion(toRegion(coords), 400);
+    try {
+      const reg = toRegion(coords);
+      if (Number.isFinite(reg.latitude) && Number.isFinite(reg.longitude)) {
+        mapRef.current.animateToRegion(reg, 400);
+      }
+    } catch (_) {
+      hasCenteredOnUser.current = false;
+    }
   }, [coords]);
 
   const handleUseCurrentLocation = useCallback(() => {
     setCustomPinPosition(null);
     clearSelection();
     if (coords && mapRef.current) {
-      mapRef.current.animateToRegion(toRegion(coords), 300);
+      try {
+        const reg = toRegion(coords);
+        if (Number.isFinite(reg.latitude) && Number.isFinite(reg.longitude)) {
+          mapRef.current.animateToRegion(reg, 300);
+        }
+      } catch (_) {}
     }
     if (coords) hasCenteredOnUser.current = false;
   }, [coords, clearSelection]);
@@ -128,11 +143,13 @@ export function MapScreen() {
   const handleDragPin = useCallback((latitude: number, longitude: number) => {
     setCustomPinPosition({ latitude, longitude });
     clearSelection();
-    if (mapRef.current) {
-      mapRef.current.animateToRegion(
-        { latitude, longitude, latitudeDelta: 0.05, longitudeDelta: 0.05 },
-        300
-      );
+    if (mapRef.current && Number.isFinite(latitude) && Number.isFinite(longitude)) {
+      try {
+        mapRef.current.animateToRegion(
+          { latitude, longitude, latitudeDelta: 0.05, longitudeDelta: 0.05 },
+          300
+        );
+      } catch (_) {}
     }
   }, [clearSelection]);
 
@@ -254,7 +271,37 @@ export function MapScreen() {
         onBack={() => navigation.goBack()}
         onRetry={() => fetchLocation()}
         onOpenSettings={Platform.OS === 'ios' || Platform.OS === 'android' ? () => Linking.openSettings() : undefined}
+        errorMessage={locationError}
       />
+    );
+  }
+
+  // While الموقع لسه بيُحمَّل لأول مرة، لا نرسم الـ MapView نهائياً لتفادي أي كراش محتمل من مكتبة الخرائط.
+  if (!coords && isLoading) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
+        <AppHeader
+          centerLogo
+          title={t('map.title')}
+          onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
+          rightIcon="calendar"
+          onRightPress={() => (navigation as any).navigate('Notifications')}
+        />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.md }}>
+          <LoadingSpinner />
+          <Text
+            style={{
+              marginTop: spacing.md,
+              fontFamily: typography.fontFamily.regular,
+              fontSize: typography.fontSize.body,
+              color: colors.textSecondary,
+              textAlign: 'center',
+            }}
+          >
+            {t('map.gettingLocation') ?? 'جاري تحديد موقعك…'}
+          </Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -291,6 +338,7 @@ export function MapScreen() {
       onUseCurrentLocation={isCustomer ? handleUseCurrentLocation : undefined}
       placeSuggestions={isCustomer ? suggestions : []}
       onSelectPlace={isCustomer ? selectPlace : undefined}
+      origin={effectiveCenter}
     />
   );
 
@@ -306,20 +354,22 @@ export function MapScreen() {
             {mapContainer}
           </View>
           <SafeAreaView style={localStyles.headerSafe} edges={['top']}>
-            <AppHeader centerLogo title={mapTitle} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} rightIcon="calendar" onRightPress={() => (navigation as any).navigate('Notifications')} />
+            <AppHeader
+              centerLogo
+              title={mapTitle}
+              onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
+              rightIcon="calendar"
+              onRightPress={() => (navigation as any).navigate('Notifications')}
+            />
           </SafeAreaView>
-          <BottomSheet
-            ref={customerSheetRef}
-            snapPoints={['25%', '50%', '90%']}
-            index={0}
-            enablePanDownToClose={false}
-            backgroundStyle={localStyles.sheetBg}
-            handleIndicatorStyle={localStyles.sheetHandle}
-          >
+          {/* Simplified native bottom card for stability on mobile (no BottomSheet dependency) */}
+          <View style={localStyles.sheetBg}>
             <View style={localStyles.sheetContent}>
               {isLoadingProviders ? (
                 <>
-                  <Text style={[localStyles.skeletonLabel, { color: colors.textSecondary }]}>{t('map.loadingProviders')}</Text>
+                  <Text style={[localStyles.skeletonLabel, { color: colors.textSecondary }]}>
+                    {t('map.loadingProviders')}
+                  </Text>
                   <Skeleton width="70%" height={20} radius={4} style={localStyles.skeletonBlock} />
                   <Skeleton width="50%" height={14} radius={4} style={localStyles.skeletonBlock} />
                   <Skeleton width="100%" height={48} radius={radii.lg} style={localStyles.skeletonBlock} />
@@ -329,9 +379,19 @@ export function MapScreen() {
                   <View style={localStyles.emptyIcon}>
                     <MaterialCommunityIcons name="map-marker-radius-outline" size={40} color={colors.textMuted} />
                   </View>
-                  <Text style={[localStyles.emptyTitle, { color: colors.text }]}>{t('map.noProviders')}</Text>
-                  <Text style={[localStyles.emptySubtitle, { color: colors.textSecondary }]}>{t('map.noProvidersSubtitle')}</Text>
-                  <Button title={t('common.retry')} onPress={() => refetchProviders()} fullWidth size="lg" style={localStyles.emptyButton} />
+                  <Text style={[localStyles.emptyTitle, { color: colors.text }]}>
+                    {t('map.noProviders')}
+                  </Text>
+                  <Text style={[localStyles.emptySubtitle, { color: colors.textSecondary }]}>
+                    {t('map.noProvidersSubtitle')}
+                  </Text>
+                  <Button
+                    title={t('common.retry')}
+                    onPress={() => refetchProviders()}
+                    fullWidth
+                    size="lg"
+                    style={localStyles.emptyButton}
+                  />
                 </>
               ) : displayProvider ? (
                 <ProviderCardContent
@@ -349,7 +409,7 @@ export function MapScreen() {
                 />
               ) : null}
             </View>
-          </BottomSheet>
+          </View>
           <MapDockWithFAB
             activeId={filterRoleToArcId(filterRole)}
             onArcIconPress={(id) => setFilter(arcIdToFilterRole(id))}
@@ -420,6 +480,8 @@ const localStyles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
+    // extra space so the bottom dock / nav does not overlap the "إنشاء طلب" / status area
+    paddingBottom: spacing.xl,
   },
   sheetHandle: {
     backgroundColor: colors.border,

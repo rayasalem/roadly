@@ -123,7 +123,7 @@ export function RequestScreen({ route, navigation }: Props) {
 
   const handleTab = useCallback(
     (tab: NavTabId) => {
-      if (tab === 'Home') navigation.navigate('Home');
+      if (tab === 'Home') navigation.navigate('Map');
       else if (tab === 'Profile') navigation.navigate('Profile');
       else if (tab === 'Chat') navigation.navigate('Chat');
       else if (tab === 'Notifications') navigation.navigate('Notifications');
@@ -146,10 +146,10 @@ export function RequestScreen({ route, navigation }: Props) {
   }
 
   return (
-    <ScreenWrapper>
+    <ScreenWrapper bottomNav={<BottomNavBar activeTab="Home" onSelect={handleTab} />}>
       <AppHeader
         title={t('request.title')}
-        onBack={() => navigation.goBack()}
+        onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
         onProfile={() => navigation.navigate('Profile')}
       />
       <ScreenFadeIn style={styles.fade}>
@@ -207,13 +207,13 @@ export function RequestScreen({ route, navigation }: Props) {
               onRatingChange={setRatingStars}
               onSubmitRating={handleSubmitRating}
               isSubmittingRating={rateMutation.isPending}
+              onViewTracking={(id) => navigation.navigate('LiveTracking', { requestId: id })}
             />
           </View>
         </ScrollView>
       </ScreenFadeIn>
 
       <RequestConfirmationModal visible={showConfirmation} onClose={handleCloseConfirmation} />
-      <BottomNavBar activeTab="Home" onSelect={handleTab} />
     </ScreenWrapper>
   );
 }
@@ -226,15 +226,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   container: {
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.md,
     paddingTop: spacing.lg,
-    paddingBottom: spacing.xl,
+    paddingBottom: spacing.lg,
   },
   fallbackContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.md,
   },
   subtitle: {
     fontFamily: typography.fontFamily.regular,
@@ -242,5 +242,5 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: spacing.lg,
   },
-  section: { marginBottom: spacing.xl },
+  section: { marginBottom: spacing.lg },
 });

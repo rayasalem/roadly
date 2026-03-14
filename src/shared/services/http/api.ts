@@ -5,7 +5,7 @@ import { createHttpClient } from './httpClient';
 import { httpEvents } from './httpEvents';
 import { useUIStore } from '../../../store/uiStore';
 
-if (typeof __DEV__ !== 'undefined' && __DEV__) {
+if (typeof __DEV__ !== 'undefined' && __DEV__ && typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_DEBUG_HTTP === '1') {
   console.info('[MechNow] API base URL:', API_BASE_URL);
 }
 

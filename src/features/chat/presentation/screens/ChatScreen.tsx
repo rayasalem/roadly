@@ -1,8 +1,9 @@
 /**
- * Chat list from GET /chat/conversations. Navigate to ChatDetail on row press.
+ * Chat list from GET /chat/conversations. FlatList for virtualized list rendering.
+ * Navigate to ChatDetail on row press.
  */
-import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useCallback, memo } from 'react';
+import { View, StyleSheet, FlatList, TouchableOpacity, ListRenderItem } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -15,7 +16,10 @@ import { ErrorWithRetry } from '../../../../shared/components/ErrorWithRetry';
 import { colors } from '../../../../shared/theme/colors';
 import { spacing, typography, radii, shadows } from '../../../../shared/theme';
 import { t } from '../../../../shared/i18n/t';
+import { useAuthStore } from '../../../../store/authStore';
+import { ROLES } from '../../../../shared/constants/roles';
 import { useChatConversations } from '../../hooks/useChatConversations';
+import type { ChatConversation } from '../../data/chatApi';
 import type { CustomerStackParamList } from '../../../../navigation/CustomerStack';
 import { safeNavigateToSettings } from '../../../../navigation/navigationRef';
 
@@ -31,72 +35,131 @@ function formatTimeAgo(iso: string): string {
   return t('notifications.yesterday');
 }
 
+const ChatRow = memo(function ChatRow({
+  item,
+  onPress,
+}: {
+  item: ChatConversation;
+  onPress: (id: string, name: string) => void;
+}) {
+  return (
+    <TouchableOpacity
+      style={styles.chatRow}
+      activeOpacity={0.85}
+      onPress={() => onPress(item.id, item.name)}
+    >
+      <View style={styles.chatAvatar}>
+        <MaterialCommunityIcons name="message-text-outline" size={22} color={colors.primary} />
+      </View>
+      <View style={styles.chatMain}>
+        <View style={styles.chatHeader}>
+          <AppText variant="body" weight="semibold" numberOfLines={1} style={styles.chatName}>{item.name}</AppText>
+          <AppText variant="caption" color={colors.textMuted}>{formatTimeAgo(item.lastAt)}</AppText>
+        </View>
+        <AppText variant="callout" color={colors.textSecondary} numberOfLines={2}>{item.lastMessage}</AppText>
+      </View>
+      {item.unread > 0 && (
+        <View style={styles.unreadBadge}>
+          <AppText variant="caption" weight="semibold" style={styles.unreadText}>{item.unread}</AppText>
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+});
+
 export function ChatScreen() {
   const navigation = useNavigation<Nav>();
+  const role = useAuthStore((s) => s.user?.role);
   const { conversations, isLoading, isError, refetch } = useChatConversations();
 
-  const handleTab = (tab: NavTabId) => {
-    if (tab === 'Home') navigation.navigate('Home');
-    if (tab === 'Profile') navigation.navigate('Profile');
-    if (tab === 'Notifications') navigation.navigate('Notifications');
+  const handleTab = useCallback((tab: NavTabId) => {
+    if (tab === 'Home') {
+      if (role === ROLES.ADMIN) (navigation as any).navigate('AdminDashboard');
+      else navigation.navigate('Map');
+      return;
+    }
+    if (tab === 'Profile') (navigation as any).navigate('Profile');
+    if (tab === 'Notifications') (navigation as any).navigate('Notifications');
     if (tab === 'Settings') safeNavigateToSettings(navigation);
-  };
+  }, [navigation, role]);
 
-  const handleOpenChat = (conversationId: string, name: string) => {
+  const handleOpenChat = useCallback((conversationId: string, name: string) => {
     navigation.navigate('ChatDetail', { conversationId, name });
-  };
+  }, [navigation]);
 
-  if (isLoading) return <LoadingSpinner />;
-  if (isError) return <ErrorWithRetry message="" onRetry={() => refetch()} />;
+  const renderItem: ListRenderItem<ChatConversation> = useCallback(
+    ({ item }) => <ChatRow item={item} onPress={handleOpenChat} />,
+    [handleOpenChat],
+  );
+
+  const keyExtractor = useCallback((item: ChatConversation) => item.id, []);
+
+  const listEmptyComponent = useCallback(
+    () => (
+      <View style={styles.empty}>
+        <AppText variant="body" color={colors.textMuted}>{t('notifications.empty')}</AppText>
+      </View>
+    ),
+    [],
+  );
+
+  const ItemSeparator = useCallback(() => <View style={styles.separator} />, []);
+
+  if (isLoading) {
+    return (
+      <ScreenWrapper bottomNav={<BottomNavBar activeTab="Chat" onSelect={handleTab} />}>
+        <AppHeader title={t('nav.chat')} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} onProfile={() => navigation.navigate('Profile')} />
+        <View style={styles.loadingWrap}><LoadingSpinner /></View>
+      </ScreenWrapper>
+    );
+  }
+  if (isError) {
+    return (
+      <ScreenWrapper bottomNav={<BottomNavBar activeTab="Chat" onSelect={handleTab} />}>
+        <AppHeader title={t('nav.chat')} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} onProfile={() => navigation.navigate('Profile')} />
+        <View style={styles.errorWrap}><ErrorWithRetry message="" onRetry={() => refetch()} /></View>
+      </ScreenWrapper>
+    );
+  }
 
   return (
-    <ScreenWrapper>
-      <AppHeader title={t('nav.chat')} onProfile={() => navigation.navigate('Profile')} />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {conversations.length === 0 ? (
-          <View style={styles.empty}>
-            <AppText variant="body" color={colors.textMuted}>{t('notifications.empty')}</AppText>
-          </View>
-        ) : (
-          conversations.map((conv) => (
-            <TouchableOpacity
-              key={conv.id}
-              style={styles.chatRow}
-              activeOpacity={0.85}
-              onPress={() => handleOpenChat(conv.id, conv.name)}
-            >
-              <View style={styles.chatAvatar}>
-                <MaterialCommunityIcons name="message-text-outline" size={22} color={colors.primary} />
-              </View>
-              <View style={styles.chatMain}>
-                <View style={styles.chatHeader}>
-                  <AppText variant="body" weight="semibold" numberOfLines={1} style={styles.chatName}>{conv.name}</AppText>
-                  <AppText variant="caption" color={colors.textMuted}>{formatTimeAgo(conv.lastAt)}</AppText>
-                </View>
-                <AppText variant="callout" color={colors.textSecondary} numberOfLines={2}>{conv.lastMessage}</AppText>
-              </View>
-              {conv.unread > 0 && (
-                <View style={styles.unreadBadge}>
-                  <AppText variant="caption" weight="semibold" style={styles.unreadText}>{conv.unread}</AppText>
-                </View>
-              )}
-            </TouchableOpacity>
-          ))
-        )}
-      </ScrollView>
-      <BottomNavBar activeTab="Chat" onSelect={handleTab} />
+    <ScreenWrapper bottomNav={<BottomNavBar activeTab="Chat" onSelect={handleTab} />}>
+      <AppHeader title={t('nav.chat')} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} onProfile={() => navigation.navigate('Profile')} />
+      <FlatList
+        data={conversations}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        ListEmptyComponent={listEmptyComponent}
+        ItemSeparatorComponent={ItemSeparator}
+        contentContainerStyle={conversations.length === 0 ? styles.scrollContentEmpty : styles.scrollContent}
+        style={styles.scroll}
+        showsVerticalScrollIndicator
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        removeClippedSubviews
+      />
     </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
+  scroll: { flex: 1 },
+  loadingWrap: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  errorWrap: { flex: 1, justifyContent: 'center', paddingHorizontal: spacing.md },
   scrollContent: {
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.md,
     paddingTop: spacing.lg,
     paddingBottom: spacing.xxxl,
-    gap: spacing.sm,
   },
-  empty: { padding: spacing.xxl, alignItems: 'center' },
+  scrollContentEmpty: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xxxl,
+    flexGrow: 1,
+  },
+  empty: { padding: spacing.lg, alignItems: 'center' },
+  separator: { height: spacing.sm },
   chatRow: {
     flexDirection: 'row',
     alignItems: 'center',

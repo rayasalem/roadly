@@ -1,8 +1,8 @@
 /**
  * Shared layout for list screens: loading, error with retry, empty state, or list content.
- * Keeps screens focused on data and list rendering only.
+ * Memoized to avoid unnecessary re-renders when parent updates.
  */
-import React from 'react';
+import React, { memo } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { LoadingSpinner } from './LoadingSpinner';
 import { ErrorWithRetry } from './ErrorWithRetry';
@@ -30,7 +30,7 @@ export interface ListScreenLayoutProps {
   style?: ViewStyle;
 }
 
-export function ListScreenLayout({
+function ListScreenLayoutInner({
   header,
   isLoading,
   isError,
@@ -61,6 +61,8 @@ export function ListScreenLayout({
     </>
   );
 }
+
+export const ListScreenLayout = memo(ListScreenLayoutInner);
 
 const styles = StyleSheet.create({
   body: { flex: 1 },

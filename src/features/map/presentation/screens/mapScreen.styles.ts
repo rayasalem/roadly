@@ -1,7 +1,7 @@
 import { spacing } from '../../../../shared/theme';
 
 export const mapScreenStyles = {
-  root: { flex: 1, backgroundColor: '#fff' as const },
+  root: { flex: 1, width: '100%', backgroundColor: '#fff' as const },
   greenCircle: {
     position: 'absolute' as const,
     top: -160,
@@ -13,8 +13,8 @@ export const mapScreenStyles = {
   },
   safeArea: {
     flex: 1,
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xl,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
     justifyContent: 'space-between' as const,
   },
 };

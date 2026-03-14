@@ -1,11 +1,12 @@
 /**
  * Lightweight animation configs and hooks using React Native Animated.
  * Use for button/card scale, screen fade-in, toast, list items.
- * On web, useNativeDriver is false to avoid "not supported" warnings.
+ * On web, useNativeDriver is false for layout/opacity/transform compatibility.
  */
 import { useEffect, useRef } from 'react';
 import { Animated, Platform } from 'react-native';
 
+/** false on web to avoid "native driver not supported" */
 const useNativeDriver = Platform.OS !== 'web';
 
 /** Spring config for press feedback (buttons, cards) — subtle, quick */
@@ -32,17 +33,17 @@ export const springMarker = {
 /** Scale down value on press */
 export const PRESS_SCALE = 0.97;
 
-/** Scale for list items (slightly less than button so cards feel softer) */
-export const LIST_ITEM_PRESS_SCALE = 0.98;
+/** Scale for list items (softer press, Turo-style) */
+export const LIST_ITEM_PRESS_SCALE = 0.985;
 
 /** Duration for fade-in (ms) */
 export const FADE_IN_DURATION = 320;
 
-/** Duration for toast enter (ms) */
-export const TOAST_ENTER_DURATION = 220;
+/** Duration for toast enter (ms) — smooth Turo-style slide */
+export const TOAST_ENTER_DURATION = 280;
 
 /** Duration for toast exit (ms) */
-export const TOAST_EXIT_DURATION = 200;
+export const TOAST_EXIT_DURATION = 220;
 
 /**
  * Returns animated values for a simple screen fade-in (opacity + slight translateY).

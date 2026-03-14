@@ -27,13 +27,16 @@ export type RentalStackParamList = {
 
 const Stack = createNativeStackNavigator<RentalStackParamList>();
 
+const screenOptions = {
+  headerShown: false,
+  contentStyle: { backgroundColor: colors.background },
+  animation: 'slide_from_right' as const,
+  gestureEnabled: true,
+  animationDuration: 200,
+};
+
 export const RentalStack = () => (
-  <Stack.Navigator
-    screenOptions={{
-      headerShown: false,
-      contentStyle: { backgroundColor: colors.background },
-    }}
-  >
+  <Stack.Navigator screenOptions={screenOptions}>
     <Stack.Screen name="RentalDashboard" component={RentalDashboardScreen} />
     <Stack.Screen name="RentalServices" component={RentalServicesScreen} />
     <Stack.Screen name="RentalSkills" component={RentalSkillsScreen} />

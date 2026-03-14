@@ -27,6 +27,13 @@ export function getServiceTypeEmoji(provider: Provider): string {
   return '🔧';
 }
 
+/** MaterialCommunityIcons name for service type: mechanic, tow, car rental. */
+export function getServiceTypeIconName(provider: Provider): 'wrench' | 'tow-truck' | 'car-side' {
+  if (provider.role === 'mechanic_tow') return 'tow-truck';
+  if (provider.role === 'car_rental') return 'car-side';
+  return 'wrench';
+}
+
 /** Escape for safe HTML in popup. */
 function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');

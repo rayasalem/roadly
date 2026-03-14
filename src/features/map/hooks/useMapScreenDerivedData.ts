@@ -26,10 +26,12 @@ export function useMapScreenDerivedData({
 }: MapScreenDerivedParams) {
   const origin = center ?? coords;
 
-  const region = useMemo(
-    () => (origin ? toRegion(origin) : toRegion(DEFAULT_MAP_CENTER)),
-    [origin?.latitude, origin?.longitude]
-  );
+  const region = useMemo(() => {
+    const center = origin && Number.isFinite(origin.latitude) && Number.isFinite(origin.longitude)
+      ? origin
+      : DEFAULT_MAP_CENTER;
+    return toRegion(center);
+  }, [origin?.latitude, origin?.longitude]);
   const routeCoordinates = useMemo(() => {
     const dest = selectedProvider ?? nearest;
     if (!origin || !dest?.location) return [];

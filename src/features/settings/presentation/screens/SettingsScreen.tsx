@@ -123,15 +123,16 @@ export function SettingsScreen() {
   };
 
   return (
-    <ScreenWrapper>
+    <ScreenWrapper bottomNav={<BottomNavBar activeTab="Settings" onSelect={handleTab} />}>
       <AppHeader
         title={t('nav.settings')}
-        onBack={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Profile')}
+        onBack={navigation.canGoBack() ? () => navigation.goBack() : () => navigation.navigate('Profile')}
         rightIcon="none"
       />
       <ScrollView
+        style={{ flex: 1 }}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator
       >
         {/* حساب المستخدم */}
         <View style={[styles.card, { backgroundColor: colors.surface }]}>
@@ -218,7 +219,6 @@ export function SettingsScreen() {
           <Text style={[styles.logoutBtnText, { color: colors.error }]}>{t('auth.logout')}</Text>
         </TouchableOpacity>
       </ScrollView>
-      <BottomNavBar activeTab="Settings" onSelect={handleTab} />
     </ScreenWrapper>
   );
 }
@@ -246,7 +246,7 @@ function SettingsRow({ item, onPress, colors }: RowProps) {
 
 const styles = StyleSheet.create({
   scrollContent: {
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.md,
     paddingTop: spacing.lg,
     paddingBottom: spacing.xxxl,
     gap: spacing.lg,
@@ -281,9 +281,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   sectionTitle: {
-    fontFamily: typography.fontFamily.medium,
-    fontSize: typography.fontSize.caption,
-    marginBottom: spacing.xs,
+    fontFamily: typography.fontFamily.semibold,
+    fontSize: 18,
+    lineHeight: 24,
+    marginBottom: spacing.md,
   },
   themeSection: { marginBottom: spacing.md },
   themeLabel: {

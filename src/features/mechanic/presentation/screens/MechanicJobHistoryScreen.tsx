@@ -101,14 +101,14 @@ export function MechanicJobHistoryScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  list: { padding: spacing.xl, paddingBottom: 40 },
+  list: { padding: spacing.md, paddingBottom: 40 },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: radii.lg,
     padding: spacing.md,
-    marginBottom: spacing.md,
+    marginBottom: spacing.card,
   },
   iconWrap: {
     width: 44,
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   },
   empty: {
     alignItems: 'center',
-    paddingVertical: spacing.xxl,
+    paddingVertical: spacing.lg,
   },
   emptyText: {
     fontFamily: typography.fontFamily.regular,

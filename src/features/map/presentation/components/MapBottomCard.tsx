@@ -103,7 +103,7 @@ export function MapBottomCard({
   }
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface }, shadows.sm]}>
+    <View style={[styles.card, { backgroundColor: colors.surface }]}>
       {isLoading && (
         <>
           <Text style={[styles.skeletonLabel, { color: colors.textSecondary }]}>{t('map.loadingProviders')}</Text>
@@ -135,21 +135,21 @@ export function MapBottomCard({
 
 const styles = StyleSheet.create({
   wrap: { marginTop: spacing.lg, marginHorizontal: 0 },
-  card: { marginTop: spacing.lg, padding: spacing.lg, borderRadius: radii.lg },
+  card: { marginTop: spacing.lg, padding: spacing.md, borderRadius: radii.xl, ...shadows.sm },
   requestCard: {},
-  requestRow: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md },
-  requestIconWrap: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginRight: spacing.md },
+  requestRow: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm },
+  requestIconWrap: { width: 48, height: 48, borderRadius: radii.lg, justifyContent: 'center', alignItems: 'center', marginRight: spacing.md },
   requestInfo: { flex: 1, minWidth: 0 },
   requestTitle: { fontFamily: typography.fontFamily.semibold, fontSize: typography.presets.body.fontSize, marginBottom: spacing.xs },
-  requestMeta: { fontFamily: typography.fontFamily.regular, fontSize: typography.presets.caption.fontSize },
+  requestMeta: { fontFamily: typography.fontFamily.regular, fontSize: typography.presets.caption.fontSize, marginBottom: spacing.xs },
   requestStatus: { fontFamily: typography.fontFamily.semibold, fontSize: typography.presets.caption.fontSize, marginTop: spacing.xs },
   requestBtn: { marginTop: spacing.sm },
   skeletonLabel: { fontFamily: typography.fontFamily.regular, fontSize: typography.fontSize.callout, marginBottom: spacing.sm },
   skeletonTitle: { marginBottom: spacing.sm },
-  skeletonSubtitle: { marginBottom: spacing.md },
+  skeletonSubtitle: { marginBottom: spacing.sm },
   skeletonButton: { marginTop: spacing.sm },
-  infoTitle: { fontFamily: typography.fontFamily.semibold, fontSize: typography.fontSize.body, marginBottom: spacing.xs },
-  infoSubtitle: { fontFamily: typography.fontFamily.regular, fontSize: typography.fontSize.callout, marginBottom: spacing.md },
+  infoTitle: { fontFamily: typography.fontFamily.semibold, fontSize: typography.fontSize.body, marginBottom: spacing.sm },
+  infoSubtitle: { fontFamily: typography.fontFamily.regular, fontSize: typography.fontSize.callout, marginBottom: spacing.sm },
   startButton: { marginTop: spacing.sm },
   emptyIconWrap: { marginBottom: spacing.sm, alignItems: 'center' },
 });

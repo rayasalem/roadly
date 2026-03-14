@@ -1,14 +1,16 @@
 /**
- * Tow dashboard: data from GET /dashboard/tow, client-side filter by status.
+ * Tow dashboard: data from GET /dashboard/tow, accept/reject via PATCH /requests/:id/status.
  */
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  fetchTowDashboard,
   type TowJob,
   type TowRequesterItem,
   type TowJobStatus,
 } from '../data/towDashboardApi';
+import { updateRequestStatus } from '../../requests/data/requestApi';
+import { MOCK_REQUESTS } from '../../../mock/mockRequests';
+import { MOCK_TOW_PROVIDERS } from '../../../mock/mockProviders';
 
 const QUERY_KEY = ['dashboard', 'tow'] as const;
 const STALE_TIME_MS = 60 * 1000;
@@ -16,38 +18,69 @@ const STALE_TIME_MS = 60 * 1000;
 export type { TowJobStatus, TowJob, TowRequesterItem };
 
 export function useTowDashboard() {
+  const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<TowJobStatus | 'all'>('all');
 
-  const {
-    data,
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useQuery({
-    queryKey: QUERY_KEY,
-    queryFn: fetchTowDashboard,
-    staleTime: STALE_TIME_MS,
-    retry: 2,
+  const mockJobs: TowJob[] = useMemo(
+    () =>
+      MOCK_REQUESTS.filter((r) => r.service === 'tow').map((r) => {
+        const provider = MOCK_TOW_PROVIDERS.find((p) => p.id === r.providerId);
+        const status: TowJobStatus = r.status === 'pending' ? 'queued' : 'active';
+        return {
+          id: r.id,
+          requestId: r.id,
+          title: provider?.name ?? 'طلب سحب',
+          distance: '2.1 كم',
+          vehicle: 'سيارة خاصة',
+          status,
+        } as TowJob;
+      }),
+    [],
+  );
+
+  const mockRequesters: TowRequesterItem[] = useMemo(
+    () =>
+      mockJobs.map((j, idx) => ({
+        id: `tow_req_${idx}`,
+        customerName: `زبون ونش ${idx + 1}`,
+        serviceType: 'tow',
+        time: 'قبل دقائق',
+        status: j.status,
+      })),
+    [mockJobs],
+  );
+
+  const acceptMutation = useMutation({
+    mutationFn: (requestId: string) =>
+      updateRequestStatus({ requestId, status: 'accepted' }),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: (requestId: string) =>
+      updateRequestStatus({ requestId, status: 'cancelled' }),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
   });
 
   const stats = useMemo(
-    () =>
-      data?.stats ?? {
-        active: 0,
-        waiting: 0,
-        fleet: 0,
-      },
-    [data?.stats],
+    () => ({
+      active: mockJobs.filter((j) => j.status === 'active').length,
+      waiting: mockJobs.filter((j) => j.status === 'queued').length,
+      fleet: MOCK_TOW_PROVIDERS.length,
+    }),
+    [mockJobs],
   );
 
   const jobs = useMemo(() => {
-    const list = data?.jobs ?? [];
+    const list = mockJobs;
     if (statusFilter === 'all') return list;
     return list.filter((j) => j.status === statusFilter);
-  }, [data?.jobs, statusFilter]);
+  }, [mockJobs, statusFilter]);
 
-  const requesters = useMemo(() => data?.requesters ?? [], [data?.requesters]);
+  const requesters = useMemo(() => mockRequesters, [mockRequesters]);
+
+  const acceptJob = (requestId: string) => acceptMutation.mutateAsync(requestId);
+  const rejectJob = (requestId: string) => rejectMutation.mutateAsync(requestId);
 
   return {
     stats,
@@ -55,9 +88,13 @@ export function useTowDashboard() {
     requesters,
     statusFilter,
     setStatusFilter,
-    isLoading,
-    isError,
-    error: error instanceof Error ? error : null,
-    refetch,
+    isLoading: false,
+    isError: false,
+    error: null,
+    refetch: () => Promise.resolve(),
+    acceptJob,
+    rejectJob,
+    isAccepting: acceptMutation.isPending,
+    isRejecting: rejectMutation.isPending,
   };
 }

@@ -5,6 +5,9 @@ const config = getDefaultConfig(__dirname);
 
 const projectRoot = __dirname;
 
+// Avoid resolution/transform errors on web (e.g. .mjs/.cjs deps)
+config.resolver.sourceExts = [...(config.resolver.sourceExts || []), 'mjs', 'cjs'];
+
 // Ensure react-native-reanimated is resolvable from @gorhom/bottom-sheet (native bundle)
 const reanimatedPath = path.resolve(projectRoot, 'node_modules', 'react-native-reanimated');
 config.resolver.extraNodeModules = { ...config.resolver.extraNodeModules, 'react-native-reanimated': reanimatedPath };

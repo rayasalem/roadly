@@ -209,6 +209,7 @@ export function QuickRequestForm({
       <View style={[styles.footer, { backgroundColor: colors.background }]}>
         <Button
           testID="request-confirm"
+          variant="uber"
           title={t('request.requestNow')}
           onPress={onCreateRequest}
           disabled={isCreating}

@@ -9,6 +9,7 @@ import { Animated, Pressable, View, StyleSheet, ViewStyle } from 'react-native';
 import { colors } from '../theme/colors';
 import { spacing, radii, shadows } from '../theme';
 import { springPress, PRESS_SCALE } from '../utils/animations';
+import { HIT_SLOP_DEFAULT } from '../constants/ux';
 
 export type CardElevation = 'none' | 'sm' | 'md' | 'lg';
 export type CardPadding = 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | 'xxxl';
@@ -41,12 +42,15 @@ const radiusMap: Record<CardRadius, number> = {
   xl: radii.xl,
 };
 
+/** Default radius for modern card look */
+const DEFAULT_CARD_RADIUS: CardRadius = 'xl';
+
 export const Card = React.memo(function Card({
   children,
   variant = 'elevated',
   elevation: elevationProp,
   padding = 'lg',
-  radius = 'lg',
+  radius = DEFAULT_CARD_RADIUS,
   onPress,
   style,
 }: CardProps) {
@@ -67,7 +71,7 @@ export const Card = React.memo(function Card({
   const radiusVal = radiusMap[radius];
   const cardStyle: ViewStyle[] = [
     styles.base,
-    { borderRadius: radiusVal, padding: paddingVal },
+    { borderRadius: radiusVal, padding: paddingVal, marginVertical: 10 },
     variant === 'elevated' && elevation !== 'none' && shadows[elevation],
     variant === 'outlined' && styles.outlined,
     style,
@@ -78,6 +82,7 @@ export const Card = React.memo(function Card({
       <Animated.View style={{ transform: [{ scale }] }}>
         <Pressable
           style={cardStyle}
+          hitSlop={HIT_SLOP_DEFAULT}
           onPress={onPress}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}

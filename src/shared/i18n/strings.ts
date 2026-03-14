@@ -21,6 +21,7 @@ export type StringKey =
   | 'auth.login.placeholder.email'
   | 'auth.login.placeholder.password'
   | 'common.notImplemented'
+  | 'common.comingSoon'
   | 'common.loading'
   | 'common.error'
   | 'home.title'
@@ -48,6 +49,7 @@ export type StringKey =
   | 'auth.login.subtitle'
   | 'auth.register.subtitle'
   | 'auth.login.forgot'
+  | 'auth.login.forgotComingSoon'
   | 'auth.noAccount'
   | 'auth.hasAccount'
   | 'auth.error.required'
@@ -163,6 +165,7 @@ export type StringKey =
   | 'customer.favoritesEmptySubtitle'
   | 'customer.helpSupport'
   | 'customer.faq'
+  | 'customer.faqComingSoon'
   | 'customer.contactUs'
   | 'tow.requests'
   | 'tow.jobHistory'
@@ -174,6 +177,10 @@ export type StringKey =
   | 'admin.reports'
   | 'admin.systemSettings'
   | 'home.startJourney'
+  | 'home.heroTitle'
+  | 'home.pickupLabel'
+  | 'home.serviceTypeLabel'
+  | 'home.ctaSeePrices'
   | 'home.pickupPlaceholder'
   | 'home.destinationPlaceholder'
   | 'home.nearestLocations'
@@ -226,6 +233,9 @@ export type StringKey =
   | 'map.loadingProviders'
   | 'map.showingCachedData'
   | 'map.gettingLocation'
+  | 'map.voiceSearch'
+  | 'map.webNotSupported'
+  | 'map.webMapLoadFailed'
   | 'mechanic.stats.jobsToday'
   | 'mechanic.stats.onTheWay'
   | 'mechanic.stats.rating'
@@ -325,10 +335,43 @@ export type StringKey =
   | 'mechanic.noJobs'
   | 'mechanic.jobHistory'
   | 'mechanic.noJobHistory'
+  | 'mechanic.viewRequestOnMap'
+  | 'tow.stats.newRequests'
+  | 'tow.stats.activeRequests'
+  | 'tow.stats.completedJobs'
+  | 'rental.stats.newRequests'
+  | 'rental.stats.activeRequests'
+  | 'rental.stats.completedJobs'
+  | 'tow.viewRequestOnMap'
+  | 'rental.viewRequestOnMap'
   | 'tow.noJobs'
   | 'tow.declined'
   | 'tow.accepted'
   | 'rental.noVehicles'
+  | 'rental.addCarTitle'
+  | 'rental.editCarTitle'
+  | 'rental.manageCarSubtitle'
+  | 'rental.carNamePlaceholder'
+  | 'rental.carModelPlaceholder'
+  | 'rental.yearPlaceholder'
+  | 'rental.pricePlaceholder'
+  | 'rental.descriptionPlaceholder'
+  | 'rental.photoUrlPlaceholder'
+  | 'rental.carImageLabel'
+  | 'rental.transmissionLabel'
+  | 'rental.transmissionAutomatic'
+  | 'rental.transmissionManual'
+  | 'rental.seatsLabel'
+  | 'rental.seatsPlaceholder'
+  | 'rental.deleteCarTitle'
+  | 'rental.deleteCarConfirm'
+  | 'rental.missingRequiredFields'
+  | 'rental.pricePerDay'
+  | 'rental.unnamedCar'
+  | 'rental.addCarHint'
+  | 'common.save'
+  | 'common.delete'
+  | 'common.missingFieldsTitle'
   | 'home.requestHelpNow'
   | 'request.confirmHint'
   | 'request.sentTitle'
@@ -357,6 +400,7 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'auth.login.placeholder.email': 'email@example.com',
     'auth.login.placeholder.password': 'Password',
     'common.notImplemented': 'Not implemented yet.',
+    'common.comingSoon': 'Coming soon.',
     'common.loading': 'Loading…',
     'common.error': 'Something went wrong.',
     'home.title': 'Home',
@@ -384,6 +428,7 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'auth.login.subtitle': 'Use your account to continue.',
     'auth.register.subtitle': 'Create an account to get started.',
     'auth.login.forgot': 'Forgot password?',
+    'auth.login.forgotComingSoon': 'Password reset coming soon.',
     'auth.noAccount': "Don't have an account?",
     'auth.hasAccount': 'Already have an account?',
     'auth.error.required': 'Please enter email and password.',
@@ -500,6 +545,7 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'customer.favoritesEmptySubtitle': 'Save providers from the map to request them faster.',
     'customer.helpSupport': 'Help & Support',
     'customer.faq': 'FAQ',
+    'customer.faqComingSoon': 'FAQ coming soon.',
     'customer.contactUs': 'Contact us',
     'tow.requests': 'Requests',
     'tow.jobHistory': 'Job history',
@@ -512,6 +558,10 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'admin.systemSettings': 'System settings',
     'settings.appearance': 'Appearance',
     'home.startJourney': 'Start Your Journey',
+    'home.heroTitle': 'Go anywhere with Roadly',
+    'home.pickupLabel': 'Pickup now',
+    'home.serviceTypeLabel': 'Service type',
+    'home.ctaSeePrices': 'See prices',
     'home.pickupPlaceholder': 'Choose Pickup Point',
     'home.destinationPlaceholder': 'Choose Destination',
     'home.nearestLocations': 'Nearest Locations',
@@ -552,9 +602,15 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'map.openSettings': 'Open Settings',
     'map.loadingProviders': 'Loading providers…',
     'map.gettingLocation': 'Getting your location…',
+    'map.voiceSearch': 'Voice search',
+    'map.webNotSupported': 'Native map is available on mobile only. Use the in-app map on web.',
+    'map.webMapLoadFailed': 'Map could not load (e.g. blocked by tracking prevention). Try disabling it for this site or use another browser.',
     'mechanic.stats.jobsToday': 'Jobs today',
     'mechanic.stats.onTheWay': 'On the way',
     'mechanic.stats.rating': 'Rating',
+    'mechanic.stats.newRequests': 'New requests',
+    'mechanic.stats.activeRequests': 'Active requests',
+    'mechanic.stats.completedJobs': 'Completed jobs',
     'mechanic.activeRequests': 'Active requests',
     'mechanic.accept': 'Accept',
     'mechanic.decline': 'Decline',
@@ -651,12 +707,45 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'mechanic.noJobs': 'No jobs yet. New requests will appear here when customers need help.',
     'mechanic.jobHistory': 'Job history',
     'mechanic.noJobHistory': 'No completed jobs yet.',
+    'mechanic.viewRequestOnMap': 'View requests on map',
+    'tow.stats.newRequests': 'New requests',
+    'tow.stats.activeRequests': 'Active requests',
+    'tow.stats.completedJobs': 'Completed jobs',
+    'rental.stats.newRequests': 'New requests',
+    'rental.stats.activeRequests': 'Active requests',
+    'rental.stats.completedJobs': 'Completed jobs',
+    'tow.viewRequestOnMap': 'View on map',
+    'rental.viewRequestOnMap': 'View on map',
     'mechanic.availability': 'Availability',
     'mechanic.unavailable': 'Offline',
     'tow.noJobs': 'No tow jobs yet. New requests will appear here.',
     'tow.declined': 'Request declined.',
     'tow.accepted': 'Request accepted.',
     'rental.noVehicles': 'No vehicles listed yet. Add vehicles or wait for bookings.',
+    'rental.addCarTitle': 'Add car',
+    'rental.editCarTitle': 'Edit car',
+    'rental.manageCarSubtitle': 'Enter details exactly as customers will see them in the app.',
+    'rental.carNamePlaceholder': 'Car name (e.g. Toyota Corolla)',
+    'rental.carModelPlaceholder': 'Model / trim (e.g. XLE)',
+    'rental.yearPlaceholder': 'Year',
+    'rental.pricePlaceholder': 'Price per day (e.g. 150)',
+    'rental.descriptionPlaceholder': 'Short description (condition, mileage, etc.)',
+    'rental.photoUrlPlaceholder': 'Image URL (e.g. https://…)',
+    'rental.carImageLabel': 'Car image',
+    'rental.transmissionLabel': 'Transmission',
+    'rental.transmissionAutomatic': 'Automatic',
+    'rental.transmissionManual': 'Manual',
+    'rental.seatsLabel': 'Number of seats',
+    'rental.seatsPlaceholder': 'e.g. 5',
+    'rental.deleteCarTitle': 'Delete car',
+    'rental.deleteCarConfirm': 'Are you sure you want to remove this car from your fleet?',
+    'rental.missingRequiredFields': 'Please fill in at least name, model, year, and price per day.',
+    'rental.pricePerDay': 'per day',
+    'rental.unnamedCar': 'Unnamed car',
+    'rental.addCarHint': 'Add cars to your fleet so customers can request and book them.',
+    'common.save': 'Save',
+    'common.delete': 'Delete',
+    'common.missingFieldsTitle': 'Missing information',
     'home.requestHelpNow': 'Request help now',
     'request.confirmHint': 'Tap the button below to send your request. A provider will be notified.',
     'request.sentTitle': 'Request sent',
@@ -684,6 +773,7 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'auth.login.placeholder.email': 'email@example.com',
     'auth.login.placeholder.password': 'كلمة المرور',
     'common.notImplemented': 'غير متوفر حالياً.',
+    'common.comingSoon': 'قريباً.',
     'common.loading': 'جاري التحميل…',
     'common.error': 'حدث خطأ.',
     'home.title': 'الرئيسية',
@@ -711,6 +801,7 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'auth.login.subtitle': 'استخدم حسابك للمتابعة.',
     'auth.register.subtitle': 'أنشئ حساباً للبدء.',
     'auth.login.forgot': 'نسيت كلمة المرور؟',
+    'auth.login.forgotComingSoon': 'استعادة كلمة المرور قريباً.',
     'auth.noAccount': 'ليس لديك حساب؟',
     'auth.hasAccount': 'لديك حساب بالفعل؟',
     'auth.error.required': 'يرجى إدخال البريد وكلمة المرور.',
@@ -825,6 +916,7 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'customer.favoritesEmptySubtitle': 'احفظ المزودين من الخريطة لطلبهم بسرعة.',
     'customer.helpSupport': 'المساعدة والدعم',
     'customer.faq': 'الأسئلة الشائعة',
+    'customer.faqComingSoon': 'الأسئلة الشائعة قريباً.',
     'customer.contactUs': 'تواصل معنا',
     'tow.requests': 'الطلبات',
     'tow.jobHistory': 'سجل المهام',
@@ -842,6 +934,10 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'rental.noHistory': 'لا يوجد سجل تأجير بعد.',
     'settings.appearance': 'المظهر',
     'home.startJourney': 'ابدأ رحلتك',
+    'home.heroTitle': 'اذهب لأي مكان مع Roadly',
+    'home.pickupLabel': 'موقعك الآن',
+    'home.serviceTypeLabel': 'نوع الخدمة',
+    'home.ctaSeePrices': 'عرض الخريطة',
     'home.pickupPlaceholder': 'اختر نقطة الانطلاق',
     'home.destinationPlaceholder': 'اختر الوجهة',
     'home.nearestLocations': 'أقرب المواقع',
@@ -894,9 +990,15 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'map.loadingProviders': 'جاري تحميل المزودين…',
     'map.showingCachedData': 'عرض مواقع مزودين من الذاكرة المؤقتة.',
     'map.gettingLocation': 'جاري تحديد موقعك…',
+    'map.voiceSearch': 'بحث صوتي',
+    'map.webNotSupported': 'الخريطة الأصلية متاحة فقط على الموبايل. استخدم الخريطة داخل التطبيق على الويب.',
+    'map.webMapLoadFailed': 'لم تُحمَّل الخريطة (مثلاً بسبب منع التتبع). جرّب تعطيله لهذا الموقع أو استخدم متصفحاً آخر.',
     'mechanic.stats.jobsToday': 'مهام اليوم',
     'mechanic.stats.onTheWay': 'في الطريق',
     'mechanic.stats.rating': 'التقييم',
+    'mechanic.stats.newRequests': 'طلبات جديدة',
+    'mechanic.stats.activeRequests': 'طلبات نشطة',
+    'mechanic.stats.completedJobs': 'طلبات مكتملة',
     'mechanic.activeRequests': 'الطلبات النشطة',
     'mechanic.accept': 'قبول',
     'mechanic.decline': 'رفض',
@@ -993,12 +1095,45 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'mechanic.noJobs': 'لا توجد مهام بعد. ستظهر الطلبات هنا عندما يحتاج العملاء مساعدة.',
     'mechanic.jobHistory': 'سجل المهام',
     'mechanic.noJobHistory': 'لا توجد مهام مكتملة بعد.',
+    'mechanic.viewRequestOnMap': 'عرض الطلبات على الخريطة',
+    'tow.stats.newRequests': 'طلبات جديدة',
+    'tow.stats.activeRequests': 'طلبات نشطة',
+    'tow.stats.completedJobs': 'طلبات مكتملة',
+    'rental.stats.newRequests': 'طلبات جديدة',
+    'rental.stats.activeRequests': 'طلبات نشطة',
+    'rental.stats.completedJobs': 'طلبات مكتملة',
+    'tow.viewRequestOnMap': 'عرض على الخريطة',
+    'rental.viewRequestOnMap': 'عرض على الخريطة',
     'mechanic.availability': 'الحالة',
     'mechanic.unavailable': 'غير متاح',
     'tow.noJobs': 'لا توجد مهام ونش بعد. ستظهر الطلبات هنا.',
     'tow.declined': 'تم رفض الطلب.',
     'tow.accepted': 'تم قبول الطلب.',
     'rental.noVehicles': 'لا توجد مركبات بعد. أضف مركبات أو انتظر الحجوزات.',
+    'rental.addCarTitle': 'إضافة سيارة',
+    'rental.editCarTitle': 'تعديل السيارة',
+    'rental.manageCarSubtitle': 'أدخل البيانات كما سيراها العملاء في التطبيق.',
+    'rental.carNamePlaceholder': 'اسم السيارة (مثلاً تويوتا كورولا)',
+    'rental.carModelPlaceholder': 'الموديل / الفئة (مثلاً XLE)',
+    'rental.yearPlaceholder': 'سنة الصنع',
+    'rental.pricePlaceholder': 'السعر لليوم (مثلاً 150)',
+    'rental.descriptionPlaceholder': 'وصف مختصر (الحالة، الكيلومترات، إلخ)',
+    'rental.photoUrlPlaceholder': 'رابط صورة السيارة (مثلاً https://…)',
+    'rental.carImageLabel': 'صورة السيارة',
+    'rental.transmissionLabel': 'ناقل الحركة',
+    'rental.transmissionAutomatic': 'أوتوماتيك',
+    'rental.transmissionManual': 'يدوي',
+    'rental.seatsLabel': 'عدد المقاعد',
+    'rental.seatsPlaceholder': 'مثلاً 5',
+    'rental.deleteCarTitle': 'حذف السيارة',
+    'rental.deleteCarConfirm': 'هل أنت متأكد من إزالة هذه السيارة من أسطولك؟',
+    'rental.missingRequiredFields': 'يرجى تعبئة الاسم، الموديل، السنة، والسعر لليوم على الأقل.',
+    'rental.pricePerDay': 'لليوم',
+    'rental.unnamedCar': 'سيارة بدون اسم',
+    'rental.addCarHint': 'أضف سيارات لأسطولك ليقوم العملاء بطلبها وحجزها.',
+    'common.save': 'حفظ',
+    'common.delete': 'حذف',
+    'common.missingFieldsTitle': 'معلومات ناقصة',
     'home.requestHelpNow': 'طلب مساعدة الآن',
     'request.confirmHint': 'اضغط الزر أدناه لإرسال طلبك. سيتم إخطار أحد المزودين.',
     'request.sentTitle': 'تم إرسال الطلب',

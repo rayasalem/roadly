@@ -54,8 +54,8 @@ export const StatusBadge = React.memo(function StatusBadge({
     if (!pulse) return;
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(anim, { toValue: 1.08, useNativeDriver: true, duration: 600 }),
-        Animated.timing(anim, { toValue: 1, useNativeDriver: true, duration: 600 }),
+        Animated.timing(anim, { toValue: 1.08, useNativeDriver: false, duration: 600 }),
+        Animated.timing(anim, { toValue: 1, useNativeDriver: false, duration: 600 }),
       ])
     );
     loop.start();

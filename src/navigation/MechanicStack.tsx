@@ -23,13 +23,16 @@ export type MechanicStackParamList = {
 
 const Stack = createNativeStackNavigator<MechanicStackParamList>();
 
+const screenOptions = {
+  headerShown: false,
+  contentStyle: { backgroundColor: colors.background },
+  animation: 'slide_from_right' as const,
+  gestureEnabled: true,
+  animationDuration: 200,
+};
+
 export const MechanicStack = () => (
-  <Stack.Navigator
-    screenOptions={{
-      headerShown: false,
-      contentStyle: { backgroundColor: colors.background },
-    }}
-  >
+  <Stack.Navigator screenOptions={screenOptions}>
     <Stack.Screen name="MechanicDashboard" component={MechanicDashboardScreen} />
     <Stack.Screen name="MechanicServices" component={MechanicServicesScreen} />
     <Stack.Screen name="MechanicSkills" component={MechanicSkillsScreen} />

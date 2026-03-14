@@ -47,6 +47,9 @@ export function RootNavigator() {
         headerStyle: { backgroundColor: colors.surface },
         headerTintColor: colors.text,
         headerTitleStyle: { fontWeight: '600' },
+        animation: 'slide_from_right',
+        gestureEnabled: true,
+        animationDuration: 200,
       }}
     >
       <Stack.Screen

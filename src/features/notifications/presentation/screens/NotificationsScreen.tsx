@@ -11,6 +11,8 @@ import { colors } from '../../../../shared/theme/colors';
 import { spacing, typography, radii, shadows } from '../../../../shared/theme';
 import { t } from '../../../../shared/i18n/t';
 import { usePressScaleAnimation } from '../../../../shared/utils/animations';
+import { useAuthStore } from '../../../../store/authStore';
+import { ROLES } from '../../../../shared/constants/roles';
 import { useNotifications, type Notification } from '../../hooks/useNotifications';
 import { safeNavigateToSettings } from '../../../../navigation/navigationRef';
 
@@ -65,6 +67,7 @@ const NotificationCard = memo(function NotificationCard({
 
 export function NotificationsScreen() {
   const navigation = useNavigation<any>();
+  const role = useAuthStore((s) => s.user?.role);
   const {
     notifications,
     isLoading,
@@ -76,11 +79,15 @@ export function NotificationsScreen() {
   } = useNotifications();
 
   const handleTab = useCallback((tab: NavTabId) => {
-    if (tab === 'Home') navigation.navigate('Home');
+    if (tab === 'Home') {
+      if (role === ROLES.ADMIN) navigation.navigate('AdminDashboard');
+      else navigation.navigate('Map');
+      return;
+    }
     if (tab === 'Chat') navigation.navigate('Chat');
-    if (tab === 'Profile') navigation.navigate('Profile');
-    if (tab === 'Settings') safeNavigateToSettings(navigation);
-  }, [navigation]);
+    else if (tab === 'Profile') navigation.navigate('Profile');
+    else if (tab === 'Settings') safeNavigateToSettings(navigation);
+  }, [navigation, role]);
 
   const handleNotificationPress = useCallback(
     (item: Notification) => {
@@ -118,12 +125,13 @@ export function NotificationsScreen() {
         initialNumToRender={10}
         maxToRenderPerBatch={10}
         windowSize={5}
+        removeClippedSubviews
       />
     </ScreenFadeIn>
   );
 
   return (
-    <ScreenWrapper>
+    <ScreenWrapper bottomNav={<BottomNavBar activeTab="Notifications" onSelect={handleTab} />}>
       <ListScreenLayout
         header={header}
         isLoading={isLoading}
@@ -132,7 +140,6 @@ export function NotificationsScreen() {
         errorMessage={error?.message ?? t('error.network')}
         isEmpty={notifications.length === 0}
         emptyState={emptyState}
-        bottomNav={<BottomNavBar activeTab="Notifications" onSelect={handleTab} />}
         style={styles.fadeWrap}
       >
         {listContent}
@@ -144,7 +151,7 @@ export function NotificationsScreen() {
 const styles = StyleSheet.create({
   fadeWrap: { flex: 1 },
   scrollContent: {
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.md,
     paddingTop: spacing.lg,
     paddingBottom: spacing.xxxl,
     gap: spacing.sm,

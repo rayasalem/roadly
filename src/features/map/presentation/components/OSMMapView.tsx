@@ -10,10 +10,13 @@ import { colors } from '../../../../shared/theme/colors';
 import { typography } from '../../../../shared/theme';
 import { t } from '../../../../shared/i18n/t';
 import { getMarkerColorByStatus, buildProviderPopupHtml } from '../../utils/mapMarkerUtils';
+import { LEAFLET_CRITICAL_CSS } from '../../leafletCriticalCss';
 
-const LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-const LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
 const OSM_TILES = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+const LEAFLET_STYLE_ID = 'mechnow-leaflet-inline-css';
+/** Load Leaflet from CDN (avoid bundling; inline CSS used to avoid Tracking Prevention block) */
+const LEAFLET_JS_CDN = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js';
+const LEAFLET_JS_CDN_FALLBACK = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js';
 /** Cap markers for performance on large provider lists */
 const MAX_MARKERS = 150;
 
@@ -41,11 +44,60 @@ function OSMMapViewInner({
   const mapRef = useRef<{ setView: (latlng: [number, number], zoom: number) => void; remove?: () => void } | null>(null);
   const markersRef = useRef<unknown[]>([]);
   const onProviderPressRef = useRef(onProviderPress);
-  const [mapReady, setMapReady] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [leafletReady, setLeafletReady] = useState(false);
   onProviderPressRef.current = onProviderPress;
 
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+
+    // Inject Leaflet CSS from bundle (no CDN = no Tracking Prevention block)
+    if (!document.getElementById(LEAFLET_STYLE_ID)) {
+      const style = document.createElement('style');
+      style.id = LEAFLET_STYLE_ID;
+      style.textContent = LEAFLET_CRITICAL_CSS;
+      document.head.appendChild(style);
+    }
+
+    type LType = {
+      map: (el: HTMLElement, o?: object) => { setView: (latlng: [number, number], zoom: number) => void; remove?: () => void };
+      tileLayer: (url: string, o?: object) => { addTo: (m: unknown) => unknown };
+      marker: (latlng: [number, number], o?: object) => { addTo: (m: unknown) => unknown; bindPopup: (html: string, o?: object) => unknown; on: (e: string, fn: () => void) => unknown };
+      circleMarker: (latlng: [number, number], o?: object) => { addTo: (m: unknown) => unknown };
+      divIcon?: (o: object) => unknown;
+    };
+
+    function initMap(L: LType) {
+      const el = containerRef.current;
+      if (!el) return;
+      const map = L.map(el, {
+        center: [center.latitude, center.longitude],
+        zoom: 14,
+        zoomControl: true,
+        dragging: true,
+        scrollWheelZoom: true,
+      }) as { setView: (latlng: [number, number], zoom: number) => void; remove?: () => void };
+      mapRef.current = map;
+      L.tileLayer(OSM_TILES, { attribution: '© OpenStreetMap' }).addTo(map);
+    }
+
+    const runInit = (L: LType) => {
+      setLoadError(null);
+      initMap(L);
+      setLeafletReady(true);
+    };
+
+    const tryInitFromWindow = () => {
+      const L = (window as unknown as { L?: LType }).L;
+      if (L && typeof L.map === 'function') {
+        runInit(L);
+        return true;
+      }
+      return false;
+    };
+
+    if (tryInitFromWindow()) return;
+
     const loadScript = (src: string): Promise<void> =>
       new Promise((resolve, reject) => {
         if (document.querySelector(`script[src="${src}"]`)) {
@@ -58,37 +110,21 @@ function OSMMapViewInner({
         s.onerror = () => reject(new Error('Leaflet load failed'));
         document.head.appendChild(s);
       });
-    const loadCss = (href: string): void => {
-      if (document.querySelector(`link[href="${href}"]`)) return;
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = href;
-      document.head.appendChild(link);
-    };
-    loadCss(LEAFLET_CSS);
-    const L = (window as unknown as { L?: unknown }).L;
-    if (L && typeof (L as { map: (el: HTMLElement, o?: object) => unknown }).map === 'function') {
-      initMap((window as unknown as { L: { map: (el: HTMLElement, o?: object) => unknown; tileLayer: (url: string, o?: object) => { addTo: (m: unknown) => unknown }; marker: (latlng: [number, number], o?: object) => { addTo: (m: unknown) => unknown; bindPopup: (html: string, o?: object) => unknown }; latLng: (lat: number, lng: number) => unknown } }).L);
-      return;
-    }
-    loadScript(LEAFLET_JS).then(() => {
-      const L = (window as unknown as { L: { map: (el: HTMLElement, o?: object) => unknown; tileLayer: (url: string, o?: object) => { addTo: (m: unknown) => unknown }; marker: (latlng: [number, number], o?: object) => { addTo: (m: unknown) => unknown; bindPopup: (html: string, o?: object) => unknown }; latLng: (lat: number, lng: number) => unknown } }).L;
-      initMap(L);
-    }).catch(() => {});
 
-    function initMap(L: { map: (el: HTMLElement, o?: object) => unknown; tileLayer: (url: string, o?: object) => { addTo: (m: unknown) => unknown }; marker: (latlng: [number, number], o?: object) => { addTo: (m: unknown) => unknown; bindPopup: (html: string, o?: object) => unknown } }) {
-      const el = containerRef.current;
-      if (!el) return;
-      const map = L.map(el, {
-      center: [center.latitude, center.longitude],
-      zoom: 14,
-      zoomControl: true,
-      dragging: true,
-      scrollWheelZoom: true,
-    }) as { setView: (latlng: [number, number], zoom: number) => void; eachLayer: (fn: (l: unknown) => void) => void; remove: () => void };
-      mapRef.current = map;
-      L.tileLayer(OSM_TILES, { attribution: '© OpenStreetMap' }).addTo(map);
-    }
+    loadScript(LEAFLET_JS_CDN)
+      .then(() => {
+        const L = (window as unknown as { L?: LType }).L;
+        if (L) runInit(L);
+      })
+      .catch(() => {
+        loadScript(LEAFLET_JS_CDN_FALLBACK)
+          .then(() => {
+            const L = (window as unknown as { L?: LType }).L;
+            if (L) runInit(L);
+          })
+          .catch(() => setLoadError('leaflet_failed'));
+      });
+
     return () => {
       const map = mapRef.current as { remove?: () => void } | null;
       if (map?.remove) map.remove();
@@ -162,7 +198,7 @@ function OSMMapViewInner({
       });
       markersRef.current.push(marker);
     });
-  }, [providers, userLocation, selectedProviderId, nearestProviderId, center.latitude, center.longitude]);
+  }, [providers, userLocation, selectedProviderId, nearestProviderId, center.latitude, center.longitude, leafletReady]);
 
   const setRef = useCallback((r: unknown) => {
     containerRef.current = (r as HTMLDivElement | null) ?? null;
@@ -176,7 +212,15 @@ function OSMMapViewInner({
     );
   }
 
-  return <View style={styles.container} ref={setRef as (r: View | null) => void} collapsable={false} />;
+  if (loadError) {
+    return (
+      <View style={[styles.container, styles.errorContainer]}>
+        <Text style={styles.errorText}>{t('map.webMapLoadFailed') ?? 'تعطيل منع التتبع قد يمنع تحميل الخريطة. جرّب تعطيله لهذا الموقع أو استخدم متصفحاً آخر.'}</Text>
+      </View>
+    );
+  }
+
+  return <View style={[styles.container, styles.containerWeb]} ref={setRef as (r: View | null) => void} collapsable={false} />;
 }
 
 /** Stable props compare: re-render only when center or provider list identity/length changes. */
@@ -200,6 +244,19 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     minHeight: 320,
+  },
+  containerWeb: Platform.OS === 'web' ? { height: '100%', minHeight: 280 } : {},
+  errorContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    backgroundColor: colors.surface,
+  },
+  errorText: {
+    fontFamily: typography.fontFamily.regular,
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
   fallback: {
     fontFamily: typography.fontFamily.regular,

@@ -36,13 +36,16 @@ export type CustomerStackParamList = {
 
 const Stack = createNativeStackNavigator<CustomerStackParamList>();
 
+const screenOptions = {
+  headerShown: false,
+  contentStyle: { backgroundColor: colors.background },
+  animation: 'slide_from_right' as const,
+  gestureEnabled: true,
+  animationDuration: 200,
+};
+
 export const CustomerStack = () => (
-  <Stack.Navigator
-    screenOptions={{
-      headerShown: false,
-      contentStyle: { backgroundColor: colors.background },
-    }}
-  >
+  <Stack.Navigator screenOptions={screenOptions}>
     <Stack.Screen name="Map" component={MapScreen} initialParams={undefined} />
     <Stack.Screen name="Home" component={HomeScreen} />
     <Stack.Screen name="Request" component={RequestScreen} />

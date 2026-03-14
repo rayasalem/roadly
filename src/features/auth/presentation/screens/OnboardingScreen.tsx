@@ -84,8 +84,8 @@ const styles = StyleSheet.create({
   slide: {
     width,
     flex: 1,
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xxl * 2,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.lg * 2,
     alignItems: 'center',
   },
   iconWrap: {
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
   },
   title: {
     fontFamily: typography.fontFamily.bold,
@@ -111,8 +111,8 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   footer: {
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xl,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.lg,
     gap: spacing.lg,
   },
   dots: {

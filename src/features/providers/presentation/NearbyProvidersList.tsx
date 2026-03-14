@@ -12,7 +12,7 @@ export interface NearbyProvidersListProps {
   loading?: boolean;
 }
 
-const ITEM_SEPARATOR_HEIGHT = spacing.sm;
+const ITEM_SEPARATOR_HEIGHT = spacing.card;
 
 export const NearbyProvidersList = React.memo(function NearbyProvidersList({
   providers,
@@ -25,12 +25,9 @@ export const NearbyProvidersList = React.memo(function NearbyProvidersList({
   const renderItem: ListRenderItem<Provider> = useCallback(
     ({ item }) => (
       <ProviderCard
-        title={item.name}
-        subtitle={item.role}
-        distanceText={undefined}
-        isAvailable={item.isAvailable}
-        onPress={() => onSelect(item)}
-        onRequest={() => onRequest(item)}
+        provider={item}
+        onPress={onSelect}
+        onRequest={onRequest}
       />
     ),
     [onRequest, onSelect],

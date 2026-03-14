@@ -27,7 +27,10 @@ export const typography = {
     title3: typographyPresets.titleSmall.fontSize,
     titleSmall: typographyPresets.titleSmall.fontSize,
     title2: 20,
+    /** Screen title (e.g. AppHeader): 24px */
     title1: 24,
+    /** Section title: 18px */
+    sectionTitle: typographyPresets.titleSmall.fontSize,
     title: typographyPresets.title.fontSize,
     display: typographyPresets.display.fontSize,
     xs: 12,
@@ -56,6 +59,15 @@ export const typography = {
 } as const;
 
 export { colors, radii, shadows };
+export { cardBase, cardSectionGap, cardElementGap } from './cardStyles';
+export {
+  SCREEN_TITLE_FONT_SIZE,
+  SCREEN_TITLE_LINE_HEIGHT,
+  SECTION_TITLE_FONT_SIZE,
+  SECTION_TITLE_LINE_HEIGHT,
+  SECTION_TITLE_MARGIN_BELOW,
+  sectionTitleBase,
+} from './titleStyles';
 export { typographyPresets } from './typographyPresets';
 export type { TypographyPresetKey } from './typographyPresets';
 export type { SpacingKey } from './spacing';

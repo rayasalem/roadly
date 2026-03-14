@@ -4,6 +4,7 @@
  */
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppHeader } from '../../../../shared/components/AppHeader';
@@ -20,10 +21,10 @@ export function LiveTrackingScreen() {
   const requestId = route.params?.requestId;
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       <AppHeader
         title={t('customer.liveTracking')}
-        onBack={() => navigation.goBack()}
+        onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
         rightIcon="none"
       />
       <View style={styles.content}>
@@ -41,7 +42,7 @@ export function LiveTrackingScreen() {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -56,8 +57,9 @@ const styles = StyleSheet.create({
   icon: { marginBottom: spacing.md },
   title: {
     fontFamily: typography.fontFamily.semibold,
-    fontSize: typography.fontSize.title3,
-    marginBottom: spacing.sm,
+    fontSize: 24,
+    lineHeight: 30,
+    marginBottom: spacing.md,
     textAlign: 'center',
   },
   subtitle: {

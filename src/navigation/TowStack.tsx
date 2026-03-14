@@ -23,13 +23,16 @@ export type TowStackParamList = {
 
 const Stack = createNativeStackNavigator<TowStackParamList>();
 
+const screenOptions = {
+  headerShown: false,
+  contentStyle: { backgroundColor: colors.background },
+  animation: 'slide_from_right' as const,
+  gestureEnabled: true,
+  animationDuration: 200,
+};
+
 export const TowStack = () => (
-  <Stack.Navigator
-    screenOptions={{
-      headerShown: false,
-      contentStyle: { backgroundColor: colors.background },
-    }}
-  >
+  <Stack.Navigator screenOptions={screenOptions}>
     <Stack.Screen name="TowDashboard" component={TowDashboardScreen} />
     <Stack.Screen name="TowServices" component={TowServicesScreen} />
     <Stack.Screen name="TowSkills" component={TowSkillsScreen} />

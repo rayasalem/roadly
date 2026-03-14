@@ -9,6 +9,8 @@ export type TowJobStatus = 'active' | 'queued';
 
 export interface TowJob {
   id: string;
+  /** Request id for accept/reject (PATCH /requests/:id/status). May equal id. */
+  requestId?: string;
   title: string;
   distance: string;
   eta: string;

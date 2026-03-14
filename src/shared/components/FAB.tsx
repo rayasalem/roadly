@@ -8,6 +8,7 @@ import { colors } from '../theme/colors';
 import { spacing, radii, shadows } from '../theme';
 import type { RoleThemeId } from '../theme/roleThemes';
 import { ROLE_THEMES } from '../theme/roleThemes';
+import { HIT_SLOP_ICON } from '../constants/ux';
 
 export interface FABProps {
   icon: string;
@@ -39,6 +40,7 @@ export const FAB = React.memo(function FAB({
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      hitSlop={HIT_SLOP_ICON}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? 'Action'}
     >

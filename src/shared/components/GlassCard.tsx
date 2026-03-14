@@ -34,13 +34,14 @@ export const GlassCard = React.memo(function GlassCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: radii.xl,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.5)',
     backgroundColor: 'rgba(255,255,255,0.85)',
+    marginVertical: 10,
     ...shadows.md,
   },
   padding: {
-    padding: spacing.lg,
+    padding: 16,
   },
 });

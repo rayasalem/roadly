@@ -1,15 +1,15 @@
 /**
- * Reusable provider map marker (native): service-type icon (🔧/🚛/🚗), colored by status,
- * callout with photo, name, service type, rating, phone, distance, and Request Service.
+ * Reusable provider map marker: profile image with service-type icon badge (Mechanic / Tow / Car Rental).
+ * Tap marker → opens provider card (bottom sheet). Callout shows name, rating, distance hint.
  */
 import React, { memo } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { Marker, Callout } from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { Provider } from '../../../providers/domain/types';
 import { colors } from '../../../../shared/theme/colors';
-import { spacing, typography, radii, shadows } from '../../../../shared/theme';
-import { getMarkerColorByStatus, getServiceTypeEmoji } from '../../utils/mapMarkerUtils';
+import { spacing, typography, shadows } from '../../../../shared/theme';
+import { getMarkerColorByStatus, getServiceTypeEmoji, getServiceTypeIconName } from '../../utils/mapMarkerUtils';
 import { t } from '../../../../shared/i18n/t';
 
 export interface ProviderMarkerProps {
@@ -17,6 +17,8 @@ export interface ProviderMarkerProps {
   selected: boolean;
   onPress: (provider: Provider) => void;
   onRequestService?: (provider: Provider) => void;
+  /** Optional distance in km for callout (from user to provider). */
+  distanceKm?: number | null;
 }
 
 function getCoord(provider: Provider): { latitude: number; longitude: number } | null {
@@ -25,10 +27,37 @@ function getCoord(provider: Provider): { latitude: number; longitude: number } |
   return { latitude: (loc as { latitude: number }).latitude, longitude: (loc as { longitude: number }).longitude };
 }
 
-const PinView = memo(function PinView({ color, emoji }: { color: string; emoji: string }) {
+/** Marker: circular profile image with service-type icon badge (wrench / tow-truck / car). */
+const MarkerPin = memo(function MarkerPin({
+  photoUri,
+  imageFailed,
+  onImageError,
+  serviceIconName,
+  badgeColor,
+  selected,
+}: {
+  photoUri: string | null;
+  imageFailed: boolean;
+  onImageError: () => void;
+  serviceIconName: 'wrench' | 'tow-truck' | 'car-side';
+  badgeColor: string;
+  selected: boolean;
+}) {
+  const showImage = photoUri && !imageFailed;
   return (
-    <View style={[styles.pin, { backgroundColor: color }]}>
-      <Text style={styles.pinEmoji}>{emoji}</Text>
+    <View style={[styles.markerWrap, selected && styles.markerWrapSelected]}>
+      <View style={styles.avatarRing}>
+        {showImage ? (
+          <Image source={{ uri: photoUri! }} style={styles.markerAvatar} onError={onImageError} />
+        ) : (
+          <View style={[styles.markerAvatar, styles.markerAvatarPlaceholder]}>
+            <MaterialCommunityIcons name="account" size={22} color={colors.textMuted} />
+          </View>
+        )}
+      </View>
+      <View style={[styles.serviceBadge, { backgroundColor: badgeColor }]}>
+        <MaterialCommunityIcons name={serviceIconName} size={12} color={colors.primaryContrast} />
+      </View>
     </View>
   );
 });
@@ -38,18 +67,18 @@ export const ProviderMarker = memo(function ProviderMarker({
   selected,
   onPress,
   onRequestService,
+  distanceKm,
 }: ProviderMarkerProps) {
   const [imageFailed, setImageFailed] = React.useState(false);
   const coord = getCoord(provider);
   if (!coord) return null;
 
-  const color = getMarkerColorByStatus(provider, selected);
+  const badgeColor = getMarkerColorByStatus(provider, selected);
   const photoUri = provider.photo ?? provider.avatarUri ?? null;
-  const showImage = photoUri && !imageFailed;
-  const rating = provider.rating ?? 0;
-  const services = Array.isArray(provider.services) ? provider.services.slice(0, 3) : [];
+  const serviceIconName = getServiceTypeIconName(provider);
   const serviceEmoji = getServiceTypeEmoji(provider);
-  const phone = provider.phone ?? provider.contact ?? '—';
+  const rating = provider.rating ?? 0;
+  const serviceLabel = provider.serviceType ?? (provider.role === 'mechanic_tow' ? 'tow' : provider.role === 'car_rental' ? 'rental' : 'mechanic');
 
   return (
     <Marker
@@ -58,36 +87,25 @@ export const ProviderMarker = memo(function ProviderMarker({
       tracksViewChanges={false}
       anchor={{ x: 0.5, y: 0.5 }}
     >
-      <PinView color={color} emoji={serviceEmoji} />
+      <MarkerPin
+        photoUri={photoUri}
+        imageFailed={imageFailed}
+        onImageError={() => setImageFailed(true)}
+        serviceIconName={serviceIconName}
+        badgeColor={badgeColor}
+        selected={selected}
+      />
       <Callout tooltip onPress={() => onPress(provider)}>
         <View style={styles.callout}>
-          <View style={styles.calloutRow}>
-            {showImage ? (
-              <Image source={{ uri: photoUri! }} style={styles.avatar} onError={() => setImageFailed(true)} />
-            ) : (
-              <View style={styles.avatarPlaceholder}>
-                <MaterialCommunityIcons name="account" size={24} color={colors.textMuted} />
-              </View>
-            )}
-            <View style={styles.calloutInfo}>
-              <Text style={styles.name} numberOfLines={1}>{provider.name}</Text>
-              <Text style={styles.serviceType}>{serviceEmoji} {provider.serviceType ?? (provider.role === 'mechanic_tow' ? 'tow' : provider.role === 'car_rental' ? 'rental' : 'mechanic')}</Text>
-              <Text style={styles.rating}>{rating > 0 ? `${rating.toFixed(1)} ★` : '—'}</Text>
-              <Text style={styles.phone} numberOfLines={1}>{phone}</Text>
-              {services.length > 0 && (
-                <Text style={styles.services} numberOfLines={2}>{services.join(', ')}</Text>
-              )}
-            </View>
-          </View>
-          {onRequestService && (
-            <TouchableOpacity
-              style={styles.requestBtn}
-              onPress={() => onRequestService(provider)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.requestBtnText}>{t('map.requestService')}</Text>
-            </TouchableOpacity>
+          <Text style={styles.name} numberOfLines={1}>{provider.name}</Text>
+          <Text style={styles.serviceType}>{serviceEmoji} {serviceLabel}</Text>
+          <Text style={styles.rating}>{rating > 0 ? `${rating.toFixed(1)} ★` : '—'}</Text>
+          {distanceKm != null && (
+            <Text style={styles.distance}>
+              {distanceKm < 1 ? `${(distanceKm * 1000).toFixed(0)} m` : `${distanceKm.toFixed(1)} km`} {t('map.away') ?? 'away'}
+            </Text>
           )}
+          <Text style={styles.tapHint}>{t('map.tapForDetails') ?? 'Tap to open card'}</Text>
         </View>
       </Callout>
     </Marker>
@@ -95,18 +113,58 @@ export const ProviderMarker = memo(function ProviderMarker({
 });
 
 const styles = StyleSheet.create({
-  pin: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  markerWrap: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  markerWrapSelected: {
+    transform: [{ scale: 1.1 }],
+  },
+  avatarRing: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     borderWidth: 3,
     borderColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
+    overflow: 'hidden',
     ...shadows.sm,
   },
-  pinEmoji: {
-    fontSize: 14,
+  markerAvatar: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 17,
+  },
+  markerAvatarPlaceholder: {
+    backgroundColor: colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  serviceBadge: {
+    position: 'absolute',
+    right: -2,
+    bottom: -2,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.surface,
+  },
+  callout: {
+    minWidth: 160,
+    maxWidth: 220,
+    padding: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    ...shadows.md,
+  },
+  name: {
+    fontFamily: typography.fontFamily.semibold,
+    fontSize: typography.fontSize.callout,
+    color: colors.text,
   },
   serviceType: {
     fontFamily: typography.fontFamily.medium,
@@ -114,67 +172,22 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
-  phone: {
-    fontFamily: typography.fontFamily.regular,
-    fontSize: 11,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  callout: {
-    minWidth: 200,
-    padding: spacing.sm,
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    ...shadows.md,
-  },
-  calloutRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: radii.md,
-    marginRight: spacing.sm,
-  },
-  avatarPlaceholder: {
-    width: 48,
-    height: 48,
-    borderRadius: radii.md,
-    marginRight: spacing.sm,
-    backgroundColor: colors.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  calloutInfo: { flex: 1, minWidth: 0 },
-  name: {
-    fontFamily: typography.fontFamily.semibold,
-    fontSize: typography.fontSize.callout,
-    color: colors.text,
-  },
   rating: {
     fontFamily: typography.fontFamily.regular,
-    fontSize: typography.fontSize.caption,
+    fontSize: 11,
     color: colors.warning,
     marginTop: 2,
   },
-  services: {
+  distance: {
     fontFamily: typography.fontFamily.regular,
     fontSize: 11,
     color: colors.textSecondary,
     marginTop: 2,
   },
-  requestBtn: {
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: radii.md,
-    alignItems: 'center',
-  },
-  requestBtnText: {
-    fontFamily: typography.fontFamily.semibold,
-    fontSize: typography.fontSize.caption,
-    color: colors.primaryContrast,
+  tapHint: {
+    fontFamily: typography.fontFamily.regular,
+    fontSize: 10,
+    color: colors.textMuted,
+    marginTop: spacing.xs,
   },
 });

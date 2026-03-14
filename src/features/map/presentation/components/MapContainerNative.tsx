@@ -1,7 +1,8 @@
 /**
  * Native map card: MapView, polyline, markers, search bar with suggestions, filters, draggable service pin, floating buttons.
+ * Memoized and stable callbacks for map performance on mid-range devices.
  */
-import React from 'react';
+import React, { useCallback, memo } from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet, Platform, ScrollView } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -16,6 +17,7 @@ import type { MapClusterItem } from '../../utils/mapClustering';
 import { SILVER_MAP_STYLE } from '../../constants/silverMapStyle';
 import { colors } from '../../../../shared/theme/colors';
 import type { PlaceSuggestion } from '../../data/placesApi';
+import { haversineDistanceKm } from '../../../location/data/haversine';
 
 interface MapContainerNativeProps {
   mapRef: React.RefObject<MapView | null>;
@@ -46,9 +48,11 @@ interface MapContainerNativeProps {
   onUseCurrentLocation?: () => void;
   placeSuggestions?: PlaceSuggestion[];
   onSelectPlace?: (suggestion: PlaceSuggestion) => void;
+  /** Origin for distance calculation (e.g. user location); shown in marker callout when set. */
+  origin?: { latitude: number; longitude: number } | null;
 }
 
-export function MapContainerNative(props: MapContainerNativeProps) {
+function MapContainerNativeInner(props: MapContainerNativeProps) {
   const { colors: themeColors } = useTheme();
   const {
     mapRef,
@@ -74,8 +78,28 @@ export function MapContainerNative(props: MapContainerNativeProps) {
   } = props;
 
   const fullScreen = props.fullScreen === true;
-  const { effectiveCenter, onDragPin, onUseCurrentLocation, placeSuggestions = [], onSelectPlace } = props;
+  const { effectiveCenter, onDragPin, onUseCurrentLocation, placeSuggestions = [], onSelectPlace, origin } = props;
   const showServicePin = isCustomer && effectiveCenter && onDragPin;
+
+  const getDistanceKm = useCallback((provider: Provider): number | null => {
+    if (!origin || !provider?.location) return null;
+    const loc = provider.location as { latitude?: number; longitude?: number };
+    if (typeof loc.latitude !== 'number' || typeof loc.longitude !== 'number') return null;
+    return haversineDistanceKm(origin, { latitude: loc.latitude, longitude: loc.longitude });
+  }, [origin]);
+
+  if (Platform.OS === 'web') {
+    return (
+      <View style={[styles.mapCard, fullScreen && styles.mapCardFullScreen]}>
+        <View style={styles.mapFallbackWeb}>
+          <MaterialCommunityIcons name="map" size={32} color={colors.primary} />
+          <Text style={styles.mapFallbackWebText}>
+            {t('map.webNotSupported') ?? 'الخريطة الأصلية متاحة فقط على الموبايل. استخدم نسخة الويب المدمجة في شاشة الخريطة.'}
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.mapCard, fullScreen && styles.mapCardFullScreen, { backgroundColor: themeColors.surface }, !fullScreen && shadows.lg]}>
@@ -114,6 +138,7 @@ export function MapContainerNative(props: MapContainerNativeProps) {
                 selected={selectedProvider?.id === provider.id}
                 onPress={onSelectProvider}
                 onRequestService={isCustomer ? onRequestService : undefined}
+                distanceKm={origin ? getDistanceKm(provider) ?? null : null}
               />
             );
           }
@@ -190,10 +215,25 @@ export function MapContainerNative(props: MapContainerNativeProps) {
   );
 }
 
+export const MapContainerNative = memo(MapContainerNativeInner);
+
 const styles = StyleSheet.create({
   mapCard: { flex: 1, borderRadius: 32, overflow: 'hidden' },
   mapCardFullScreen: { borderRadius: 0 },
   map: { flex: 1 },
+  mapFallbackWeb: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.lg,
+  },
+  mapFallbackWebText: {
+    marginTop: spacing.sm,
+    fontFamily: typography.fontFamily.regular,
+    fontSize: typography.fontSize.body,
+    textAlign: 'center',
+    color: colors.textSecondary,
+  },
   searchRow: {
     position: 'absolute',
     top: spacing.md,

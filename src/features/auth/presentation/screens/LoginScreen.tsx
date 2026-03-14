@@ -38,6 +38,7 @@ export function LoginScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const clearError = useCallback(() => setError(null), []);
@@ -186,11 +187,11 @@ export function LoginScreen({ navigation }: Props) {
               {error ? <AppText testID="login-error" variant="callout" style={styles.errorText}>{error}</AppText> : null}
 
               <View style={styles.actionRow}>
-                <TouchableOpacity style={styles.rememberRow} accessibilityRole="checkbox">
-                  <MaterialCommunityIcons name="checkbox-marked-outline" size={22} color={colors.primary} />
+                <TouchableOpacity style={styles.rememberRow} onPress={() => setRememberMe((v) => !v)} accessibilityRole="checkbox" accessibilityState={{ checked: rememberMe }}>
+                  <MaterialCommunityIcons name={rememberMe ? 'checkbox-marked' : 'checkbox-marked-outline'} size={22} color={colors.primary} />
                   <AppText variant="callout" style={styles.rememberText}>{t('auth.rememberMe')}</AppText>
                 </TouchableOpacity>
-                <TouchableOpacity accessibilityRole="button">
+                <TouchableOpacity onPress={() => toast({ type: 'info', message: t('auth.login.forgotComingSoon') ?? 'Password reset coming soon.' })} accessibilityRole="button">
                   <AppText variant="callout" style={styles.forgotLink}>{t('auth.login.forgot')}</AppText>
                 </TouchableOpacity>
               </View>
@@ -267,7 +268,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
-    paddingTop: spacing.xl,
+    paddingTop: spacing.lg,
     paddingBottom: spacing.sm,
     minHeight: 56,
   },
@@ -297,7 +298,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.md,
     paddingTop: spacing.xxl,
     paddingBottom: spacing.xxl,
   },
@@ -308,12 +309,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    marginBottom: spacing.xs,
+    marginBottom: spacing.md,
   },
   title: {
     fontFamily: typography.fontFamily.bold,
-    fontSize: typography.presets.title.fontSize,
-    lineHeight: typography.presets.title.lineHeight,
+    fontSize: 24,
+    lineHeight: 30,
     color: colors.authTopDark,
   },
   subtitle: {
@@ -322,7 +323,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   form: {
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
   },
   inputWrap: {
     flexDirection: 'row',
@@ -380,7 +381,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: spacing.xs,
-    paddingTop: spacing.xl,
+    paddingTop: spacing.lg,
     minHeight: 44,
   },
   footerText: {

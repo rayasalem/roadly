@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
-    paddingBottom: spacing.xl,
+    paddingBottom: spacing.lg,
   },
   section: { marginBottom: spacing.lg },
   skeletonLabel: { marginBottom: spacing.sm },

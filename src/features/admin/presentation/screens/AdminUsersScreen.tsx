@@ -24,6 +24,7 @@ import { colors } from '../../../../shared/theme/colors';
 import { spacing, typography, radii, shadows } from '../../../../shared/theme';
 import { ROLE_THEMES } from '../../../../shared/theme/roleThemes';
 import { t } from '../../../../shared/i18n/t';
+import { blurActiveElementForA11y } from '../../../../shared/utils/domA11y';
 import type { AdminStackParamList } from '../../../../navigation/AdminStack';
 import {
   useAdminUsers,
@@ -264,7 +265,7 @@ export function AdminUsersScreen() {
         ref={sheetRef}
         snapPoints={[520, '90%']}
         enablePanDownToClose
-        onDismiss={() => setEditingUser(null)}
+        onDismiss={() => { blurActiveElementForA11y(); setEditingUser(null); }}
         backgroundStyle={styles.sheetBg}
         handleIndicatorStyle={styles.sheetHandle}
       >
@@ -356,7 +357,7 @@ export function AdminUsersScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   safe: { flex: 1 },
-  scroll: { padding: spacing.xl, paddingBottom: spacing.xxl },
+  scroll: { padding: spacing.md, paddingBottom: spacing.lg },
   searchInput: {
     fontFamily: typography.fontFamily.regular,
     fontSize: typography.fontSize.body,
@@ -393,7 +394,8 @@ const styles = StyleSheet.create({
   blockBtnText: { fontFamily: typography.fontFamily.medium, fontSize: typography.fontSize.caption, color: colors.error },
   sectionTitle: {
     fontFamily: typography.fontFamily.semibold,
-    fontSize: typography.fontSize.title3,
+    fontSize: 18,
+    lineHeight: 24,
     color: colors.text,
     marginBottom: spacing.md,
   },
@@ -445,12 +447,13 @@ const styles = StyleSheet.create({
   },
   sheetHandle: { backgroundColor: colors.border, width: 40 },
   sheetScroll: { flex: 1 },
-  sheetContent: { padding: spacing.xl, paddingBottom: spacing.xxl },
+  sheetContent: { padding: spacing.md, paddingBottom: spacing.lg },
   sheetTitle: {
     fontFamily: typography.fontFamily.semibold,
-    fontSize: typography.fontSize.title2,
+    fontSize: 18,
+    lineHeight: 24,
     color: colors.text,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   sheetCard: { marginBottom: spacing.lg },
   fieldLabel: {

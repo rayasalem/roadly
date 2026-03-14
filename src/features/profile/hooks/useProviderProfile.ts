@@ -18,6 +18,8 @@ export interface ProviderProfile {
   avatarUri: string | null;
   rating: number;
   status: ProviderDisplayStatus;
+  /** Realtime availability flag used by dashboards & profile toggles */
+  isAvailable: boolean;
   phone: string;
   email: string;
   reviews: ProviderReview[];
@@ -77,6 +79,7 @@ export function useProviderProfile(role: Role | 'guest' | null, displayName: str
       avatarUri: data.avatarUri ?? null,
       rating: data.rating ?? 0,
       status: (data.status ?? 'available') as ProviderDisplayStatus,
+      isAvailable: data.isAvailable ?? true,
       phone: data.phone ?? '',
       email: data.email ?? '',
       reviews: data.reviews ?? [],

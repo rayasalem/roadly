@@ -4,10 +4,13 @@
  *
  * Hierarchy:
  * - display: Hero headings, splash titles (32px)
- * - title: Screen titles, card headings (22px)
+ * - title: Screen titles (24px), card headings (22px)
+ * - titleSmall: Section headers (18px)
  * - subtitle: Section labels, emphasis text (16px medium)
  * - body: Paragraphs, form labels, list content (16px)
  * - caption: Hints, metadata, timestamps (12px)
+ *
+ * Standard sizes: Screen title = 24px, Section title = 18px.
  */
 import type { FontFamilySet } from './typography';
 

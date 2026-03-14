@@ -34,6 +34,7 @@ import { t } from '../../../../shared/i18n/t';
 import { useProviderProfile } from '../../hooks/useProviderProfile';
 import { ROLES } from '../../../../shared/constants/roles';
 import type { CustomerStackParamList } from '../../../../navigation/CustomerStack';
+import { blurActiveElementForA11y } from '../../../../shared/utils/domA11y';
 import { safeNavigateToSettings } from '../../../../navigation/navigationRef';
 import { updateProviderAvailability } from '../../data/providerProfileApi';
 import { useMutation } from '@tanstack/react-query';
@@ -125,10 +126,14 @@ export function ProfileScreen() {
   }, [availabilityMutation, profile?.isAvailable]);
 
   const handleTab = (tab: NavTabId) => {
-    if (tab === 'Home') navigation.navigate('Home');
     if (tab === 'Profile') return;
-    if (tab === 'Chat') navigation.navigate('Chat');
-    if (tab === 'Notifications') navigation.navigate('Notifications');
+    if (tab === 'Home') {
+      if (role === ROLES.ADMIN) (navigation as any).navigate('AdminDashboard');
+      else navigation.navigate('Map');
+      return;
+    }
+    if (tab === 'Chat') (navigation as any).navigate('Chat');
+    if (tab === 'Notifications') (navigation as any).navigate('Notifications');
     if (tab === 'Settings') safeNavigateToSettings(navigation);
   };
 
@@ -267,7 +272,7 @@ export function ProfileScreen() {
           ref={sheetRef}
           snapPoints={[400, '70%']}
           enablePanDownToClose
-          onDismiss={() => setSheetOpen(false)}
+          onDismiss={() => { blurActiveElementForA11y(); setSheetOpen(false); }}
           backgroundStyle={styles.sheetBg}
           handleIndicatorStyle={styles.sheetHandle}
         >
@@ -284,9 +289,9 @@ export function ProfileScreen() {
   }
 
   return (
-    <ScreenWrapper>
-      <AppHeader title={t('profile.title')} onBack={() => navigation.goBack()} onProfile={() => safeNavigateToSettings(navigation)} />
-      <View style={styles.container}>
+    <ScreenWrapper bottomNav={user?.role === ROLES.USER || user?.role === ROLES.ADMIN ? <BottomNavBar activeTab="Profile" onSelect={handleTab} /> : undefined}>
+      <AppHeader title={t('profile.title')} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} onProfile={() => safeNavigateToSettings(navigation)} />
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.containerScroll} showsVerticalScrollIndicator>
         {user && (
           <View style={styles.card}>
             <Text style={styles.label}>{t('profile.name')}</Text>
@@ -314,10 +319,7 @@ export function ProfileScreen() {
           fullWidth
           size="lg"
         />
-      </View>
-      {user?.role === ROLES.USER && (
-        <BottomNavBar activeTab="Profile" onSelect={handleTab} />
-      )}
+      </ScrollView>
     </ScreenWrapper>
   );
 }
@@ -388,17 +390,20 @@ function EditServicesSheet({
 
 const styles = StyleSheet.create({
   fadeWrap: { flex: 1 },
+  containerScroll: {
+    paddingBottom: spacing.lg,
+  },
   container: {
     flex: 1,
-    padding: spacing.xl,
+    padding: spacing.md,
     gap: spacing.lg,
   },
   scroll: { flex: 1 },
-  scrollContent: { padding: spacing.xl, paddingBottom: spacing.xxl },
+  scrollContent: { padding: spacing.md, paddingBottom: spacing.lg },
   card: {
-    padding: spacing.lg,
+    padding: spacing.md,
     backgroundColor: colors.surface,
-    borderRadius: radii.lg,
+    borderRadius: radii.xl,
     ...shadows.sm,
   },
   label: {
@@ -415,7 +420,7 @@ const styles = StyleSheet.create({
   },
   profileCard: {
     alignItems: 'center',
-    paddingVertical: spacing.xl,
+    paddingVertical: spacing.lg,
     marginBottom: spacing.lg,
   },
   avatarWrap: { marginBottom: spacing.md },
@@ -471,7 +476,8 @@ const styles = StyleSheet.create({
   contactText: { fontFamily: typography.fontFamily.regular, fontSize: typography.presets.caption.fontSize, color: colors.textSecondary },
   sectionTitle: {
     fontFamily: typography.fontFamily.semibold,
-    fontSize: typography.presets.titleSmall.fontSize,
+    fontSize: 18,
+    lineHeight: 24,
     color: colors.text,
     marginBottom: spacing.md,
   },
@@ -482,8 +488,8 @@ const styles = StyleSheet.create({
   logoutBtn: { marginTop: spacing.xl },
   sheetBg: { backgroundColor: colors.surface, borderTopLeftRadius: radii.xxl, borderTopRightRadius: radii.xxl, ...shadows.lg },
   sheetHandle: { backgroundColor: colors.border, width: 40 },
-  sheetContent: { padding: spacing.xl, flex: 1 },
-  sheetTitle: { fontFamily: typography.fontFamily.semibold, fontSize: typography.presets.title.fontSize, color: colors.text, marginBottom: spacing.xs },
+  sheetContent: { padding: spacing.md, flex: 1 },
+  sheetTitle: { fontFamily: typography.fontFamily.semibold, fontSize: 18, lineHeight: 24, color: colors.text, marginBottom: spacing.sm },
   sheetSubtitle: { fontFamily: typography.fontFamily.regular, fontSize: typography.presets.bodySmall.fontSize, color: colors.textSecondary, marginBottom: spacing.lg },
   sheetList: { maxHeight: 280 },
   sheetListContent: { paddingBottom: spacing.lg },

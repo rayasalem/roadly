@@ -7,10 +7,7 @@ import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppText } from '../../../../shared/components/AppText';
 import { colors } from '../../../../shared/theme/colors';
-import { spacing, typography, shadows } from '../../../../shared/theme';
-
-const CARD_RADIUS = 28;
-const DIRECTIONS_GREEN = '#00D67D';
+import { spacing, typography, shadows, radii } from '../../../../shared/theme';
 
 export interface LocationInfoCardProps {
   title: string;
@@ -73,7 +70,7 @@ export function LocationInfoCard({
           accessibilityRole="button"
           accessibilityLabel="Directions"
         >
-          <MaterialCommunityIcons name="directions" size={22} color="#fff" />
+          <MaterialCommunityIcons name="directions" size={22} color={colors.primaryContrast} />
           <AppText variant="callout" style={styles.directionsText}>Directions</AppText>
         </TouchableOpacity>
       </View>
@@ -84,9 +81,9 @@ export function LocationInfoCard({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
-    borderRadius: CARD_RADIUS,
+    borderRadius: radii.xl,
     overflow: 'hidden',
-    ...shadows.lg,
+    ...shadows.sm,
   },
   image: {
     width: '100%',
@@ -101,13 +98,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   content: {
-    padding: spacing.lg,
+    padding: spacing.md,
   },
   title: {
     fontFamily: typography.fontFamily.semibold,
     fontSize: typography.fontSize.title3,
     color: colors.text,
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
   },
   subtitle: {
     marginBottom: spacing.sm,
@@ -116,7 +113,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   starRow: {
     flexDirection: 'row',
@@ -136,15 +133,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    backgroundColor: DIRECTIONS_GREEN,
-    paddingVertical: spacing.md,
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.sm + 2,
     paddingHorizontal: spacing.lg,
-    borderRadius: 16,
+    borderRadius: radii.lg,
+    minHeight: 48,
     ...shadows.sm,
   },
   directionsText: {
     fontFamily: typography.fontFamily.semibold,
     fontSize: typography.fontSize.callout,
-    color: '#fff',
+    color: colors.primaryContrast,
   },
 });

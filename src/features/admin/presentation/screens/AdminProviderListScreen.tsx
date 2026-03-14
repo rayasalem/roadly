@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
-  scroll: { padding: spacing.xl, paddingBottom: spacing.xxl },
+  scroll: { padding: spacing.md, paddingBottom: spacing.lg },
   card: { marginBottom: spacing.md },
   row: { flexDirection: 'row', alignItems: 'center' },
   iconWrap: {
