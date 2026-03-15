@@ -28,7 +28,8 @@ import { blurActiveElementForA11y } from '../../../../shared/utils/domA11y';
 import type { RentalStackParamList } from '../../../../navigation/RentalStack';
 import { useUIStore } from '../../../../store/uiStore';
 import { useAuthStore } from '../../../../store/authStore';
-import { useRentalDashboard, type RentalVehicle, type VehicleStatus } from '../../hooks/useRentalDashboard';
+import { useRentalDashboard, type RentalVehicle, type VehicleStatus, type RentalJob } from '../../hooks/useRentalDashboard';
+import { Button } from '../../../../shared/components/Button';
 import { useProviderProfile } from '../../../profile/hooks/useProviderProfile';
 import { updateProviderAvailability } from '../../../profile/data/providerProfileApi';
 
@@ -92,7 +93,7 @@ export function RentalDashboardScreen() {
 
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const [selectedVehicle, setSelectedVehicle] = useState<RentalVehicle | null>(null);
-  const { stats, vehicles, bookings, isLoading, isError, error, refetch } = useRentalDashboard();
+  const { stats, vehicles, bookings, jobs, acceptJob, rejectJob, isAccepting, isRejecting, isLoading, isError, error, refetch } = useRentalDashboard();
 
   const openMap = useCallback(() => navigation.navigate('Map'), [navigation]);
   const openProfile = useCallback(() => navigation.navigate('Profile'), [navigation]);
@@ -253,24 +254,32 @@ export function RentalDashboardScreen() {
           }
           ListFooterComponent={
             <>
-              <Text style={styles.sectionTitle}>{t('rental.requestsList') ?? 'Requests'}</Text>
+              <Text style={styles.sectionTitle}>{t('rental.requestsList') ?? 'Service requests'}</Text>
               <GlassCard role="rental">
-                {bookings.length === 0 ? (
+                {jobs.length === 0 ? (
                   <View style={styles.bookingEmpty}>
-                    <AppText variant="callout" color={colors.textMuted}>{t('rental.noBookings') ?? 'No booking requests yet.'}</AppText>
+                    <AppText variant="callout" color={colors.textMuted}>{t('rental.noBookings') ?? 'No requests yet.'}</AppText>
                   </View>
                 ) : (
-                  bookings.map((b) => (
-                    <TouchableOpacity key={b.id} style={styles.bookingRow} onPress={openMap} activeOpacity={0.8}>
+                  jobs.map((job: RentalJob) => (
+                    <View key={job.id} style={styles.bookingRow}>
                       <View style={styles.bookingIcon}>
-                        <MaterialCommunityIcons name="calendar-clock" size={20} color={THEME.primary} />
+                        <MaterialCommunityIcons name="car-key" size={20} color={THEME.primary} />
                       </View>
                       <View style={styles.bookingMain}>
-                        <Text style={styles.bookingTitle}>{b.customer}</Text>
-                        <Text style={styles.bookingMeta}>{b.vehicle} • {b.time}</Text>
+                        <Text style={styles.bookingTitle}>{job.title}</Text>
+                        <Text style={styles.bookingMeta}>{job.eta} • {job.status}</Text>
                       </View>
-                      <MaterialCommunityIcons name="map-marker-outline" size={18} color={THEME.primary} />
-                    </TouchableOpacity>
+                      {job.status === 'new' ? (
+                        <View style={styles.rentalJobActions}>
+                          <Button title={t('mechanic.decline')} onPress={() => rejectJob(job.requestId ?? job.id)} variant="outline" size="sm" />
+                          <View style={{ width: 8 }} />
+                          <Button title={t('mechanic.accept')} onPress={() => acceptJob(job.requestId ?? job.id)} variant="accent" size="sm" />
+                        </View>
+                      ) : (
+                        <StatusBadge label={job.status} variant={job.status === 'accepted' || job.status === 'on_the_way' ? 'active' : 'completed'} size="sm" />
+                      )}
+                    </View>
                   ))
                 )}
               </GlassCard>
@@ -440,6 +449,7 @@ const styles = StyleSheet.create({
   bookingMain: { flex: 1, minWidth: 0 },
   bookingTitle: { fontFamily: typography.fontFamily.semibold, fontSize: typography.presets.body.fontSize, color: colors.text },
   bookingMeta: { fontFamily: typography.fontFamily.regular, fontSize: typography.presets.caption.fontSize, color: colors.textSecondary, marginTop: spacing.xs },
+  rentalJobActions: { flexDirection: 'row', alignItems: 'center' },
   fabWrap: { position: 'absolute', right: spacing.xl, bottom: spacing.xl },
   sheetBg: { backgroundColor: colors.surface, borderTopLeftRadius: radii.xxl, borderTopRightRadius: radii.xxl, ...shadows.lg },
   sheetContent: { padding: spacing.md },

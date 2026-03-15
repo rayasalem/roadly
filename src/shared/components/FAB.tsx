@@ -27,7 +27,7 @@ export const FAB = React.memo(function FAB({
   const theme = role ? ROLE_THEMES[role] : null;
   const bg = theme?.primary ?? colors.primary;
 
-  const useNativeDriver = Platform.OS !== 'web';
+  const useNativeDriver = false;
   const handlePressIn = () => {
     Animated.spring(scale, { toValue: 0.92, useNativeDriver, speed: 50 }).start();
   };

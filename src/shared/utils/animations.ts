@@ -1,33 +1,33 @@
 /**
  * Lightweight animation configs and hooks using React Native Animated.
  * Use for button/card scale, screen fade-in, toast, list items.
- * On web, useNativeDriver is false for layout/opacity/transform compatibility.
+ * useNativeDriver: false everywhere to avoid "JS driven animation on native node" errors when mixing.
  */
 import { useEffect, useRef } from 'react';
-import { Animated, Platform } from 'react-native';
+import { Animated } from 'react-native';
 
-/** false on web to avoid "native driver not supported" */
-const useNativeDriver = Platform.OS !== 'web';
+/** Always false to avoid native/JS driver conflict on same animated nodes */
+const useNativeDriver = false;
 
 /** Spring config for press feedback (buttons, cards) — subtle, quick */
 export const springPress = {
   friction: 6,
   tension: 160,
-  useNativeDriver: useNativeDriver as true,
+  useNativeDriver: false as const,
 };
 
 /** Slightly bouncier spring for list items */
 export const springListItem = {
   friction: 8,
   tension: 180,
-  useNativeDriver: useNativeDriver as true,
+  useNativeDriver: false as const,
 };
 
 /** Spring for marker / emphasis — a bit more bounce */
 export const springMarker = {
   friction: 4,
   tension: 200,
-  useNativeDriver: useNativeDriver as true,
+  useNativeDriver: false as const,
 };
 
 /** Scale down value on press */

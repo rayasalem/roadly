@@ -2,6 +2,7 @@ import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { AppText } from '../../../../shared/components/AppText';
 import { useTheme, spacing, typography, radii, shadows } from '../../../../shared/theme';
+import { ACTIVE_OPACITY } from '../../../../shared/constants/ux';
 
 type FilterRole = string | null;
 
@@ -21,6 +22,7 @@ export function MapFiltersBar({ filterRole, onFilterChange, filterOptions, getLa
           key={role ?? 'all'}
           style={[styles.chip, { backgroundColor: filterRole === role ? colors.primary : 'rgba(255,255,255,0.9)' }, shadows.sm]}
           onPress={() => onFilterChange(role)}
+          activeOpacity={ACTIVE_OPACITY}
           accessibilityRole="button"
         >
           <AppText variant="callout" style={[styles.chipText, { color: filterRole === role ? colors.primaryContrast : colors.text }]}>

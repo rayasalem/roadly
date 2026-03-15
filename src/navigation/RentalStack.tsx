@@ -1,6 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { colors } from '../shared/theme/colors';
+import { ProviderDashboardScreen } from '../features/provider-dashboard/presentation/screens/ProviderDashboardScreen';
 import { RentalDashboardScreen } from '../features/rental/presentation/screens/RentalDashboardScreen';
 import { RentalServicesScreen } from '../features/rental/presentation/screens/RentalServicesScreen';
 import { RentalSkillsScreen } from '../features/rental/presentation/screens/RentalSkillsScreen';
@@ -11,6 +12,8 @@ import { MapScreen } from '../features/map/presentation/screens/MapScreen';
 import { ProfileScreen } from '../features/profile/presentation/screens/ProfileScreen';
 import { SettingsScreen } from '../features/settings/presentation/screens/SettingsScreen';
 import { NotificationsScreen } from '../features/notifications/presentation/screens/NotificationsScreen';
+import { ChatScreen } from '../features/chat/presentation/screens/ChatScreen';
+import { ChatDetailScreen } from '../features/chat/presentation/screens/ChatDetailScreen';
 
 export type RentalStackParamList = {
   RentalDashboard: undefined;
@@ -21,6 +24,8 @@ export type RentalStackParamList = {
   RentalHistory: undefined;
   Map: undefined;
   Profile: undefined;
+  Chat: undefined;
+  ChatDetail: { conversationId: string; name: string };
   Settings: undefined;
   Notifications: undefined;
 };
@@ -36,7 +41,9 @@ const screenOptions = {
 };
 
 export const RentalStack = () => (
-  <Stack.Navigator screenOptions={screenOptions}>
+  <Stack.Navigator screenOptions={screenOptions} initialRouteName="Map">
+    <Stack.Screen name="Map" component={MapScreen} />
+    <Stack.Screen name="ProviderDashboard" component={ProviderDashboardScreen} />
     <Stack.Screen name="RentalDashboard" component={RentalDashboardScreen} />
     <Stack.Screen name="RentalServices" component={RentalServicesScreen} />
     <Stack.Screen name="RentalSkills" component={RentalSkillsScreen} />
@@ -45,6 +52,8 @@ export const RentalStack = () => (
     <Stack.Screen name="RentalHistory" component={RentalHistoryScreen} />
     <Stack.Screen name="Map" component={MapScreen} />
     <Stack.Screen name="Profile" component={ProfileScreen} />
+    <Stack.Screen name="Chat" component={ChatScreen} />
+    <Stack.Screen name="ChatDetail" component={ChatDetailScreen} />
     <Stack.Screen name="Settings" component={SettingsScreen} />
     <Stack.Screen name="Notifications" component={NotificationsScreen} />
   </Stack.Navigator>

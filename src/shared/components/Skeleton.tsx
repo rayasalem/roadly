@@ -12,7 +12,7 @@ type SkeletonProps = {
 
 export const Skeleton = React.memo(function Skeleton({ width = '100%', height = 14, radius = 10, style }: SkeletonProps) {
   const shimmer = useRef(new Animated.Value(0)).current;
-  const useNativeDriver = Platform.OS !== 'web';
+  const useNativeDriver = false;
 
   useEffect(() => {
     const loop = Animated.loop(

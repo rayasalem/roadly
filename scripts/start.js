@@ -32,11 +32,14 @@ if (!fs.existsSync(expoCli)) {
   process.exit(1);
 }
 
-const child = spawn('node', [expoCli, 'start'], {
-  stdio: 'inherit',
-  cwd: rootDir,
-  shell: process.platform === 'win32',
-});
+// On Windows with shell, paths containing spaces (e.g. "سطح المكتب") get split unless we pass a single quoted command
+const useShell = process.platform === 'win32';
+const hasSpaces = expoCli.includes(' ') || rootDir.includes(' ');
+const cmd = useShell && hasSpaces ? `node "${expoCli.replace(/"/g, '"')}" start` : null;
+
+const child = cmd
+  ? spawn(cmd, { stdio: 'inherit', cwd: rootDir, shell: true })
+  : spawn('node', [expoCli, 'start'], { stdio: 'inherit', cwd: rootDir, shell: useShell });
 child.on('error', (err) => {
   console.error('ERROR starting Expo:', err && err.message ? err.message : err);
   process.exit(1);

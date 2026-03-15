@@ -79,11 +79,17 @@ export type StringKey =
   | 'request.status'
   | 'request.historyTitle'
   | 'request.noHistory'
+  | 'request.status.new'
   | 'request.status.pending'
   | 'request.status.accepted'
+  | 'request.status.rejected'
+  | 'request.status.inProgress'
   | 'request.status.on_the_way'
   | 'request.status.completed'
   | 'request.status.cancelled'
+  | 'request.cancelRequest'
+  | 'request.markComplete'
+  | 'request.customer'
   | 'request.eta'
   | 'request.etaMinutes'
   | 'request.trackBelow'
@@ -114,10 +120,23 @@ export type StringKey =
   | 'common.currency'
   | 'request.submitRating'
   | 'request.ratingSubmitted'
+  | 'request.filterAll'
+  | 'request.filterInProgress'
+  | 'request.filterCompleted'
+  | 'request.filterCancelled'
+  | 'request.trackOnMap'
+  | 'request.rateProvider'
+  | 'request.cancelRequest'
+  | 'customerDashboard.newRequestCta'
+  | 'customerDashboard.activeRequests'
+  | 'customerDashboard.viewAllRequests'
+  | 'customerDashboard.offersTitle'
+  | 'customerDashboard.offersSubtitle'
   | 'map.title'
   | 'map.incomingRequests'
   | 'map.nearest'
   | 'map.noProviders'
+  | 'map.availableProviders'
   | 'map.cta.start'
   | 'auth.getStarted'
   | 'auth.tagline'
@@ -138,6 +157,7 @@ export type StringKey =
   | 'welcome.subtitle'
   | 'welcome.signUp'
   | 'welcome.login'
+  | 'welcome.registerAsProvider'
   | 'welcome.continueAsGuest'
   | 'nav.home'
   | 'nav.chat'
@@ -148,6 +168,18 @@ export type StringKey =
   | 'notifications.hoursAgo'
   | 'notifications.yesterday'
   | 'notifications.empty'
+  | 'notifications.prefs.title'
+  | 'notifications.prefs.newRequests'
+  | 'notifications.prefs.statusUpdates'
+  | 'notifications.prefs.completionAndRating'
+  | 'notification.toast.requestAccepted'
+  | 'notification.toast.requestRejected'
+  | 'notification.toast.providerArrived'
+  | 'notification.toast.inProgress'
+  | 'notification.toast.serviceCompleted'
+  | 'notification.toast.newRequest'
+  | 'notification.toast.requestCompleted'
+  | 'notification.toast.requestRejectedProvider'
   | 'nav.profile'
   | 'nav.settings'
   | 'settings.appearance'
@@ -155,6 +187,23 @@ export type StringKey =
   | 'customer.liveTrackingTitle'
   | 'customer.liveTrackingSubtitle'
   | 'customer.ratings'
+  | 'rating.overall'
+  | 'rating.speed'
+  | 'rating.quality'
+  | 'rating.professionalism'
+  | 'rating.commentOptional'
+  | 'rating.commentPlaceholder'
+  | 'rating.submit'
+  | 'rating.thanksTitle'
+  | 'rating.thanksSubtitle'
+  | 'rating.backToRequests'
+  | 'rating.rateRequest'
+  | 'rating.forProvider'
+  | 'rating.rateNowNotification'
+  | 'rating.receivedTitle'
+  | 'rating.noRatingsYet'
+  | 'rating.averageRating'
+  | 'common.sending'
   | 'customer.ratingsEmpty'
   | 'customer.ratingsEmptySubtitle'
   | 'customer.payment'
@@ -206,6 +255,9 @@ export type StringKey =
   | 'map.legend.busy'
   | 'map.legend.offline'
   | 'map.legend.you'
+  | 'map.legend.mechanic'
+  | 'map.legend.tow'
+  | 'map.legend.rental'
   | 'map.searchPlaceholder'
   | 'map.searchHerePlaceholder'
   | 'map.useCurrentLocation'
@@ -214,9 +266,12 @@ export type StringKey =
   | 'map.onlyCustomersCanRequest'
   | 'map.backToList'
   | 'map.myLocation'
+  | 'map.away'
+  | 'map.tapForDetails'
   | 'map.placeholderNoKey'
   | 'map.placeholderLoadError'
   | 'map.openMap'
+  | 'map.availability'
   | 'map.status.available'
   | 'map.status.busy'
   | 'map.status.onTheWay'
@@ -236,6 +291,96 @@ export type StringKey =
   | 'map.voiceSearch'
   | 'map.webNotSupported'
   | 'map.webMapLoadFailed'
+  | 'map.nearbyProvidersSection'
+  | 'map.tapMarkerHint'
+  | 'map.mapLoading'
+  | 'providersPage.title'
+  | 'providersPage.viewAll'
+  | 'providersPage.filterAll'
+  | 'providersPage.filterAvailable'
+  | 'providersPage.filterBusy'
+  | 'providersPage.filterOffline'
+  | 'providerReg.title'
+  | 'providerReg.subtitle'
+  | 'providerReg.typeMechanic'
+  | 'providerReg.typeTow'
+  | 'providerReg.typeRental'
+  | 'providerReg.fullName'
+  | 'providerReg.phone'
+  | 'providerReg.email'
+  | 'providerReg.password'
+  | 'providerReg.photosOptional'
+  | 'providerReg.workshopAddress'
+  | 'providerReg.serviceTypes'
+  | 'providerReg.workingHours'
+  | 'providerReg.currentLocation'
+  | 'providerReg.vehicleTypes'
+  | 'providerReg.carTypes'
+  | 'providerReg.carsCount'
+  | 'providerReg.rentPerHour'
+  | 'providerReg.rentPerDay'
+  | 'providerReg.availability'
+  | 'providerReg.available'
+  | 'providerReg.unavailable'
+  | 'providerReg.statusSubOn'
+  | 'providerReg.statusSubOff'
+  | 'providerReg.requestMode'
+  | 'providerReg.autoAccept'
+  | 'providerReg.manualAccept'
+  | 'providerReg.currentRequests'
+  | 'providerReg.accept'
+  | 'providerReg.decline'
+  | 'providerReg.notifications'
+  | 'providerReg.notificationsHint'
+  | 'providerReg.submit'
+  | 'providerReg.phoneInvalid'
+  | 'providerReg.gpsButton'
+  | 'providerReg.workingHoursFrom'
+  | 'providerReg.workingHoursTo'
+  | 'providerReg.addPhoto'
+  | 'providerReg.serviceMaintenance'
+  | 'providerReg.serviceElectric'
+  | 'providerReg.serviceOilChange'
+  | 'providerReg.serviceTires'
+  | 'providerReg.serviceEngine'
+  | 'providerReg.serviceBrakes'
+  | 'providerReg.vehicleCar'
+  | 'providerReg.vehicleTruck'
+  | 'providerReg.vehicleSuv'
+  | 'providerReg.vehicleMotorcycle'
+  | 'providerReg.carTypeSedan'
+  | 'providerReg.carTypeSuv'
+  | 'providerReg.carTypeHatchback'
+  | 'providerDashboard.headerTitle'
+  | 'providerDashboard.notifications'
+  | 'providerDashboard.logout'
+  | 'providerDashboard.sidebar.dashboard'
+  | 'providerDashboard.sidebar.incoming'
+  | 'providerDashboard.sidebar.inProgress'
+  | 'providerDashboard.sidebar.history'
+  | 'providerDashboard.sidebar.map'
+  | 'providerDashboard.sidebar.statistics'
+  | 'providerDashboard.sidebar.profile'
+  | 'providerDashboard.sidebar.help'
+  | 'providerDashboard.sidebar.requests'
+  | 'providerDashboard.newRequests'
+  | 'providerDashboard.inProgress'
+  | 'providerDashboard.completed'
+  | 'providerDashboard.availability'
+  | 'providerDashboard.statsToday'
+  | 'providerDashboard.statsWeek'
+  | 'providerDashboard.statsMonth'
+  | 'providerDashboard.totalEarnings'
+  | 'providerDashboard.acceptRate'
+  | 'providerDashboard.declineRate'
+  | 'providerDashboard.viewOnMap'
+  | 'providerDashboard.mapSectionDesc'
+  | 'providerDashboard.rating'
+  | 'providerDashboard.helpTitle'
+  | 'providerDashboard.helpDesc'
+  | 'providerDashboard.noNewRequests'
+  | 'providerDashboard.noInProgress'
+  | 'providerDashboard.noCompleted'
   | 'mechanic.stats.jobsToday'
   | 'mechanic.stats.onTheWay'
   | 'mechanic.stats.rating'
@@ -458,11 +603,17 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'request.status': 'Status',
     'request.historyTitle': 'My requests',
     'request.noHistory': 'No requests yet. Create one from the map.',
+    'request.status.new': 'New',
     'request.status.pending': 'Pending',
     'request.status.accepted': 'Accepted',
+    'request.status.rejected': 'Rejected',
+    'request.status.inProgress': 'In progress',
     'request.status.on_the_way': 'On the way',
     'request.status.completed': 'Completed',
-    'request.status.cancelled': 'Cancel',
+    'request.status.cancelled': 'Cancelled',
+    'request.cancelRequest': 'Cancel request',
+    'request.markComplete': 'Mark complete',
+    'request.customer': 'Customer',
     'request.eta': 'ETA',
     'request.etaMinutes': 'min',
     'request.trackBelow': 'Track your request below.',
@@ -493,10 +644,23 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'common.currency': 'USD',
     'request.submitRating': 'Submit rating',
     'request.ratingSubmitted': 'Thank you for your rating!',
+    'request.filterAll': 'All',
+    'request.filterInProgress': 'In progress',
+    'request.filterCompleted': 'Completed',
+    'request.filterCancelled': 'Cancelled',
+    'request.trackOnMap': 'Track on map',
+    'request.rateProvider': 'Rate',
+    'request.cancelRequest': 'Cancel request',
+    'customerDashboard.newRequestCta': 'New service request',
+    'customerDashboard.activeRequests': 'My requests',
+    'customerDashboard.viewAllRequests': 'View all',
+    'customerDashboard.offersTitle': 'Offers & discounts',
+    'customerDashboard.offersSubtitle': 'Check available offers for your next service.',
     'map.title': 'Get direction',
     'map.incomingRequests': 'Incoming requests',
     'map.nearest': 'Nearest provider',
     'map.noProviders': 'No providers nearby yet.',
+    'map.availableProviders': 'Available providers',
     'map.noRequestsYet': 'No requests yet.',
     'map.noRequestsSubtitle': 'New service requests will appear here.',
     'map.cta.start': 'Start',
@@ -529,6 +693,18 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'notifications.hoursAgo': 'hours ago',
     'notifications.yesterday': 'Yesterday',
     'notifications.empty': 'No notifications yet.',
+    'notifications.prefs.title': 'Notification types',
+    'notifications.prefs.newRequests': 'New requests & updates',
+    'notifications.prefs.statusUpdates': 'Status updates (accepted, rejected, on the way)',
+    'notifications.prefs.completionAndRating': 'Completion & rating',
+    'notification.toast.requestAccepted': 'Your request was accepted',
+    'notification.toast.requestRejected': 'Your request was rejected',
+    'notification.toast.providerArrived': 'Provider has arrived',
+    'notification.toast.inProgress': 'Your request is in progress',
+    'notification.toast.serviceCompleted': 'Service completed — rate your provider',
+    'notification.toast.newRequest': 'New service request',
+    'notification.toast.requestCompleted': 'Request completed',
+    'notification.toast.requestRejectedProvider': 'Request was declined',
     'nav.profile': 'Profile',
     'nav.settings': 'Settings',
     'customer.liveTracking': 'Live Tracking',
@@ -537,6 +713,23 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'customer.ratings': 'Ratings',
     'customer.ratingsEmpty': 'No ratings yet',
     'customer.ratingsEmptySubtitle': 'Rate your completed services from Request History.',
+    'rating.overall': 'Overall rating',
+    'rating.speed': 'Response / service speed',
+    'rating.quality': 'Service quality',
+    'rating.professionalism': 'Professionalism & behavior',
+    'rating.commentOptional': 'Comment (optional)',
+    'rating.commentPlaceholder': 'Add a note or feedback…',
+    'rating.submit': 'Submit rating',
+    'rating.thanksTitle': 'Thanks for your rating',
+    'rating.thanksSubtitle': 'Your feedback helps us improve.',
+    'rating.backToRequests': 'Back to my requests',
+    'rating.rateRequest': 'Rate this request',
+    'rating.forProvider': 'Provider',
+    'rating.rateNowNotification': 'Rate your request now',
+    'rating.receivedTitle': 'Ratings received',
+    'rating.noRatingsYet': 'No ratings yet',
+    'rating.averageRating': 'Average rating',
+    'common.sending': 'Sending…',
     'customer.payment': 'Payment',
     'customer.addPaymentMethod': 'Add payment method',
     'customer.paymentHint': 'Add a card to pay for services quickly.',
@@ -578,6 +771,9 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'map.legend.busy': 'Busy',
     'map.legend.offline': 'Offline',
     'map.legend.you': 'You',
+    'map.legend.mechanic': 'Mechanic',
+    'map.legend.tow': 'Tow truck',
+    'map.legend.rental': 'Car rental',
     'map.searchPlaceholder': 'Search area or address',
     'map.searchHerePlaceholder': 'Search here or enter address and area',
     'map.useCurrentLocation': 'Use current location',
@@ -586,9 +782,12 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'map.onlyCustomersCanRequest': 'Only customers can request services',
     'map.backToList': 'Back to list',
     'map.myLocation': 'My location',
+    'map.away': 'away',
+    'map.tapForDetails': 'Tap to open card',
     'map.placeholderNoKey': 'Add EXPO_PUBLIC_GOOGLE_MAPS_KEY in .env to show the map',
     'map.placeholderLoadError': 'Map could not load. Check your key and connection.',
     'map.openMap': 'Open map',
+    'map.availability': 'Availability',
     'map.status.available': 'Available',
     'map.status.busy': 'Busy',
     'map.status.onTheWay': 'On the way',
@@ -605,6 +804,94 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'map.voiceSearch': 'Voice search',
     'map.webNotSupported': 'Native map is available on mobile only. Use the in-app map on web.',
     'map.webMapLoadFailed': 'Map could not load (e.g. blocked by tracking prevention). Try disabling it for this site or use another browser.',
+    'map.nearbyProvidersSection': 'Nearby providers',
+    'map.tapMarkerHint': 'Tap a marker on the map to see details.',
+    'map.mapLoading': 'Loading map…',
+    'providersPage.title': 'All providers',
+    'providersPage.viewAll': 'View all providers',
+    'providersPage.filterAll': 'All',
+    'providersPage.filterAvailable': 'Available',
+    'providersPage.filterBusy': 'Busy',
+    'providersPage.filterOffline': 'Unavailable',
+    'providerReg.title': 'Provider registration',
+    'providerReg.subtitle': 'Register as mechanic, tow truck or car rental',
+    'providerReg.typeMechanic': 'Mechanic',
+    'providerReg.typeTow': 'Tow truck',
+    'providerReg.typeRental': 'Car rental',
+    'providerReg.fullName': 'Full name',
+    'providerReg.phone': 'Phone number',
+    'providerReg.email': 'Email',
+    'providerReg.password': 'Password',
+    'providerReg.photosOptional': 'Photos (optional)',
+    'providerReg.workshopAddress': 'Workshop address / GPS',
+    'providerReg.serviceTypes': 'Service types',
+    'providerReg.workingHours': 'Working hours',
+    'providerReg.currentLocation': 'Current work location (GPS)',
+    'providerReg.vehicleTypes': 'Vehicle types you can tow',
+    'providerReg.carTypes': 'Car types available',
+    'providerReg.carsCount': 'Number of cars available',
+    'providerReg.rentPerHour': 'Rent per hour',
+    'providerReg.rentPerDay': 'Rent per day',
+    'providerReg.availability': 'Availability',
+    'providerReg.available': 'Available',
+    'providerReg.unavailable': 'Unavailable',
+    'providerReg.requestMode': 'Request handling',
+    'providerReg.autoAccept': 'Auto-accept',
+    'providerReg.manualAccept': 'Manual approval',
+    'providerReg.currentRequests': 'Current requests',
+    'providerReg.accept': 'Accept',
+    'providerReg.decline': 'Decline',
+    'providerReg.notifications': 'Notifications',
+    'providerReg.notificationsHint': 'You will be notified of new requests and status updates',
+    'providerReg.submit': 'Register',
+    'providerReg.phoneInvalid': 'Please enter a valid phone number',
+    'providerReg.gpsButton': 'Set location (GPS)',
+    'providerReg.workingHoursFrom': 'From',
+    'providerReg.workingHoursTo': 'To',
+    'providerReg.addPhoto': 'Add photo',
+    'providerReg.serviceMaintenance': 'Maintenance',
+    'providerReg.serviceElectric': 'Electrical',
+    'providerReg.serviceOilChange': 'Oil change',
+    'providerReg.serviceTires': 'Tires',
+    'providerReg.serviceEngine': 'Engine',
+    'providerReg.serviceBrakes': 'Brakes',
+    'providerReg.vehicleCar': 'Car',
+    'providerReg.vehicleTruck': 'Truck',
+    'providerReg.vehicleSuv': 'SUV',
+    'providerReg.vehicleMotorcycle': 'Motorcycle',
+    'providerReg.carTypeSedan': 'Sedan',
+    'providerReg.carTypeSuv': 'SUV',
+    'providerReg.carTypeHatchback': 'Hatchback',
+    'providerDashboard.headerTitle': 'Provider dashboard',
+    'providerDashboard.notifications': 'Notifications',
+    'providerDashboard.logout': 'Logout',
+    'providerDashboard.sidebar.dashboard': 'Dashboard',
+    'providerDashboard.sidebar.incoming': 'Incoming requests',
+    'providerDashboard.sidebar.inProgress': 'In progress',
+    'providerDashboard.sidebar.history': 'History',
+    'providerDashboard.sidebar.map': 'Map',
+    'providerDashboard.sidebar.statistics': 'Statistics',
+    'providerDashboard.sidebar.profile': 'Profile & settings',
+    'providerDashboard.sidebar.help': 'Help',
+    'providerDashboard.sidebar.requests': 'Incoming requests',
+    'providerDashboard.newRequests': 'New requests',
+    'providerDashboard.inProgress': 'In progress',
+    'providerDashboard.completed': 'Completed',
+    'providerDashboard.availability': 'Availability',
+    'providerDashboard.statsToday': 'Today',
+    'providerDashboard.statsWeek': 'This week',
+    'providerDashboard.statsMonth': 'This month',
+    'providerDashboard.totalEarnings': 'Total earnings',
+    'providerDashboard.acceptRate': 'Accept rate',
+    'providerDashboard.declineRate': 'Decline rate',
+    'providerDashboard.viewOnMap': 'View on map',
+    'providerDashboard.mapSectionDesc': 'View request and customer locations on the map in real time.',
+    'providerDashboard.rating': 'Rating',
+    'providerDashboard.helpTitle': 'Help & support',
+    'providerDashboard.helpDesc': 'Contact support for technical assistance.',
+    'providerDashboard.noNewRequests': 'No new requests',
+    'providerDashboard.noInProgress': 'No requests in progress',
+    'providerDashboard.noCompleted': 'No completed requests yet',
     'mechanic.stats.jobsToday': 'Jobs today',
     'mechanic.stats.onTheWay': 'On the way',
     'mechanic.stats.rating': 'Rating',
@@ -831,11 +1118,17 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'request.status': 'الحالة',
     'request.historyTitle': 'طلباتي',
     'request.noHistory': 'لا توجد طلبات بعد. أنشئ طلباً من الخريطة.',
+    'request.status.new': 'جديد',
     'request.status.pending': 'قيد الانتظار',
     'request.status.accepted': 'مقبول',
+    'request.status.rejected': 'مرفوض',
+    'request.status.inProgress': 'جاري التنفيذ',
     'request.status.on_the_way': 'في الطريق',
     'request.status.completed': 'مكتمل',
-    'request.status.cancelled': 'إلغاء',
+    'request.status.cancelled': 'ملغي',
+    'request.cancelRequest': 'إلغاء الطلب',
+    'request.markComplete': 'تم التنفيذ',
+    'request.customer': 'العميل',
     'request.eta': 'الوصول المتوقع',
     'request.etaMinutes': 'د',
     'request.trackBelow': 'تتبع طلبك أدناه.',
@@ -866,10 +1159,23 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'common.currency': 'USD',
     'request.submitRating': 'إرسال التقييم',
     'request.ratingSubmitted': 'شكراً لتقييمك!',
+    'request.filterAll': 'الكل',
+    'request.filterInProgress': 'جاري التنفيذ',
+    'request.filterCompleted': 'مكتمل',
+    'request.filterCancelled': 'ملغي',
+    'request.trackOnMap': 'تتبع على الخريطة',
+    'request.rateProvider': 'تقييم',
+    'request.cancelRequest': 'إلغاء الطلب',
+    'customerDashboard.newRequestCta': 'طلب خدمة جديد',
+    'customerDashboard.activeRequests': 'طلباتي',
+    'customerDashboard.viewAllRequests': 'عرض الكل',
+    'customerDashboard.offersTitle': 'العروض والخصومات',
+    'customerDashboard.offersSubtitle': 'اطّلع على العروض المتاحة لخدمتك القادمة.',
     'map.title': 'الحصول على الاتجاه',
     'map.incomingRequests': 'الطلبات الواردة',
     'map.nearest': 'أقرب مزود',
     'map.noProviders': 'لا يوجد مزودون قريبون بعد.',
+    'map.availableProviders': 'المزودون المتاحون',
     'map.cta.start': 'ابدأ',
     'auth.getStarted': 'ابدأ',
     'auth.tagline': 'أجر سيارتك واكسب مالاً إضافياً.',
@@ -890,6 +1196,7 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'welcome.subtitle': 'خدمات سيارات سريعة وسهلة وآمنة بين يديك.',
     'welcome.signUp': 'إنشاء حساب',
     'welcome.login': 'تسجيل الدخول',
+    'welcome.registerAsProvider': 'تسجيل كمزود خدمة',
     'welcome.continueAsGuest': 'متابعة كزائر',
     'nav.home': 'الرئيسية',
     'nav.chat': 'الدردشة',
@@ -900,6 +1207,18 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'notifications.hoursAgo': 'ساعات',
     'notifications.yesterday': 'أمس',
     'notifications.empty': 'لا توجد إشعارات بعد.',
+    'notifications.prefs.title': 'أنواع الإشعارات',
+    'notifications.prefs.newRequests': 'طلبات جديدة وتحديثات',
+    'notifications.prefs.statusUpdates': 'تحديثات الحالة (قبول، رفض، في الطريق)',
+    'notifications.prefs.completionAndRating': 'إتمام الخدمة والتقييم',
+    'notification.toast.requestAccepted': 'تم قبول طلبك',
+    'notification.toast.requestRejected': 'تم رفض طلبك',
+    'notification.toast.providerArrived': 'المزود وصل',
+    'notification.toast.inProgress': 'طلبك قيد التنفيذ',
+    'notification.toast.serviceCompleted': 'تم إتمام الخدمة — قيّم المزود',
+    'notification.toast.newRequest': 'طلب خدمة جديد',
+    'notification.toast.requestCompleted': 'الطلب مكتمل',
+    'notification.toast.requestRejectedProvider': 'تم رفض الطلب',
     'nav.profile': 'الملف',
     'nav.settings': 'الإعدادات',
     'customer.liveTracking': 'التتبع المباشر',
@@ -908,6 +1227,23 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'customer.ratings': 'التقييمات',
     'customer.ratingsEmpty': 'لا توجد تقييمات بعد',
     'customer.ratingsEmptySubtitle': 'قيّم الخدمات المكتملة من سجل الطلبات.',
+    'rating.overall': 'التقييم العام',
+    'rating.speed': 'سرعة الاستجابة / الخدمة',
+    'rating.quality': 'جودة الخدمة',
+    'rating.professionalism': 'سلوك المزود والاحترافية',
+    'rating.commentOptional': 'ملاحظة أو تعليق (اختياري)',
+    'rating.commentPlaceholder': 'أضف ملاحظة أو تعليقاً…',
+    'rating.submit': 'إرسال التقييم',
+    'rating.thanksTitle': 'شكراً لتقييمك',
+    'rating.thanksSubtitle': 'ملاحظاتك تساعدنا على التحسين.',
+    'rating.backToRequests': 'العودة لطلباتي',
+    'rating.rateRequest': 'تقييم هذا الطلب',
+    'rating.forProvider': 'المزود',
+    'rating.rateNowNotification': 'قيم طلبك الآن',
+    'rating.receivedTitle': 'التقييمات الواردة',
+    'rating.noRatingsYet': 'لا توجد تقييمات بعد',
+    'rating.averageRating': 'متوسط التقييم',
+    'common.sending': 'جاري الإرسال…',
     'customer.payment': 'الدفع',
     'customer.addPaymentMethod': 'إضافة طريقة دفع',
     'customer.paymentHint': 'أضف بطاقة للدفع بسرعة.',
@@ -963,6 +1299,9 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'map.legend.busy': 'مشغول',
     'map.legend.offline': 'غير متصل',
     'map.legend.you': 'أنت',
+    'map.legend.mechanic': 'ميكانيكي',
+    'map.legend.tow': 'ونش',
+    'map.legend.rental': 'تأجير سيارات',
     'map.searchPlaceholder': 'البحث عن منطقة أو عنوان',
     'map.searchHerePlaceholder': 'البحث هنا أو أدخل العنوان والمنطقة',
     'map.useCurrentLocation': 'استخدم موقعي الحالي',
@@ -971,9 +1310,12 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'map.onlyCustomersCanRequest': 'يمكن للعملاء فقط طلب الخدمات',
     'map.backToList': 'العودة للقائمة',
     'map.myLocation': 'موقعي',
+    'map.away': 'بعيداً',
+    'map.tapForDetails': 'اضغط لفتح البطاقة',
     'map.placeholderNoKey': 'أضف EXPO_PUBLIC_GOOGLE_MAPS_KEY في .env لعرض الخريطة',
     'map.placeholderLoadError': 'تعذر تحميل الخريطة. تحقق من المفتاح والاتصال.',
     'map.openMap': 'فتح الخريطة',
+    'map.availability': 'الحالة',
     'map.status.available': 'متاح',
     'map.status.busy': 'مشغول',
     'map.status.onTheWay': 'في الطريق',
@@ -993,6 +1335,96 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'map.voiceSearch': 'بحث صوتي',
     'map.webNotSupported': 'الخريطة الأصلية متاحة فقط على الموبايل. استخدم الخريطة داخل التطبيق على الويب.',
     'map.webMapLoadFailed': 'لم تُحمَّل الخريطة (مثلاً بسبب منع التتبع). جرّب تعطيله لهذا الموقع أو استخدم متصفحاً آخر.',
+    'map.nearbyProvidersSection': 'مزودون قريبون',
+    'map.tapMarkerHint': 'اضغط على علامة على الخريطة لرؤية التفاصيل.',
+    'map.mapLoading': 'جاري تحميل الخريطة…',
+    'providersPage.title': 'كل المزودين',
+    'providersPage.viewAll': 'عرض كل المزودين',
+    'providersPage.filterAll': 'الكل',
+    'providersPage.filterAvailable': 'متاحون',
+    'providersPage.filterBusy': 'مشغولون',
+    'providersPage.filterOffline': 'غير متاحين',
+    'providerReg.title': 'تسجيل مزود خدمة',
+    'providerReg.subtitle': 'سجّل كميكانيكي أو ونش أو مؤجر سيارات',
+    'providerReg.typeMechanic': 'ميكانيكي',
+    'providerReg.typeTow': 'ونش',
+    'providerReg.typeRental': 'تأجير سيارات',
+    'providerReg.fullName': 'الاسم الكامل',
+    'providerReg.phone': 'رقم الهاتف',
+    'providerReg.email': 'البريد الإلكتروني',
+    'providerReg.password': 'كلمة المرور',
+    'providerReg.photosOptional': 'صور (اختياري)',
+    'providerReg.workshopAddress': 'عنوان الورشة / الموقع',
+    'providerReg.serviceTypes': 'نوع الخدمات',
+    'providerReg.workingHours': 'ساعات العمل',
+    'providerReg.currentLocation': 'موقع العمل الحالي (GPS)',
+    'providerReg.vehicleTypes': 'أنواع المركبات التي يمكن سحبها',
+    'providerReg.carTypes': 'أنواع السيارات المتاحة',
+    'providerReg.carsCount': 'عدد السيارات المتاحة',
+    'providerReg.rentPerHour': 'سعر الإيجار لكل ساعة',
+    'providerReg.rentPerDay': 'سعر الإيجار لكل يوم',
+    'providerReg.availability': 'التوافر',
+    'providerReg.available': 'متاح',
+    'providerReg.unavailable': 'غير متاح',
+    'providerReg.statusSubOn': 'أنت تستقبل الطلبات الآن',
+    'providerReg.statusSubOff': 'لن تصلك طلبات حتى تفعّل التوافر',
+    'providerReg.requestMode': 'استقبال الطلبات',
+    'providerReg.autoAccept': 'قبول تلقائي',
+    'providerReg.manualAccept': 'موافقة يدوية',
+    'providerReg.currentRequests': 'الطلبات الحالية',
+    'providerReg.accept': 'موافقة',
+    'providerReg.decline': 'رفض',
+    'providerReg.notifications': 'الإشعارات',
+    'providerReg.notificationsHint': 'ستصلك إشعارات عند وصول طلب جديد أو تحديث الحالة',
+    'providerReg.submit': 'تسجيل',
+    'providerReg.phoneInvalid': 'أدخل رقماً هاتفياً صحيحاً',
+    'providerReg.gpsButton': 'تحديد موقع (GPS)',
+    'providerReg.workingHoursFrom': 'من',
+    'providerReg.workingHoursTo': 'إلى',
+    'providerReg.addPhoto': 'إضافة صورة',
+    'providerReg.serviceMaintenance': 'صيانة',
+    'providerReg.serviceElectric': 'كهرباء',
+    'providerReg.serviceOilChange': 'تبديل زيت',
+    'providerReg.serviceTires': 'إطارات',
+    'providerReg.serviceEngine': 'محرك',
+    'providerReg.serviceBrakes': 'فرامل',
+    'providerReg.vehicleCar': 'سيارة',
+    'providerReg.vehicleTruck': 'شاحنة',
+    'providerReg.vehicleSuv': 'دفع رباعي',
+    'providerReg.vehicleMotorcycle': 'دراجة نارية',
+    'providerReg.carTypeSedan': 'سيدان',
+    'providerReg.carTypeSuv': 'دفع رباعي',
+    'providerReg.carTypeHatchback': 'هاتشباك',
+    'providerDashboard.headerTitle': 'لوحة تحكم المزود',
+    'providerDashboard.notifications': 'الإشعارات',
+    'providerDashboard.logout': 'تسجيل خروج',
+    'providerDashboard.sidebar.dashboard': 'الرئيسية',
+    'providerDashboard.sidebar.incoming': 'طلبات جديدة',
+    'providerDashboard.sidebar.inProgress': 'طلبات جارية',
+    'providerDashboard.sidebar.history': 'السجل',
+    'providerDashboard.sidebar.map': 'الخريطة',
+    'providerDashboard.sidebar.statistics': 'الإحصائيات',
+    'providerDashboard.sidebar.profile': 'الملف والإعدادات',
+    'providerDashboard.sidebar.help': 'المساعدة',
+    'providerDashboard.sidebar.requests': 'طلبات واردة',
+    'providerDashboard.newRequests': 'طلبات جديدة',
+    'providerDashboard.inProgress': 'جاري التنفيذ',
+    'providerDashboard.completed': 'مكتملة',
+    'providerDashboard.availability': 'التوافر',
+    'providerDashboard.statsToday': 'اليوم',
+    'providerDashboard.statsWeek': 'هذا الأسبوع',
+    'providerDashboard.statsMonth': 'هذا الشهر',
+    'providerDashboard.totalEarnings': 'إجمالي الأرباح',
+    'providerDashboard.acceptRate': 'معدل القبول',
+    'providerDashboard.declineRate': 'معدل الرفض',
+    'providerDashboard.viewOnMap': 'عرض على الخريطة',
+    'providerDashboard.mapSectionDesc': 'اعرض مواقع الطلبات والعملاء على الخريطة في الوقت الحقيقي.',
+    'providerDashboard.rating': 'التقييم',
+    'providerDashboard.helpTitle': 'المساعدة والدعم الفني',
+    'providerDashboard.helpDesc': 'تواصل مع الدعم للحصول على المساعدة الفنية.',
+    'providerDashboard.noNewRequests': 'لا توجد طلبات جديدة',
+    'providerDashboard.noInProgress': 'لا توجد طلبات قيد التنفيذ',
+    'providerDashboard.noCompleted': 'لا توجد طلبات مكتملة بعد',
     'mechanic.stats.jobsToday': 'مهام اليوم',
     'mechanic.stats.onTheWay': 'في الطريق',
     'mechanic.stats.rating': 'التقييم',

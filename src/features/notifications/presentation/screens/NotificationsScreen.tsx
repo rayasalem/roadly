@@ -1,3 +1,7 @@
+/**
+ * Notifications list: icon and color by type (provider/customer).
+ * Tap → mark as read and navigate to request details or dashboard.
+ */
 import React, { memo, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable, Animated } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -14,6 +18,7 @@ import { usePressScaleAnimation } from '../../../../shared/utils/animations';
 import { useAuthStore } from '../../../../store/authStore';
 import { ROLES } from '../../../../shared/constants/roles';
 import { useNotifications, type Notification } from '../../hooks/useNotifications';
+import { getNotificationTheme } from '../../constants/notificationTheme';
 import { safeNavigateToSettings } from '../../../../navigation/navigationRef';
 
 function formatTime(createdAt: string): string {
@@ -36,21 +41,24 @@ function formatTime(createdAt: string): string {
 
 const NotificationCard = memo(function NotificationCard({
   item,
+  isProvider,
   onPress,
 }: {
   item: Notification;
+  isProvider: boolean;
   onPress: () => void;
 }) {
   const isRead = item.read;
+  const theme = getNotificationTheme(item.type, isProvider);
   const { scale, onPressIn, onPressOut } = usePressScaleAnimation();
   return (
     <Pressable onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
       <Animated.View style={[styles.card, isRead && styles.cardRead, { transform: [{ scale }] }]}>
-        <View style={styles.iconWrap}>
+        <View style={[styles.iconWrap, { backgroundColor: theme.color + '22' }]}>
           <MaterialCommunityIcons
-            name={isRead ? 'bell-outline' : 'bell-badge-outline'}
-            size={22}
-            color={isRead ? colors.textMuted : colors.primary}
+            name={theme.icon as any}
+            size={24}
+            color={theme.color}
           />
         </View>
         <View style={styles.textCol}>
@@ -68,6 +76,7 @@ const NotificationCard = memo(function NotificationCard({
 export function NotificationsScreen() {
   const navigation = useNavigation<any>();
   const role = useAuthStore((s) => s.user?.role);
+  const isProvider = role === 'mechanic' || role === 'mechanic_tow' || role === 'car_rental';
   const {
     notifications,
     isLoading,
@@ -81,29 +90,46 @@ export function NotificationsScreen() {
   const handleTab = useCallback((tab: NavTabId) => {
     if (tab === 'Home') {
       if (role === ROLES.ADMIN) navigation.navigate('AdminDashboard');
+      else if (isProvider) navigation.navigate('ProviderDashboard');
       else navigation.navigate('Map');
       return;
     }
     if (tab === 'Chat') navigation.navigate('Chat');
     else if (tab === 'Profile') navigation.navigate('Profile');
     else if (tab === 'Settings') safeNavigateToSettings(navigation);
-  }, [navigation, role]);
+  }, [navigation, role, isProvider]);
 
   const handleNotificationPress = useCallback(
     (item: Notification) => {
       if (!item.read) markAsRead(item.id);
+      const requestId = item.data?.requestId as string | undefined;
+      const providerId = item.data?.providerId as string | undefined;
+      try {
+        if (isProvider) {
+          navigation.navigate('ProviderDashboard');
+          return;
+        }
+        if (requestId) {
+          navigation.navigate('RequestHistory');
+          return;
+        }
+        navigation.navigate('RequestHistory');
+      } catch (_) {
+        navigation.navigate('RequestHistory');
+      }
     },
-    [markAsRead],
+    [markAsRead, isProvider, navigation]
   );
 
   const renderItem = useCallback(
     ({ item }: { item: Notification }) => (
       <NotificationCard
         item={item}
+        isProvider={isProvider}
         onPress={() => handleNotificationPress(item)}
       />
     ),
-    [handleNotificationPress],
+    [handleNotificationPress, isProvider],
   );
 
   const header = (
@@ -165,13 +191,12 @@ const styles = StyleSheet.create({
     ...shadows.sm,
   },
   cardRead: {
-    opacity: 0.7,
+    opacity: 0.75,
   },
   iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.background,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,

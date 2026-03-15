@@ -10,7 +10,12 @@ config.resolver.sourceExts = [...(config.resolver.sourceExts || []), 'mjs', 'cjs
 
 // Ensure react-native-reanimated is resolvable from @gorhom/bottom-sheet (native bundle)
 const reanimatedPath = path.resolve(projectRoot, 'node_modules', 'react-native-reanimated');
-config.resolver.extraNodeModules = { ...config.resolver.extraNodeModules, 'react-native-reanimated': reanimatedPath };
+const leafletPath = path.resolve(projectRoot, 'node_modules', 'leaflet');
+config.resolver.extraNodeModules = {
+  ...config.resolver.extraNodeModules,
+  'react-native-reanimated': reanimatedPath,
+  leaflet: leafletPath,
+};
 
 // Use platform-specific entry so serverBootstrap is never bundled (only run via "node expo/AppEntry.js" on Render)
 const defaultResolveRequest = config.resolver.resolveRequest;
@@ -29,6 +34,20 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   // Force resolve react-native-reanimated from project root (fix for @gorhom/bottom-sheet in node_modules)
   if (moduleName === 'react-native-reanimated' || moduleName.startsWith('react-native-reanimated/')) {
     try {
+      const resolved = require.resolve(moduleName, { paths: [projectRoot] });
+      return { type: 'sourceFile', filePath: resolved };
+    } catch (_) {
+      // fall through
+    }
+  }
+  // Force resolve leaflet from project root (web bundle — avoids CDN + Tracking Prevention)
+  if (moduleName === 'leaflet' || moduleName.startsWith('leaflet/')) {
+    try {
+      const leafletMain = path.join(leafletPath, 'dist', 'leaflet.js');
+      const fs = require('fs');
+      if (fs.existsSync(leafletMain)) {
+        return { type: 'sourceFile', filePath: leafletMain };
+      }
       const resolved = require.resolve(moduleName, { paths: [projectRoot] });
       return { type: 'sourceFile', filePath: resolved };
     } catch (_) {

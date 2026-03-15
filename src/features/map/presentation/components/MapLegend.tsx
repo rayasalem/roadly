@@ -8,11 +8,19 @@ import { AppText } from '../../../../shared/components/AppText';
 import { useTheme, spacing, typography } from '../../../../shared/theme';
 import { t } from '../../../../shared/i18n/t';
 
-const LEGEND_ITEMS: { key: string; colorKey: 'primary' | 'warning' | 'textMuted' | 'mapUser'; labelKey: string }[] = [
-  { key: 'available', colorKey: 'primary' as const, labelKey: 'map.legend.available' },
-  { key: 'busy', colorKey: 'warning' as const, labelKey: 'map.legend.busy' },
-  { key: 'offline', colorKey: 'textMuted' as const, labelKey: 'map.legend.offline' },
-  { key: 'you', colorKey: 'mapUser' as const, labelKey: 'map.legend.you' },
+type LegendColorKey = 'primary' | 'warning' | 'textMuted' | 'mapUser' | 'mapMechanic' | 'mapTow' | 'mapRental';
+
+const STATUS_LEGEND_ITEMS: { key: string; colorKey: LegendColorKey; labelKey: string }[] = [
+  { key: 'available', colorKey: 'primary', labelKey: 'map.legend.available' },
+  { key: 'busy', colorKey: 'warning', labelKey: 'map.legend.busy' },
+  { key: 'offline', colorKey: 'textMuted', labelKey: 'map.legend.offline' },
+  { key: 'you', colorKey: 'mapUser', labelKey: 'map.legend.you' },
+];
+
+const ROLE_LEGEND_ITEMS: { key: string; colorKey: LegendColorKey; labelKey: string }[] = [
+  { key: 'mechanic', colorKey: 'mapMechanic', labelKey: 'map.legend.mechanic' },
+  { key: 'tow', colorKey: 'mapTow', labelKey: 'map.legend.tow' },
+  { key: 'rental', colorKey: 'mapRental', labelKey: 'map.legend.rental' },
 ];
 
 export interface MapLegendProps {
@@ -22,11 +30,20 @@ export interface MapLegendProps {
 
 export function MapLegend({ compact }: MapLegendProps) {
   const { colors } = useTheme();
+  const themeColors = colors as Record<LegendColorKey, string>;
   return (
     <View style={[styles.wrap, compact && styles.wrapCompact]}>
-      {LEGEND_ITEMS.map((item) => (
+      {STATUS_LEGEND_ITEMS.map((item) => (
         <View key={item.key} style={styles.row}>
-          <View style={[styles.dot, { backgroundColor: colors[item.colorKey] }]} />
+          <View style={[styles.dot, { backgroundColor: themeColors[item.colorKey] }]} />
+          <AppText variant="caption" style={[styles.label, { color: colors.textSecondary }]}>
+            {t(item.labelKey)}
+          </AppText>
+        </View>
+      ))}
+      {ROLE_LEGEND_ITEMS.map((item) => (
+        <View key={`role-${item.key}`} style={styles.row}>
+          <View style={[styles.dot, { backgroundColor: themeColors[item.colorKey] }]} />
           <AppText variant="caption" style={[styles.label, { color: colors.textSecondary }]}>
             {t(item.labelKey)}
           </AppText>

@@ -45,7 +45,7 @@ export function LoginScreen({ navigation }: Props) {
 
   const fade = useRef(new Animated.Value(0)).current;
   const slideY = useRef(new Animated.Value(12)).current;
-  const useNativeDriver = Platform.OS !== 'web';
+  const useNativeDriver = false;
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fade, { toValue: 1, duration: 400, useNativeDriver }),

@@ -21,6 +21,8 @@ function mockToServiceRequest(m: import('../../../mock/mockRequests').MockReques
     serviceType: m.service,
     status: m.status,
     origin: { latitude: m.customerLocation.latitude, longitude: m.customerLocation.longitude },
+    providerName: m.providerName ?? null,
+    customerName: m.customerName ?? null,
     createdAt: now,
     updatedAt: now,
   };

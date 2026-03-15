@@ -32,6 +32,8 @@ import { usePlacesSearch } from '../../hooks/usePlacesSearch';
 import { providerRoleToServiceType } from '../../utils/providerToServiceType';
 import type { CustomerStackParamList } from '../../../../navigation/CustomerStack';
 import { safeNavigateToSettings } from '../../../../navigation/navigationRef';
+import { blurActiveElementForA11y } from '../../../../shared/utils/domA11y';
+import { ACTIVE_OPACITY } from '../../../../shared/constants/ux';
 import { mapScreenWebStyles as styles } from './mapScreenWeb.styles';
 
 const DEFAULT_CENTER = { latitude: 25.2048, longitude: 55.2708 };
@@ -111,6 +113,7 @@ export function MapScreen() {
         return;
       }
       try {
+        blurActiveElementForA11y();
         bottomSheetRef.current?.dismiss();
       } catch (_) {}
       setSelectedProvider(null);
@@ -191,8 +194,7 @@ export function MapScreen() {
           {coords && nearest && nearestDistanceKm != null && (
             <View style={styles.userInfoChip}>
               <AppText variant="caption" style={styles.userInfoText}>
-                {t('map.youAreHere')}{' '}
-                {coords.latitude.toFixed(3)}, {coords.longitude.toFixed(3)} • {nearestDistanceKm.toFixed(1)} km
+                {t('map.youAreHere')} • {nearestDistanceKm.toFixed(1)} km
               </AppText>
             </View>
           )}
@@ -203,16 +205,18 @@ export function MapScreen() {
             selectedProviderId={selectedProvider?.id ?? null}
             nearestProviderId={nearest?.id ?? null}
             onProviderPress={handleSelectProvider}
+            // زر \"طلب خدمة\" في بوب آب Leaflet يستخدم نفس المنطق الموجود في Native
+            onRequestService={handleRequestService}
           />
           <View style={styles.legendWrap}>
             <MapLegend compact />
           </View>
           <MapFiltersBar filterRole={filterRole} onFilterChange={setFilter} filterOptions={filterOptions} getLabel={getFilterLabel} />
-          <TouchableOpacity style={styles.createRequestButton} onPress={() => (isCustomer ? navigation.navigate('Request', { serviceType: 'mechanic' }) : toast({ type: 'info', message: t('map.onlyCustomersCanRequest') }))}>
+          <TouchableOpacity activeOpacity={ACTIVE_OPACITY} style={styles.createRequestButton} onPress={() => (isCustomer ? navigation.navigate('Request', { serviceType: 'mechanic' }) : toast({ type: 'info', message: t('map.onlyCustomersCanRequest') }))}>
             <MaterialCommunityIcons name="plus" size={20} color={colors.primaryContrast} />
             <AppText variant="caption" style={styles.createRequestButtonText}>{t('map.createRequest')}</AppText>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.locationButton} onPress={handleMyLocation}>
+          <TouchableOpacity activeOpacity={ACTIVE_OPACITY} style={styles.locationButton} onPress={handleMyLocation}>
             <MaterialCommunityIcons name="crosshairs-gps" size={24} color={colors.primaryContrast} />
           </TouchableOpacity>
           {showLocationOverlay && (
@@ -248,7 +252,7 @@ export function MapScreen() {
         provider={selectedProvider}
         onRequestService={handleRequestService}
         onOpenMap={handleOpenMapFromSheet}
-        onViewProfile={() => { try { bottomSheetRef.current?.dismiss(); } catch (_) {} setSelectedProvider(null); navigation.navigate('Profile'); }}
+        onViewProfile={(provider) => { try { blurActiveElementForA11y(); bottomSheetRef.current?.dismiss(); } catch (_) {} setSelectedProvider(null); navigation.navigate('ProviderProfile', { providerId: provider.id }); }}
         onClose={() => setSelectedProvider(null)}
         requestServiceDisabled={!isCustomer}
         distanceKm={selectedProviderDistanceKm ?? undefined}

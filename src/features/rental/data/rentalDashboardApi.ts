@@ -28,10 +28,29 @@ export interface RentalDashboardStats {
   rented: number;
 }
 
+export interface RentalJob {
+  id: string;
+  requestId?: string;
+  title: string;
+  distance: string;
+  eta: string;
+  status: 'new' | 'accepted' | 'on_the_way' | 'completed' | 'cancelled';
+}
+
+export interface RentalRequesterItem {
+  id: string;
+  customerName: string;
+  serviceType: string;
+  time: string;
+  status: string;
+}
+
 export interface RentalDashboardResponse {
   stats: RentalDashboardStats;
   vehicles: RentalVehicle[];
   bookings: RentalBooking[];
+  jobs?: RentalJob[];
+  requesters?: RentalRequesterItem[];
 }
 
 export async function fetchRentalDashboard(): Promise<RentalDashboardResponse> {

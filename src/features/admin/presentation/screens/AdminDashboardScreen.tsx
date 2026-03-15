@@ -83,6 +83,17 @@ export function AdminDashboardScreen() {
   const openProfile = useCallback(() => navigation.navigate('Profile'), [navigation]);
   const openMap = useCallback(() => navigation.navigate('Map'), [navigation]);
 
+  const handleTab = useCallback(
+    (tab: NavTabId) => {
+      if (tab === 'Home') navigation.navigate('AdminDashboard');
+      else if (tab === 'Profile') navigation.navigate('Profile');
+      else if (tab === 'Chat') navigation.navigate('Chat');
+      else if (tab === 'Notifications') navigation.navigate('Notifications');
+      else if (tab === 'Settings') navigation.navigate('Settings');
+    },
+    [navigation],
+  );
+
   const {
     stats,
     chartData,

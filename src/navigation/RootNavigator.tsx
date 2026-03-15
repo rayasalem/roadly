@@ -7,6 +7,7 @@ import { OnboardingScreen } from '../features/auth/presentation/screens/Onboardi
 import { WelcomeScreen } from '../features/auth/presentation/screens/WelcomeScreen';
 import { LoginScreen } from '../features/auth/presentation/screens/LoginScreen';
 import { RegisterScreen } from '../features/auth/presentation/screens/RegisterScreen';
+import { ProviderRegistrationScreen } from '../features/auth/presentation/screens/ProviderRegistrationScreen';
 import { useAuthStore } from '../store/authStore';
 import { navigationRef } from './navigationRef';
 
@@ -76,6 +77,11 @@ export function RootNavigator() {
         name="Register"
         options={{ headerShown: false }}
         component={RegisterScreen}
+      />
+      <Stack.Screen
+        name="ProviderRegister"
+        options={{ headerShown: false }}
+        component={ProviderRegistrationScreen}
       />
       <Stack.Screen
         name="App"

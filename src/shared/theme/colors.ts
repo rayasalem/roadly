@@ -48,11 +48,11 @@ export const colors = {
   info: '#0284C7',
   infoLight: '#E0F2FE',
 
-  // —— Map & role (all green: available = green, busy = warning/orange) ——
+  // —— Map & role: ألوان مميزة لكل نوع (ميكانيكي أزرق، ونش أحمر، تأجير أخضر) ——
   mapUser: '#22C55E',
-  mapMechanic: '#22C55E',
-  mapTow: '#16A34A',
-  mapRental: '#15803D',
+  mapMechanic: '#2563EB',
+  mapTow: '#DC2626',
+  mapRental: '#22C55E',
 
   // —— Design system (unified theme for map & provider cards) ——
   designPrimary: '#1E3A8A',

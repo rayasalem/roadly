@@ -55,7 +55,7 @@ export function useRequestService(options: UseRequestServiceOptions) {
 
   const handleCreate = (onSuccess: (requestId: string) => void, onError?: (error: Error) => void) => {
     createMutation.mutate(
-      { serviceType, origin, providerId },
+      { serviceType, origin, providerId, description: serviceDescription?.trim() || undefined },
       {
         onSuccess: (req) => {
           onSuccess(req.id);

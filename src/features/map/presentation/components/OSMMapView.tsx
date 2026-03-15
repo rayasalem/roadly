@@ -4,17 +4,16 @@
  * Map is zoomable, draggable, and responsive. Uses shared mapMarkerUtils for colors and popup HTML.
  */
 import React, { useEffect, useRef, useCallback, useState, memo } from 'react';
-import { View, StyleSheet, Text, Platform } from 'react-native';
+import { View, StyleSheet, Text, Platform, TouchableOpacity } from 'react-native';
 import type { Provider } from '../../../providers/domain/types';
 import { colors } from '../../../../shared/theme/colors';
 import { typography } from '../../../../shared/theme';
 import { t } from '../../../../shared/i18n/t';
-import { getMarkerColorByStatus, buildProviderPopupHtml } from '../../utils/mapMarkerUtils';
+import { getMarkerColorByStatus, getServiceTypeEmoji, buildProviderPopupHtml } from '../../utils/mapMarkerUtils';
 import { LEAFLET_CRITICAL_CSS } from '../../leafletCriticalCss';
 
 const OSM_TILES = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 const LEAFLET_STYLE_ID = 'mechnow-leaflet-inline-css';
-/** Load Leaflet from CDN (avoid bundling; inline CSS used to avoid Tracking Prevention block) */
 const LEAFLET_JS_CDN = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js';
 const LEAFLET_JS_CDN_FALLBACK = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js';
 /** Cap markers for performance on large provider lists */
@@ -100,10 +99,8 @@ function OSMMapViewInner({
 
     const loadScript = (src: string): Promise<void> =>
       new Promise((resolve, reject) => {
-        if (document.querySelector(`script[src="${src}"]`)) {
-          resolve();
-          return;
-        }
+        if (typeof document === 'undefined') { reject(new Error('no document')); return; }
+        if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
         const s = document.createElement('script');
         s.src = src;
         s.onload = () => resolve();
@@ -141,7 +138,7 @@ function OSMMapViewInner({
 
   useEffect(() => {
     const map = mapRef.current as { removeLayer?: (l: unknown) => void } | null;
-    const L = (window as unknown as { L?: { marker: (latlng: [number, number], o?: object) => { addTo: (m: unknown) => unknown; bindPopup: (html: string, o?: object) => unknown; on: (e: string, fn: () => void) => unknown; remove?: () => void }; circleMarker: (latlng: [number, number], o?: object) => { addTo: (m: unknown) => unknown; remove?: () => void } } }).L;
+    const L = (window as unknown as { L?: { marker: (latlng: [number, number], o?: object) => { addTo: (m: unknown) => unknown; bindPopup: (html: string, o?: object) => unknown; on: (e: string, fn: () => void) => unknown; remove?: () => void }; circleMarker: (latlng: [number, number], o?: object) => { addTo: (m: unknown) => unknown; remove?: () => void }; divIcon?: (o: object) => unknown } }).L;
     if (!map || !L) return;
     markersRef.current.forEach((m: { remove?: () => void }) => {
       if (typeof m?.remove === 'function') m.remove();
@@ -170,19 +167,15 @@ function OSMMapViewInner({
       const isNearestMarker = provider.id === nearestProviderId;
       const color = getMarkerColorByStatus(provider, isSelected);
       const divClass = isNearestMarker ? 'mechnow-marker-nearest' : '';
-      const photoUri = provider.photo ?? provider.avatarUri ?? null;
-      const safeUri = photoUri ? String(photoUri).replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;') : '';
-      const innerHtml = safeUri
-        ? `<img src="${safeUri}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none'" />`
-        : '';
-      const markerHtml = `<div class="${divClass}" style="width:28px;height:28px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.25);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;">${innerHtml}${!safeUri ? '👤' : ''}</div>`;
+      const emoji = getServiceTypeEmoji(provider);
+      const markerHtml = `<div class="${divClass}" style="width:40px;height:40px;border-radius:50%;background:${color};border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;font-size:20px;line-height:1;">${emoji}</div>`;
       const marker = L.marker(latlng, {
         icon: (L as unknown as { divIcon: (o: object) => unknown }).divIcon
           ? (L as unknown as { divIcon: (o: { html: string; className: string; iconSize: [number, number]; iconAnchor: [number, number] }) => unknown }).divIcon({
               html: markerHtml,
               className: '',
-              iconSize: [28, 28],
-              iconAnchor: [14, 14],
+              iconSize: [40, 40],
+              iconAnchor: [20, 20],
             })
           : undefined,
       });
@@ -215,12 +208,26 @@ function OSMMapViewInner({
   if (loadError) {
     return (
       <View style={[styles.container, styles.errorContainer]}>
-        <Text style={styles.errorText}>{t('map.webMapLoadFailed') ?? 'تعطيل منع التتبع قد يمنع تحميل الخريطة. جرّب تعطيله لهذا الموقع أو استخدم متصفحاً آخر.'}</Text>
+        <Text style={styles.errorText}>{t('map.webMapLoadFailed')}</Text>
+        {Platform.OS === 'web' && typeof window !== 'undefined' && (
+          <TouchableOpacity style={styles.retryButton} onPress={() => window.location.reload()} activeOpacity={0.8}>
+            <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   }
 
-  return <View style={[styles.container, styles.containerWeb]} ref={setRef as (r: View | null) => void} collapsable={false} />;
+  return (
+    <View style={[styles.container, styles.containerWeb]}>
+      <View style={StyleSheet.absoluteFill} ref={setRef as (r: View | null) => void} collapsable={false} />
+      {!leafletReady && (
+        <View style={styles.loadingOverlay} pointerEvents="none">
+          <Text style={styles.loadingText}>{t('map.mapLoading')}</Text>
+        </View>
+      )}
+    </View>
+  );
 }
 
 /** Stable props compare: re-render only when center or provider list identity/length changes. */
@@ -257,6 +264,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+  },
+  retryButtonText: {
+    fontFamily: typography.fontFamily.medium,
+    fontSize: 15,
+    color: colors.primaryContrast,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.85)',
+  },
+  loadingText: {
+    fontFamily: typography.fontFamily.regular,
+    fontSize: 14,
+    color: colors.textSecondary,
   },
   fallback: {
     fontFamily: typography.fontFamily.regular,

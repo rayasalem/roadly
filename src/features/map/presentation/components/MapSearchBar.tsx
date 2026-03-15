@@ -3,6 +3,7 @@ import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppText } from '../../../../shared/components/AppText';
 import { useTheme, spacing, typography, radii, shadows } from '../../../../shared/theme';
+import { ACTIVE_OPACITY } from '../../../../shared/constants/ux';
 import { t } from '../../../../shared/i18n/t';
 
 interface MapSearchBarProps {
@@ -36,7 +37,7 @@ export function MapSearchBar(p: MapSearchBarProps) {
       {p.showSuggestions && p.suggestions.length > 0 && (
         <View style={[styles.suggestionsBox, { backgroundColor: colors.surface }, shadows.lg]}>
           {p.suggestions.slice(0, 6).map((s) => (
-            <TouchableOpacity key={s.id} style={styles.suggestionRow} onPress={() => p.onSelectSuggestion(s)} activeOpacity={0.7}>
+            <TouchableOpacity key={s.id} style={styles.suggestionRow} onPress={() => p.onSelectSuggestion(s)} activeOpacity={ACTIVE_OPACITY}>
               <MaterialCommunityIcons name="map-marker" size={18} color={colors.primary} />
               <AppText variant="callout" numberOfLines={1} style={[styles.suggestionText, { color: colors.text }]}>{s.description}</AppText>
             </TouchableOpacity>

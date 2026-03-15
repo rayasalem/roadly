@@ -20,8 +20,10 @@ export const ENDPOINTS = {
   requestsCustomer: '/requests/customer',
   /** List requests for current provider */
   requestsProvider: '/requests/provider',
-  /** Rate a completed request (POST body: rating 1-5, comment?) */
+  /** Rate a completed request (POST body: rating, ratingSpeed?, ratingQuality?, ratingProfessionalism?, comment?) */
   requestRate: (requestId: string) => `/requests/${requestId}/rate`,
+  /** List ratings received by current provider */
+  ratingsProvider: '/ratings/provider',
   adminUsers: '/admin/users',
   adminProviders: '/admin/providers',
   /** Dashboard data per role */

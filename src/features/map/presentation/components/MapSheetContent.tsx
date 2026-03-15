@@ -82,6 +82,14 @@ export function MapSheetContent({
           />
         </View>
       )}
+      {!isLoading && !showEmpty && providers.length > 0 && (
+        <View style={styles.section}>
+          <AppText variant="callout" style={[styles.sectionTitle, { color: colors.text }]}>
+            {t('map.nearbyProvidersSection')} ({providers.length})
+          </AppText>
+          <AppText variant="caption" style={{ color: colors.textMuted, marginTop: 4 }}>{t('map.tapMarkerHint')}</AppText>
+        </View>
+      )}
       <NearbyProvidersList
         providers={providers}
         onSelect={onSelectProvider}
@@ -103,5 +111,6 @@ const styles = StyleSheet.create({
   skeletonCta: { marginTop: spacing.sm },
   emptyIconWrap: { marginBottom: spacing.sm, alignItems: 'center' },
   title: { marginBottom: spacing.xs },
+  sectionTitle: { fontWeight: '600', marginBottom: 2 },
   cta: { marginTop: spacing.xs },
 });

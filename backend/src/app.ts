@@ -21,22 +21,59 @@ import chatRoutes from './routes/chat.js';
 const app = express();
 
 app.set('trust proxy', 1);
+
+const isDev = env.NODE_ENV !== 'production';
+const productionOrigins = env.CLIENT_URL.split(',').map((u) => u.trim()).filter(Boolean);
+const allowedOrigins: string[] = isDev
+  ? ['http://localhost:8081', 'http://127.0.0.1:8081', 'http://localhost:19006']
+  : productionOrigins.length > 0
+    ? productionOrigins
+    : ['https://roadmapapp.vercel.app'];
+
+function getCorsOrigin(req: express.Request): string {
+  const origin = req.headers.origin;
+  if (typeof origin === 'string' && allowedOrigins.includes(origin)) return origin;
+  return allowedOrigins[0] ?? 'http://localhost:8081';
+}
+
+function applyCorsHeaders(req: express.Request, res: express.Response): void {
+  const origin = getCorsOrigin(req);
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
+  res.setHeader('Access-Control-Max-Age', '86400');
+  res.setHeader('Vary', 'Origin');
+}
+
+// 1) Preflight: respond to OPTIONS for every path before any other middleware
+app.options('*', (req, res) => {
+  applyCorsHeaders(req, res);
+  res.sendStatus(204);
+});
+
+// 2) CORS headers on every response (before helmet so they are not overridden)
+app.use((req, res, next) => {
+  applyCorsHeaders(req, res);
+  next();
+});
+
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+      return cb(null, allowedOrigins[0]);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    optionsSuccessStatus: 204,
+  })
+);
+
 app.use(helmet());
 app.use(requestIdMiddleware);
 app.use(requestLoggerMiddleware);
-const isDev = env.NODE_ENV !== 'production';
-const productionOrigins = env.CLIENT_URL.split(',').map((u) => u.trim()).filter(Boolean);
-// In dev: allow any origin so Expo Go / device (exp://, http from LAN) can connect
-app.use(
-  cors({
-    origin: isDev
-      ? true
-      : productionOrigins.length > 0
-        ? productionOrigins
-        : ['https://roadmapapp.vercel.app'],
-    credentials: true,
-  })
-);
 app.use(express.json({ limit: '1mb' }));
 app.use(apiLimiter);
 

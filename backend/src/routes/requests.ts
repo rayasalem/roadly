@@ -16,20 +16,41 @@ import type { RequestStatus } from '../store/requestStore.js';
 import { getProvider } from '../store/providerStore.js';
 import { createNotification } from '../store/notificationStore.js';
 import { addRating, hasRatedRequest } from '../store/ratingStore.js';
+import type { ServiceRequest } from '../store/requestStore.js';
+
+/** Enrich request with provider name and location for customer-facing responses. */
+function enrichRequestWithProvider(req: ServiceRequest): ServiceRequest & { providerName?: string; providerLocation?: { latitude: number; longitude: number } } {
+  if (!req.providerId) return req;
+  const provider = getProvider(req.providerId);
+  if (!provider) return req;
+  return {
+    ...req,
+    providerName: provider.name,
+    providerLocation: provider.location ? { latitude: provider.location.latitude, longitude: provider.location.longitude } : undefined,
+  };
+}
 
 const router = Router();
 router.use(authGuard);
 
 router.post('/', validateBodyJoi(createRequestSchemaJoi), (req, res) => {
   try {
-    const { serviceType, origin, destination, providerId } = req.validated!.body as {
+    const { serviceType, origin, destination, providerId, description } = req.validated!.body as {
       serviceType: string;
       origin: { latitude: number; longitude: number };
       destination?: { latitude: number; longitude: number } | null;
       providerId?: string | null;
+      description?: string | null;
     };
     const userId = req.user!.id;
-    const reqEntity = createRequest(userId, serviceType as Parameters<typeof createRequest>[1], origin, destination ?? undefined, providerId ?? undefined);
+    const reqEntity = createRequest(
+      userId,
+      serviceType as Parameters<typeof createRequest>[1],
+      origin,
+      destination ?? undefined,
+      providerId ?? undefined,
+      description ?? undefined
+    );
     res.status(201).json(reqEntity);
   } catch (e) {
     res.status(400).json({ message: e instanceof Error ? e.message : 'Failed' });
@@ -40,8 +61,9 @@ router.post('/', validateBodyJoi(createRequestSchemaJoi), (req, res) => {
 router.get('/provider', (req, res) => {
   const providerId = req.user!.id;
   const list = listRequestsByProvider(providerId);
+  const enriched = list.map(enrichRequestWithProvider);
   const { page, limit } = normalizePagination(req.query as { page?: number; limit?: number });
-  const result = paginate(list, page, limit);
+  const result = paginate(enriched, page, limit);
   res.json(result);
 });
 
@@ -49,8 +71,9 @@ router.get('/provider', (req, res) => {
 router.get('/customer', (req, res) => {
   const customerId = req.user!.id;
   const list = listRequestsByCustomer(customerId);
+  const enriched = list.map(enrichRequestWithProvider);
   const { page, limit } = normalizePagination(req.query as { page?: number; limit?: number });
-  const result = paginate(list, page, limit);
+  const result = paginate(enriched, page, limit);
   res.json(result);
 });
 
@@ -65,7 +88,7 @@ router.get('/:id', validateParamsJoi(idParamSchemaJoi), (req, res) => {
     res.status(403).json({ message: 'Forbidden' });
     return;
   }
-  res.json(reqEntity);
+  res.json(enrichRequestWithProvider(reqEntity));
 });
 
 router.patch('/:id/status', validateParamsJoi(idParamSchemaJoi), validateBodyJoi(updateRequestStatusSchemaJoi), (req, res) => {
@@ -124,7 +147,7 @@ router.patch('/:id/status', validateParamsJoi(idParamSchemaJoi), validateBodyJoi
       );
     }
   }
-  res.json(updated);
+  res.json(updated ? enrichRequestWithProvider(updated) : updated);
 });
 
 /** POST /requests/:id/rate – customer rates provider after service (1-5 + optional comment) */

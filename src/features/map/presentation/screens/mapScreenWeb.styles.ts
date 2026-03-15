@@ -10,7 +10,7 @@ export const mapScreenWebStyles = StyleSheet.create({
     flex: 2,
     minHeight: 280,
     borderRadius: 16,
-    overflow: 'hidden',
+    overflow: 'visible' as const,
     backgroundColor: colors.primaryDark,
     ...shadows.lg,
   },

@@ -17,7 +17,9 @@ export function QueryErrorFallback() {
       const query = event?.query;
       if (query?.state?.status === 'error' && query.state.error != null) {
         const message = getErrorMessage(query.state.error);
-        toast({ type: 'error', message });
+        // Defer toast so we don't update ToastHost while another component (e.g. NotificationsScreen) is still rendering
+        const schedule = typeof queueMicrotask !== 'undefined' ? queueMicrotask : (fn: () => void) => setTimeout(fn, 0);
+        schedule(() => toast({ type: 'error', message }));
       }
     });
     return unsub;

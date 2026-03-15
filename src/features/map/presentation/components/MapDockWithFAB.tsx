@@ -28,6 +28,8 @@ export interface MapDockWithFABProps {
   onArcIconPress: (id: ArcIconId) => void;
   onFABPress: () => void;
   onDockTabPress?: (tab: 'home' | 'notifications' | 'bookmark' | 'settings') => void;
+  /** When true, dock is in flow below content (no overlay). Icons stay above nav bar. */
+  inFlow?: boolean;
 }
 
 export function MapDockWithFAB({
@@ -35,12 +37,13 @@ export function MapDockWithFAB({
   onArcIconPress,
   onFABPress,
   onDockTabPress,
+  inFlow = false,
 }: MapDockWithFABProps) {
   const insets = useSafeAreaInsets();
   const bottomPad = Math.max(insets.bottom, spacing.md);
 
   return (
-    <View style={[styles.wrapper, { paddingBottom: bottomPad, pointerEvents: 'box-none' }]}>
+    <View style={[inFlow ? styles.wrapperInFlow : styles.wrapper, { paddingBottom: bottomPad, pointerEvents: 'box-none' }]}>
       {/* 4 icons in semi-circle arc above FAB */}
       <View style={[styles.arcRow, { pointerEvents: 'box-none' }]}>
         {ARC_ICONS.map((item, index) => {
@@ -107,6 +110,11 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     alignItems: 'center',
+  },
+  wrapperInFlow: {
+    width: '100%',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
   },
   arcRow: {
     flexDirection: 'row',

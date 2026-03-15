@@ -35,8 +35,22 @@ import { useUserLocation } from '../../../location/hooks/useUserLocation';
 import { haversineDistanceKm } from '../../../location/data/haversine';
 import { useNearbyProviders } from '../../../providers/hooks/useNearbyProviders';
 import type { Provider } from '../../../providers/domain/types';
+import { useRequestHistory } from '../../../requests/hooks/useRequestHistory';
+import type { ServiceRequest } from '../../../requests/domain/types';
+import { getRequestStatusTheme, isRequestInProgress } from '../../../requests/constants/requestStatusTheme';
 import { DEFAULT_MAP_CENTER, toRegion } from '../../../map/utils/mapHelpers';
 import { ACTIVE_OPACITY, HIT_SLOP_DEFAULT } from '../../../../shared/constants/ux';
+
+function requestStatusDisplay(status: string): { label: string; color: string } {
+  const theme = getRequestStatusTheme(status);
+  return { label: t(theme.labelKey), color: theme.color };
+}
+function serviceTypeLabel(st: string): string {
+  if (st === 'mechanic') return t('map.filter.mechanic');
+  if (st === 'tow') return t('map.filter.tow');
+  if (st === 'rental') return t('map.filter.rental');
+  return st;
+}
 
 type Nav = NativeStackNavigationProp<CustomerStackParamList, 'Home'>;
 
@@ -71,8 +85,12 @@ export function HomeScreen() {
     isLoading: isLoadingProviders,
   } = useNearbyProviders(nearbyParams, true, false);
   const nearbyProviders = (nearbyData?.items ?? []) as Provider[];
+  const { requests: historyRequests } = useRequestHistory(true);
+  const activeOrRecentRequests = historyRequests
+    .filter((r) => r.status !== 'cancelled')
+    .slice(0, 4);
 
-  const useNativeDriver = Platform.OS !== 'web';
+  const useNativeDriver = false;
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fade, { toValue: 1, duration: 350, useNativeDriver }),
@@ -85,7 +103,7 @@ export function HomeScreen() {
   }, [coords, locationError, fetchLocation]);
 
   const handleTab = useCallback((tab: NavTabId) => {
-    if (tab === 'Home') navigation.navigate('Map');
+    if (tab === 'Home') navigation.navigate('Home');
     else if (tab === 'Profile') navigation.navigate('Profile');
     else if (tab === 'Chat') navigation.navigate('Chat');
     else if (tab === 'Notifications') navigation.navigate('Notifications');
@@ -117,9 +135,70 @@ export function HomeScreen() {
           showsVerticalScrollIndicator={true}
           bounces={true}
         >
-          {/* Uber-style: Hero headline */}
+          {/* Hero + primary CTA */}
           <View style={[styles.section, styles.sectionFirst]}>
             <Text style={styles.heroTitle}>{t('home.heroTitle')}</Text>
+            <TouchableOpacity
+              style={styles.primaryCta}
+              activeOpacity={ACTIVE_OPACITY}
+              onPress={() => navigation.navigate('Request', { serviceType: selectedServiceType ?? 'mechanic' })}
+            >
+              <MaterialCommunityIcons name="plus-circle" size={28} color="#FFF" />
+              <Text style={styles.primaryCtaText}>{t('customerDashboard.newRequestCta')}</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* My requests — طلباتي */}
+          <View style={[styles.section]}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitleLarge}>{t('customerDashboard.activeRequests')}</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('RequestHistory')} activeOpacity={ACTIVE_OPACITY}>
+                <Text style={styles.sectionLinkTextGreen}>{t('customerDashboard.viewAllRequests')}</Text>
+              </TouchableOpacity>
+            </View>
+            {activeOrRecentRequests.length === 0 ? (
+              <View style={styles.requestsEmpty}>
+                <MaterialCommunityIcons name="clipboard-text-outline" size={40} color={colors.textMuted} />
+                <Text style={styles.requestsEmptyText}>{t('request.noHistory')}</Text>
+                <TouchableOpacity style={styles.requestsEmptyBtn} onPress={() => navigation.navigate('Map')} activeOpacity={ACTIVE_OPACITY}>
+                  <Text style={styles.requestsEmptyBtnText}>{t('home.viewOnMap')}</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              activeOrRecentRequests.map((req: ServiceRequest) => (
+                <TouchableOpacity
+                  key={req.id}
+                  style={styles.requestRowCard}
+                  onPress={() => navigation.navigate('Request', { requestId: req.id })}
+                  activeOpacity={ACTIVE_OPACITY}
+                >
+                  <View style={[styles.requestRowIcon, { backgroundColor: colors.primaryLight }]}>
+                    <MaterialCommunityIcons name="wrench" size={22} color={colors.primary} />
+                  </View>
+                  <View style={styles.requestRowBody}>
+                    <Text style={styles.requestRowTitle}>{serviceTypeLabel(req.serviceType)}</Text>
+                    <View style={[styles.requestRowBadge, { backgroundColor: requestStatusDisplay(req.status).color + '20' }]}>
+                      <Text style={[styles.requestRowBadgeText, { color: requestStatusDisplay(req.status).color }]}>{requestStatusDisplay(req.status).label}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.requestRowActions}>
+                    {isRequestInProgress(req.status) && (
+                      <TouchableOpacity style={styles.requestRowActionBtn} onPress={() => navigation.navigate('LiveTracking', { requestId: req.id })}>
+                        <MaterialCommunityIcons name="map-marker-path" size={20} color={colors.primary} />
+                        <Text style={styles.requestRowActionText}>{t('request.trackOnMap')}</Text>
+                      </TouchableOpacity>
+                    )}
+                    {req.status === 'completed' && (
+                      <TouchableOpacity style={styles.requestRowActionBtn} onPress={() => navigation.navigate('Ratings', { requestId: req.id, providerName: req.providerName ?? undefined })}>
+                        <MaterialCommunityIcons name="star-outline" size={20} color={colors.primary} />
+                        <Text style={styles.requestRowActionText}>{t('request.rateProvider')}</Text>
+                      </TouchableOpacity>
+                    )}
+                    <MaterialCommunityIcons name="chevron-right" size={22} color={colors.textMuted} />
+                  </View>
+                </TouchableOpacity>
+              ))
+            )}
           </View>
 
           {/* Uber-style: Single request card (Pickup + Service type) */}
@@ -394,6 +473,31 @@ export function HomeScreen() {
           )}
           </View>
 
+          {/* Favorites shortcut */}
+          <View style={styles.section}>
+            <TouchableOpacity style={styles.favoritesCard} onPress={() => navigation.navigate('Favorites')} activeOpacity={ACTIVE_OPACITY}>
+              <View style={styles.favoritesIconWrap}>
+                <MaterialCommunityIcons name="heart" size={28} color={colors.error} />
+              </View>
+              <View style={styles.favoritesTextCol}>
+                <Text style={styles.favoritesTitle}>{t('customer.favorites')}</Text>
+                <Text style={styles.favoritesSubtitle}>{t('customer.favoritesEmptySubtitle')}</Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Offers (optional) */}
+          <View style={styles.section}>
+            <View style={styles.offersCard}>
+              <MaterialCommunityIcons name="tag-multiple-outline" size={32} color={colors.primary} />
+              <View style={styles.offersTextCol}>
+                <Text style={styles.offersTitle}>{t('customerDashboard.offersTitle')}</Text>
+                <Text style={styles.offersSubtitle}>{t('customerDashboard.offersSubtitle')}</Text>
+              </View>
+            </View>
+          </View>
+
           {/* Section 5: Quick Actions */}
           <View style={styles.section}>
             <UberSectionTitle title={t('home.quickActionsTitle') ?? 'Quick Actions'} />
@@ -424,14 +528,12 @@ export function HomeScreen() {
               activeOpacity={ACTIVE_OPACITY}
               onPress={() => navigation.navigate('RequestHistory')}
             >
-              <MaterialCommunityIcons
-                name="clipboard-text-outline"
-                size={20}
-                color={colors.primary}
-              />
-              <Text style={styles.quickActionText}>
-                {t('home.myRequests') ?? 'My requests'}
-              </Text>
+              <MaterialCommunityIcons name="clipboard-text-outline" size={20} color={colors.primary} />
+              <Text style={styles.quickActionText}>{t('home.myRequests') ?? 'My requests'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.quickAction} activeOpacity={ACTIVE_OPACITY} onPress={() => navigation.navigate('Favorites')}>
+              <MaterialCommunityIcons name="heart-outline" size={20} color={colors.primary} />
+              <Text style={styles.quickActionText}>{t('customer.favorites')}</Text>
             </TouchableOpacity>
             </View>
           </View>
@@ -472,7 +574,141 @@ const styles = StyleSheet.create({
     fontSize: 28,
     lineHeight: 34,
     color: colors.text,
+    marginBottom: spacing.md,
+  },
+  primaryCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.primary,
+    paddingVertical: 18,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radii.xl,
+    ...shadows.sm,
+  },
+  primaryCtaText: {
+    fontFamily: typography.fontFamily.semibold,
+    fontSize: 18,
+    color: colors.primaryContrast,
+  },
+  sectionTitleLarge: {
+    fontFamily: typography.fontFamily.semibold,
+    fontSize: 20,
+    color: colors.text,
+  },
+  sectionLinkTextGreen: {
+    fontFamily: typography.fontFamily.medium,
+    fontSize: 15,
+    color: colors.primary,
+  },
+  requestsEmpty: {
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
+    backgroundColor: colors.surface,
+    borderRadius: radii.xl,
+    ...shadows.sm,
+  },
+  requestsEmptyText: {
+    fontFamily: typography.fontFamily.regular,
+    fontSize: 15,
+    color: colors.textSecondary,
+    marginTop: spacing.sm,
+  },
+  requestsEmptyBtn: {
+    marginTop: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  requestsEmptyBtnText: {
+    fontFamily: typography.fontFamily.medium,
+    fontSize: 15,
+    color: colors.primary,
+  },
+  requestRowCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    padding: spacing.md,
     marginBottom: spacing.sm,
+    ...shadows.sm,
+  },
+  requestRowIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: radii.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  requestRowBody: { flex: 1 },
+  requestRowTitle: {
+    fontFamily: typography.fontFamily.semibold,
+    fontSize: 16,
+    color: colors.text,
+    marginBottom: 4,
+  },
+  requestRowBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radii.full,
+  },
+  requestRowBadgeText: { fontFamily: typography.fontFamily.medium, fontSize: 13 },
+  requestRowActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  requestRowActionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  requestRowActionText: { fontFamily: typography.fontFamily.medium, fontSize: 13, color: colors.primary },
+  favoritesCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radii.xl,
+    padding: spacing.lg,
+    ...shadows.sm,
+  },
+  favoritesIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: colors.errorLight ?? '#FEE2E2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  favoritesTextCol: { flex: 1 },
+  favoritesTitle: {
+    fontFamily: typography.fontFamily.semibold,
+    fontSize: 17,
+    color: colors.text,
+  },
+  favoritesSubtitle: {
+    fontFamily: typography.fontFamily.regular,
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  offersCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radii.xl,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadows.sm,
+  },
+  offersTextCol: { flex: 1, marginLeft: spacing.md },
+  offersTitle: {
+    fontFamily: typography.fontFamily.semibold,
+    fontSize: 17,
+    color: colors.text,
+  },
+  offersSubtitle: {
+    fontFamily: typography.fontFamily.regular,
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   uberRequestCardWrap: {
     marginTop: 0,

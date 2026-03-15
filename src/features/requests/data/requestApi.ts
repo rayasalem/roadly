@@ -22,6 +22,8 @@ function mockItemsToResponse(): CustomerRequestsResponse {
     serviceType: m.service,
     status: m.status,
     origin: { latitude: m.customerLocation.latitude, longitude: m.customerLocation.longitude },
+    providerName: m.providerName ?? null,
+    customerName: m.customerName ?? null,
     createdAt: m.createdAt ?? now,
     updatedAt: m.createdAt ?? now,
   }));
@@ -69,7 +71,8 @@ export async function createRequest(
   input: CreateRequestInput,
 ): Promise<ServiceRequest> {
   try {
-    const res = await api.post<ServiceRequest>('/requests', input);
+    const body = { ...input, description: input.description ?? undefined };
+    const res = await api.post<ServiceRequest>('/requests', body);
     if (!res || typeof res !== 'object' || res.data == null) throw new Error('Invalid API response');
     return res.data;
   } catch (error) {
@@ -109,6 +112,8 @@ export async function getRequestById(id: string): Promise<ServiceRequest> {
         serviceType: mock.service,
         status: mock.status,
         origin: { latitude: mock.customerLocation.latitude, longitude: mock.customerLocation.longitude },
+        providerName: mock.providerName ?? null,
+        customerName: mock.customerName ?? null,
         createdAt: now,
         updatedAt: now,
       };
@@ -140,6 +145,8 @@ export async function updateRequestStatus(
         serviceType: mock.service,
         status,
         origin: { latitude: mock.customerLocation.latitude, longitude: mock.customerLocation.longitude },
+        providerName: mock.providerName ?? null,
+        customerName: mock.customerName ?? null,
         createdAt: mock.createdAt ?? now,
         updatedAt: now,
       };
@@ -150,7 +157,14 @@ export async function updateRequestStatus(
 
 export interface RateRequestInput {
   requestId: string;
+  /** Overall rating 1-5 (required). */
   rating: number;
+  /** Response/speed 1-5. */
+  ratingSpeed?: number | null;
+  /** Service quality 1-5. */
+  ratingQuality?: number | null;
+  /** Professionalism/behavior 1-5. */
+  ratingProfessionalism?: number | null;
   comment?: string | null;
 }
 
@@ -160,15 +174,25 @@ export interface RatingResponse {
   customerId: string;
   requestId: string;
   rating: number;
+  ratingSpeed?: number | null;
+  ratingQuality?: number | null;
+  ratingProfessionalism?: number | null;
   comment: string | null;
   createdAt: string;
 }
 
 export async function rateRequest(input: RateRequestInput): Promise<RatingResponse> {
   try {
+    const body = {
+      rating: input.rating,
+      ratingSpeed: input.ratingSpeed ?? undefined,
+      ratingQuality: input.ratingQuality ?? undefined,
+      ratingProfessionalism: input.ratingProfessionalism ?? undefined,
+      comment: input.comment ?? undefined,
+    };
     const res = await api.post<RatingResponse>(
       `/requests/${input.requestId}/rate`,
-      { rating: input.rating, comment: input.comment ?? undefined },
+      body,
     );
     if (!res || typeof res !== 'object' || res.data == null) throw new Error('Invalid API response');
     return res.data;

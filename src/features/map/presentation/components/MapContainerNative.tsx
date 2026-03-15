@@ -218,9 +218,9 @@ function MapContainerNativeInner(props: MapContainerNativeProps) {
 export const MapContainerNative = memo(MapContainerNativeInner);
 
 const styles = StyleSheet.create({
-  mapCard: { flex: 1, borderRadius: 32, overflow: 'hidden' },
+  mapCard: { flex: 1, borderRadius: 32, overflow: 'visible' as const },
   mapCardFullScreen: { borderRadius: 0 },
-  map: { flex: 1 },
+  map: { flex: 1, overflow: 'visible' as const },
   mapFallbackWeb: {
     flex: 1,
     alignItems: 'center',

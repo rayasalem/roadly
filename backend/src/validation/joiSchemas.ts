@@ -38,6 +38,7 @@ export const createRequestSchemaJoi = Joi.object({
   origin: coordSchema.required(),
   destination: coordSchema.optional().allow(null),
   providerId: Joi.string().min(1).optional().allow(null),
+  description: Joi.string().max(2000).optional().allow(null, ''),
 });
 
 /** PATCH /requests/:id/status */

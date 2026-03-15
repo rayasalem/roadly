@@ -1,56 +1,46 @@
 /**
  * Mechanic dashboard: data from GET /dashboard/mechanic, client-side filter by status.
- * Accept/Decline call PATCH /requests/:id/status and refetch.
+ * Accept/Decline/Complete call PATCH /requests/:id/status and refetch.
  */
 import { useState, useMemo } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
+  fetchMechanicDashboard,
   type MechanicJob,
   type RequesterItem,
   type MechanicRequestStatus,
 } from '../data/mechanicDashboardApi';
 import { updateRequestStatus } from '../../requests/data/requestApi';
-import { MOCK_REQUESTS } from '../../../mock/mockRequests';
-import { MOCK_MECHANIC_PROVIDERS } from '../../../mock/mockProviders';
+import { isNetworkOrTimeoutError } from '../../../shared/services/http/errorMessage';
 
 const QUERY_KEY = ['dashboard', 'mechanic'] as const;
-const STALE_TIME_MS = 60 * 1000;
+const STALE_TIME_MS = 30 * 1000;
 
 export type { MechanicRequestStatus, MechanicJob, RequesterItem };
+
+const emptyResponse = {
+  stats: { jobsToday: 0, onTheWay: 0, rating: '0' },
+  jobs: [] as MechanicJob[],
+  requesters: [] as RequesterItem[],
+};
 
 export function useMechanicDashboard(enabled = true) {
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<MechanicRequestStatus | 'all'>('all');
 
-  const mockJobs: MechanicJob[] = useMemo(
-    () =>
-      MOCK_REQUESTS.filter((r) => r.service === 'mechanic').map((r) => {
-        const provider = MOCK_MECHANIC_PROVIDERS.find((p) => p.id === r.providerId);
-        const status: MechanicRequestStatus =
-          r.status === 'on_the_way' ? 'on_the_way' : r.status === 'completed' ? 'in_garage' : 'new';
-        return {
-          id: r.id,
-          requestId: r.id,
-          title: provider?.name ?? 'طلب ميكانيكي',
-          distance: '1.2 كم',
-          eta: '10 دقائق',
-          status,
-        } as MechanicJob;
-      }),
-    [],
-  );
-
-  const mockRequesters: RequesterItem[] = useMemo(
-    () =>
-      mockJobs.map((j, idx) => ({
-        id: `req_${idx}`,
-        customerName: `زبون ${idx + 1}`,
-        serviceType: 'mechanic',
-        time: 'قبل قليل',
-        status: j.status,
-      })),
-    [mockJobs],
-  );
+  const { data = emptyResponse, isLoading, isError, error, refetch } = useQuery({
+    queryKey: QUERY_KEY,
+    queryFn: async () => {
+      try {
+        return await fetchMechanicDashboard();
+      } catch (e) {
+        if (isNetworkOrTimeoutError(e)) return emptyResponse;
+        throw e;
+      }
+    },
+    enabled,
+    staleTime: STALE_TIME_MS,
+  });
 
   const acceptMutation = useMutation({
     mutationFn: (requestId: string) =>
@@ -76,33 +66,22 @@ export function useMechanicDashboard(enabled = true) {
     },
   });
 
-  const stats = useMemo(
-    () => ({
-      jobsToday: mockJobs.length,
-      onTheWay: mockJobs.filter((j) => j.status === 'on_the_way').length,
-      rating: '4.7',
-    }),
-    [mockJobs],
-  );
-
   const jobs = useMemo(() => {
-    const list = mockJobs;
+    const list = data.jobs ?? [];
     if (statusFilter === 'all') return list;
     return list.filter((j) => j.status === statusFilter);
-  }, [mockJobs, statusFilter]);
-
-  const requesters = useMemo(() => mockRequesters, [mockRequesters]);
+  }, [data.jobs, statusFilter]);
 
   return {
-    stats,
+    stats: data.stats ?? emptyResponse.stats,
     jobs,
-    requesters,
+    requesters: data.requesters ?? emptyResponse.requesters,
     statusFilter,
     setStatusFilter,
-    isLoading: false,
-    isError: false,
-    error: null,
-    refetch: () => Promise.resolve(),
+    isLoading,
+    isError,
+    error,
+    refetch,
     acceptJob: acceptMutation.mutateAsync,
     declineJob: declineMutation.mutateAsync,
     completeJob: completeMutation.mutateAsync,

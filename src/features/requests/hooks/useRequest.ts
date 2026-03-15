@@ -51,7 +51,7 @@ export function useRequest(id: string | null) {
     staleTime: 3_000,
     refetchInterval: (data) => {
       if (!data) return false;
-      const terminal = data.status === 'completed' || data.status === 'cancelled';
+      const terminal = ['completed', 'cancelled', 'rejected'].includes(data.status);
       return terminal ? false : 5_000;
     },
   });

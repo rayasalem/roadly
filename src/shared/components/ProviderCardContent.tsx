@@ -9,7 +9,7 @@ import { colors } from '../theme/colors';
 import { spacing, typography, radii, shadows } from '../theme';
 import { Button } from './Button';
 import { ProviderAvatar } from './ProviderAvatar';
-import { t } from '../i18n/t';
+import { t, getLocale } from '../i18n/t';
 import type { Provider } from '../../features/providers/domain/types';
 import { ROLE_LABELS } from '../constants/roles';
 import { ROLE_THEMES, type RoleThemeId } from '../theme/roleThemes';
@@ -103,7 +103,13 @@ export function ProviderCardContent({
                 {distanceKm < 1 ? `${(distanceKm * 1000).toFixed(0)} m away` : `${distanceKm.toFixed(1)} km away`}
               </Text>
             )}
-            <Text style={styles.availabilityLabel}>{t('map.availability') ?? 'Availability'}</Text>
+            <Text style={styles.availabilityLabel}>
+              {(() => {
+                const s = t('map.availability');
+                if (s === 'map.availability') return getLocale() === 'ar' ? 'الحالة' : 'Availability';
+                return s;
+              })()}
+            </Text>
             <View style={[styles.badge, { backgroundColor: provider.displayStatus === 'busy' ? colors.warningLight : colors.greenLight }]}>
               <Text style={[styles.badgeText, { color: getStatusColor(provider) }]}>{statusLabel}</Text>
             </View>

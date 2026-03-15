@@ -8,6 +8,7 @@ import { AdminReportsScreen } from '../features/admin/presentation/screens/Admin
 import { AdminSystemSettingsScreen } from '../features/admin/presentation/screens/AdminSystemSettingsScreen';
 import { MapScreen } from '../features/map/presentation/screens/MapScreen';
 import { ChatScreen } from '../features/chat/presentation/screens/ChatScreen';
+import { ChatDetailScreen } from '../features/chat/presentation/screens/ChatDetailScreen';
 import { ProfileScreen } from '../features/profile/presentation/screens/ProfileScreen';
 import { SettingsScreen } from '../features/settings/presentation/screens/SettingsScreen';
 import { NotificationsScreen } from '../features/notifications/presentation/screens/NotificationsScreen';
@@ -20,6 +21,7 @@ export type AdminStackParamList = {
   AdminSystemSettings: undefined;
   Map: undefined;
   Chat: undefined;
+  ChatDetail: { conversationId: string; name: string };
   Profile: undefined;
   Settings: undefined;
   Notifications: undefined;
@@ -36,7 +38,8 @@ const screenOptions = {
 };
 
 export const AdminStack = () => (
-  <Stack.Navigator screenOptions={screenOptions}>
+  <Stack.Navigator screenOptions={screenOptions} initialRouteName="Map">
+    <Stack.Screen name="Map" component={MapScreen} />
     <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} />
     <Stack.Screen name="AdminProviderList" component={AdminProviderListScreen} />
     <Stack.Screen name="AdminUsers" component={AdminUsersScreen} />
@@ -44,6 +47,7 @@ export const AdminStack = () => (
     <Stack.Screen name="AdminSystemSettings" component={AdminSystemSettingsScreen} />
     <Stack.Screen name="Map" component={MapScreen} />
     <Stack.Screen name="Chat" component={ChatScreen} />
+    <Stack.Screen name="ChatDetail" component={ChatDetailScreen} />
     <Stack.Screen name="Profile" component={ProfileScreen} />
     <Stack.Screen name="Settings" component={SettingsScreen} />
     <Stack.Screen name="Notifications" component={NotificationsScreen} />

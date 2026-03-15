@@ -1,5 +1,6 @@
 /**
- * Displays current request: empty state, loading, error, or request details with status/rating.
+ * Displays current request: status with theme (color + icon), provider name, Track / Rate / Cancel.
+ * Customer view: Cancel when new/pending; Track when in progress; Rate when completed.
  */
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
@@ -11,6 +12,8 @@ import { useTheme, spacing, typography, radii, shadows } from '../../../../share
 import { colors } from '../../../../shared/theme/colors';
 import { t } from '../../../../shared/i18n/t';
 import type { ServiceRequest } from '../../domain/types';
+import type { RequestStatus } from '../../domain/types';
+import { getRequestStatusTheme, isRequestInProgress, canCustomerCancel } from '../../constants/requestStatusTheme';
 
 interface RequestStatusCardProps {
   request: ServiceRequest | null | undefined;
@@ -18,15 +21,16 @@ interface RequestStatusCardProps {
   isLoading: boolean;
   isCreating: boolean;
   onRetry: () => void;
-  onUpdateStatus: (status: 'accepted' | 'on_the_way' | 'completed' | 'cancelled') => void;
+  onUpdateStatus: (status: RequestStatus) => void;
   isUpdating: boolean;
   hasRated: boolean;
   ratingStars: number;
   onRatingChange: (stars: number) => void;
   onSubmitRating: () => void;
   isSubmittingRating: boolean;
-  /** Optional: when provided, shows a tracking button that opens a live-tracking screen. */
   onViewTracking?: (requestId: string) => void;
+  /** When true (default), show customer actions only: Cancel, Track, Rate. When false, show provider actions. */
+  isCustomerView?: boolean;
 }
 
 export function RequestStatusCard({
@@ -43,17 +47,18 @@ export function RequestStatusCard({
   onSubmitRating,
   isSubmittingRating,
   onViewTracking,
+  isCustomerView = true,
 }: RequestStatusCardProps) {
-  const { colors } = useTheme();
+  const { colors: themeColors } = useTheme();
 
   if (!requestId && !isCreating) {
     return (
-      <View style={[styles.card, { backgroundColor: colors.surface }]}>
-        <AppText variant="title3" style={[styles.cardTitle, { color: colors.text }]}>
+      <View style={[styles.card, { backgroundColor: themeColors.surface }]}>
+        <AppText variant="title3" style={[styles.cardTitle, { color: themeColors.text }]}>
           {t('request.currentTitle')}
         </AppText>
         <View style={styles.emptyState}>
-          <AppText variant="body" style={{ color: colors.textSecondary }}>
+          <AppText variant="body" style={{ color: themeColors.textSecondary }}>
             {t('request.none')}
           </AppText>
         </View>
@@ -63,12 +68,12 @@ export function RequestStatusCard({
 
   if (isCreating) {
     return (
-      <View style={[styles.card, { backgroundColor: colors.surface }]}>
-        <AppText variant="title3" style={[styles.cardTitle, { color: colors.text }]}>
+      <View style={[styles.card, { backgroundColor: themeColors.surface }]}>
+        <AppText variant="title3" style={[styles.cardTitle, { color: themeColors.text }]}>
           {t('request.currentTitle')}
         </AppText>
         <View style={styles.loadingState}>
-          <AppText variant="body" style={{ color: colors.textSecondary }}>
+          <AppText variant="body" style={{ color: themeColors.textSecondary }}>
             {t('request.creating')}
           </AppText>
         </View>
@@ -78,13 +83,13 @@ export function RequestStatusCard({
 
   if (isLoading && requestId) {
     return (
-      <View style={[styles.card, { backgroundColor: colors.surface }]}>
-        <AppText variant="title3" style={[styles.cardTitle, { color: colors.text }]}>
+      <View style={[styles.card, { backgroundColor: themeColors.surface }]}>
+        <AppText variant="title3" style={[styles.cardTitle, { color: themeColors.text }]}>
           {t('request.currentTitle')}
         </AppText>
         <View style={styles.loadingState}>
-          <ActivityIndicator size="small" color={colors.primary} style={styles.loadingSpinner} />
-          <AppText variant="body" style={{ color: colors.textSecondary }}>
+          <ActivityIndicator size="small" color={themeColors.primary} style={styles.loadingSpinner} />
+          <AppText variant="body" style={{ color: themeColors.textSecondary }}>
             {t('request.loading')}
           </AppText>
         </View>
@@ -94,8 +99,8 @@ export function RequestStatusCard({
 
   if (requestId && !request) {
     return (
-      <View style={[styles.card, { backgroundColor: colors.surface }]}>
-        <AppText variant="title3" style={[styles.cardTitle, { color: colors.text }]}>
+      <View style={[styles.card, { backgroundColor: themeColors.surface }]}>
+        <AppText variant="title3" style={[styles.cardTitle, { color: themeColors.text }]}>
           {t('request.currentTitle')}
         </AppText>
         <ErrorWithRetry message={t('error.network')} onRetry={onRetry} />
@@ -105,26 +110,35 @@ export function RequestStatusCard({
 
   if (!request) return null;
 
+  const statusTheme = getRequestStatusTheme(request.status);
+  const inProgress = isRequestInProgress(request.status);
+  const showCancel = isCustomerView && canCustomerCancel(request.status);
+
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface }]}>
-      <AppText variant="title3" style={[styles.cardTitle, { color: colors.text }]}>
+    <View style={[styles.card, { backgroundColor: themeColors.surface }]}>
+      <AppText variant="title3" style={[styles.cardTitle, { color: themeColors.text }]}>
         {t('request.currentTitle')}
       </AppText>
-      <AppText variant="caption" style={[styles.trackHint, { color: colors.textSecondary }]}>
-        {t('request.trackBelow')}
-      </AppText>
+      <View style={[styles.statusBadge, { backgroundColor: statusTheme.color + '22' }]}>
+        <MaterialCommunityIcons name={statusTheme.icon as any} size={18} color={statusTheme.color} />
+        <AppText variant="callout" weight="semibold" style={{ color: statusTheme.color }}>
+          {t(statusTheme.labelKey)}
+        </AppText>
+      </View>
       <AppText variant="body">ID: {request.id}</AppText>
-      <AppText variant="body">
-        {t('request.status')}: {request.status}
-      </AppText>
-      {request.status === 'on_the_way' && request.etaMinutes != null && (
-        <AppText variant="body" style={[styles.etaText, { color: colors.primary }]}>
+      {request.providerName != null && request.providerName !== '' && (
+        <AppText variant="body" style={[styles.etaText, { color: themeColors.text }]}>
+          {t('request.provider') ?? 'Provider'}: {request.providerName}
+        </AppText>
+      )}
+      {inProgress && request.etaMinutes != null && (
+        <AppText variant="body" style={[styles.etaText, { color: themeColors.primary }]}>
           {t('request.eta')}: {request.etaMinutes} {t('request.etaMinutes')}
         </AppText>
       )}
       {request.status === 'completed' && request.providerId && !hasRated && (
-        <View style={[styles.ratingSection, { borderTopColor: colors.border }]}>
-          <AppText variant="callout" style={[styles.ratingLabel, { color: colors.text }]}>
+        <View style={[styles.ratingSection, { borderTopColor: themeColors.border }]}>
+          <AppText variant="callout" style={[styles.ratingLabel, { color: themeColors.text }]}>
             {t('profile.rating')}
           </AppText>
           <View style={styles.starRow}>
@@ -152,7 +166,7 @@ export function RequestStatusCard({
           />
         </View>
       )}
-      {onViewTracking && (request.status === 'accepted' || request.status === 'on_the_way') && (
+      {onViewTracking && inProgress && (
         <View style={styles.trackActions}>
           <Button
             title={t('request.viewTracking') ?? t('map.openMap')}
@@ -162,37 +176,33 @@ export function RequestStatusCard({
           />
         </View>
       )}
-      <View style={styles.statusRow}>
-        <Button
-          testID="request-status-accepted"
-          title={t('request.status.accepted')}
-          onPress={() => onUpdateStatus('accepted')}
-          size="sm"
-          disabled={isUpdating}
-        />
-        <Button
-          testID="request-status-on-the-way"
-          title={t('request.status.on_the_way')}
-          onPress={() => onUpdateStatus('on_the_way')}
-          size="sm"
-          variant="outline"
-          disabled={isUpdating}
-        />
-        <Button
-          title={t('request.status.completed')}
-          onPress={() => onUpdateStatus('completed')}
-          size="sm"
-          variant="outline"
-          disabled={isUpdating}
-        />
-        <Button
-          title={t('request.status.cancelled')}
-          onPress={() => onUpdateStatus('cancelled')}
-          size="sm"
-          variant="outline"
-          disabled={isUpdating}
-        />
-      </View>
+      {showCancel && (
+        <View style={styles.statusRow}>
+          <Button
+            title={t('request.cancelRequest')}
+            onPress={() => onUpdateStatus('cancelled')}
+            size="sm"
+            variant="outline"
+            disabled={isUpdating}
+          />
+        </View>
+      )}
+      {!isCustomerView && (
+        <View style={styles.statusRow}>
+          {['new', 'pending'].includes(request.status) && (
+            <>
+              <Button title={t('providerReg.accept')} onPress={() => onUpdateStatus('accepted')} size="sm" disabled={isUpdating} />
+              <Button title={t('providerReg.decline')} onPress={() => onUpdateStatus('rejected')} size="sm" variant="outline" disabled={isUpdating} />
+            </>
+          )}
+          {(request.status === 'accepted' || request.status === 'in_progress' || request.status === 'on_the_way') && (
+            <>
+              <Button title={t('request.status.inProgress')} onPress={() => onUpdateStatus('in_progress')} size="sm" variant="outline" disabled={isUpdating} />
+              <Button title={t('request.markComplete')} onPress={() => onUpdateStatus('completed')} size="sm" disabled={isUpdating} />
+            </>
+          )}
+        </View>
+      )}
     </View>
   );
 }
@@ -209,9 +219,14 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginBottom: spacing.md,
   },
-  trackHint: {
-    fontFamily: typography.fontFamily.regular,
-    fontSize: typography.presets.caption.fontSize,
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: radii.full,
+    gap: 6,
     marginBottom: spacing.sm,
   },
   etaText: {

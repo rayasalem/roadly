@@ -18,6 +18,7 @@ import { t } from '../../../../shared/i18n/t';
 import { useThemeStore, type ColorSchemePreference } from '../../../../store/themeStore';
 import { useAuthStore } from '../../../../store/authStore';
 import { useUIStore } from '../../../../store/uiStore';
+import { useNotificationPreferencesStore } from '../../../../store/notificationPreferencesStore';
 
 type SettingsItem = {
   id: string;
@@ -81,7 +82,16 @@ export function SettingsScreen() {
   const { colors } = useTheme();
   const colorSchemePreference = useThemeStore((s) => s.colorSchemePreference);
   const setColorSchemePreference = useThemeStore((s) => s.setColorSchemePreference);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const {
+    enabled: notificationsEnabled,
+    setEnabled: setNotificationsEnabled,
+    newRequests,
+    setNewRequests,
+    statusUpdates,
+    setStatusUpdates,
+    completionAndRating,
+    setCompletionAndRating,
+  } = useNotificationPreferencesStore();
 
   const handleTab = (tab: NavTabId) => {
     if (tab === 'Settings') return;
@@ -183,17 +193,36 @@ export function SettingsScreen() {
           </View>
           {APP_ITEMS.map((item) =>
             item.type === 'toggle' ? (
-              <View key={item.id} style={styles.row}>
-                <View style={styles.rowLeft}>
-                  <MaterialCommunityIcons name={item.icon} size={22} color={colors.primaryDark} />
-                  <Text style={[styles.rowLabel, { color: colors.text }]}>{item.label}</Text>
+              <View key={item.id}>
+                <View style={styles.row}>
+                  <View style={styles.rowLeft}>
+                    <MaterialCommunityIcons name={item.icon} size={22} color={colors.primaryDark} />
+                    <Text style={[styles.rowLabel, { color: colors.text }]}>{item.label}</Text>
+                  </View>
+                  <Switch
+                    value={notificationsEnabled}
+                    onValueChange={setNotificationsEnabled}
+                    thumbColor={notificationsEnabled ? colors.primary : colors.surface}
+                    trackColor={{ true: colors.successLight, false: colors.border }}
+                  />
                 </View>
-                <Switch
-                  value={notificationsEnabled}
-                  onValueChange={setNotificationsEnabled}
-                  thumbColor={notificationsEnabled ? colors.primary : colors.surface}
-                  trackColor={{ true: colors.successLight, false: colors.border }}
-                />
+                {notificationsEnabled && (
+                  <View style={styles.prefsSection}>
+                    <Text style={[styles.prefsTitle, { color: colors.textSecondary }]}>{t('notifications.prefs.title')}</Text>
+                    <View style={styles.prefRow}>
+                      <Text style={[styles.prefLabel, { color: colors.text }]}>{t('notifications.prefs.newRequests')}</Text>
+                      <Switch value={newRequests} onValueChange={setNewRequests} thumbColor={newRequests ? colors.primary : colors.surface} trackColor={{ true: colors.successLight, false: colors.border }} />
+                    </View>
+                    <View style={styles.prefRow}>
+                      <Text style={[styles.prefLabel, { color: colors.text }]}>{t('notifications.prefs.statusUpdates')}</Text>
+                      <Switch value={statusUpdates} onValueChange={setStatusUpdates} thumbColor={statusUpdates ? colors.primary : colors.surface} trackColor={{ true: colors.successLight, false: colors.border }} />
+                    </View>
+                    <View style={styles.prefRow}>
+                      <Text style={[styles.prefLabel, { color: colors.text }]}>{t('notifications.prefs.completionAndRating')}</Text>
+                      <Switch value={completionAndRating} onValueChange={setCompletionAndRating} thumbColor={completionAndRating ? colors.primary : colors.surface} trackColor={{ true: colors.successLight, false: colors.border }} />
+                    </View>
+                  </View>
+                )}
               </View>
             ) : (
               <SettingsRow key={item.id} item={item} onPress={handlePressItem} colors={colors} />
@@ -311,6 +340,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: spacing.sm,
+  },
+  prefsSection: {
+    marginTop: spacing.sm,
+    marginLeft: spacing.lg,
+    paddingVertical: spacing.xs,
+    gap: spacing.xs,
+  },
+  prefsTitle: {
+    fontFamily: typography.fontFamily.semibold,
+    fontSize: typography.fontSize.caption,
+    marginBottom: spacing.xs,
+  },
+  prefRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.xs,
+  },
+  prefLabel: {
+    flex: 1,
+    fontFamily: typography.fontFamily.regular,
+    fontSize: typography.fontSize.callout,
+    marginRight: spacing.sm,
   },
   rowLeft: {
     flexDirection: 'row',

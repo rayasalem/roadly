@@ -40,6 +40,14 @@ export function WelcomeScreen({ navigation }: Props) {
               size="lg"
               style={styles.btn}
             />
+            <Button
+              title={t('welcome.registerAsProvider')}
+              variant="outline"
+              onPress={() => navigation.navigate('ProviderRegister')}
+              fullWidth
+              size="lg"
+              style={styles.btn}
+            />
           </View>
         </View>
       </View>

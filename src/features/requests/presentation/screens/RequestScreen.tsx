@@ -93,7 +93,7 @@ export function RequestScreen({ route, navigation }: Props) {
   }, [requestService, toast]);
 
   const handleUpdateStatus = useCallback(
-    (status: 'accepted' | 'on_the_way' | 'completed' | 'cancelled') => {
+    (status: import('../../domain/types').RequestStatus) => {
       if (!requestId) return;
       updateStatus(status, {
         onSuccess: () => toast({ type: 'success', message: t('request.statusUpdated') }),

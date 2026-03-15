@@ -7,6 +7,7 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 
 import { colors } from '../theme/colors';
 import { spacing, shadows } from '../theme';
+import { blurActiveElementForA11y } from '../utils/domA11y';
 import { ProviderCardContent } from './ProviderCardContent';
 import type { Provider } from '../../features/providers/domain/types';
 
@@ -39,6 +40,7 @@ export const ProviderBottomSheet = forwardRef<BottomSheetModal, ProviderBottomSh
         snapPoints={SNAP_POINTS}
         enablePanDownToClose
         onDismiss={() => { blurActiveElementForA11y(); onClose(); }}
+        onChange={(index) => { if (index === -1) blurActiveElementForA11y(); }}
         backgroundStyle={[styles.sheetBackground, { backgroundColor: colors.surface }]}
         handleIndicatorStyle={styles.handle}
       >

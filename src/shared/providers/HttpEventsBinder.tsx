@@ -9,7 +9,9 @@ export function HttpEventsBinder() {
   useEffect(() => {
     return httpEvents.on('httpError', (e) => {
       if (e.kind === 'Unauthorized') return;
-      toast({ type: 'error', message: getMessageFromHttpError(e) });
+      // Defer toast so we don't update ToastHost while another component is still rendering
+      const schedule = typeof queueMicrotask !== 'undefined' ? queueMicrotask : (fn: () => void) => setTimeout(fn, 0);
+      schedule(() => toast({ type: 'error', message: getMessageFromHttpError(e) }));
     });
   }, [toast]);
 

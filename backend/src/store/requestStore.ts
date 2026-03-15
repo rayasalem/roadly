@@ -12,6 +12,7 @@ export interface ServiceRequest {
   providerId: string | null;
   serviceType: ServiceType;
   status: RequestStatus;
+  description?: string | null;
   origin: { latitude: number; longitude: number };
   destination?: { latitude: number; longitude: number } | null;
   priceEstimate?: number | null;
@@ -52,7 +53,8 @@ export function createRequest(
   serviceType: ServiceType,
   origin: { latitude: number; longitude: number },
   destination?: { latitude: number; longitude: number } | null,
-  providerId?: string | null
+  providerId?: string | null,
+  description?: string | null
 ): ServiceRequest {
   const now = new Date().toISOString();
   const req: ServiceRequest = {
@@ -61,6 +63,7 @@ export function createRequest(
     providerId: providerId ?? null,
     serviceType,
     status: 'pending',
+    description: description ?? null,
     origin,
     destination: destination ?? null,
     priceEstimate: null,

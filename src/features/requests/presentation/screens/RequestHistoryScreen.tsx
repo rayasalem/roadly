@@ -1,9 +1,9 @@
 /**
- * Customer request history: list of user's service requests with status and provider info.
- * FlatList with memoized row for list performance.
+ * Customer request history: list with filters (All / In progress / Completed / Cancelled),
+ * status colors, and actions (Track, Rate, Cancel).
  */
-import React, { useCallback, memo } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import React, { useCallback, memo, useMemo, useState } from 'react';
+import { View, StyleSheet, FlatList, TouchableOpacity, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -18,19 +18,12 @@ import { spacing, typography, radii, shadows } from '../../../../shared/theme';
 import { t } from '../../../../shared/i18n/t';
 import { useRequestHistory } from '../../hooks/useRequestHistory';
 import type { ServiceRequest } from '../../domain/types';
+import { getRequestStatusTheme, isRequestInProgress } from '../../constants/requestStatusTheme';
 import type { CustomerStackParamList } from '../../../../navigation/CustomerStack';
 import { safeNavigateToSettings } from '../../../../navigation/navigationRef';
 
 type Nav = NativeStackNavigationProp<CustomerStackParamList, 'RequestHistory'>;
-
-function statusLabel(status: string): string {
-  if (status === 'pending') return t('request.status.pending') ?? 'Pending';
-  if (status === 'accepted') return t('request.status.accepted') ?? 'Accepted';
-  if (status === 'on_the_way') return t('map.status.onTheWay') ?? 'On the way';
-  if (status === 'completed') return t('request.status.completed') ?? 'Completed';
-  if (status === 'cancelled') return t('request.status.cancelled') ?? 'Cancelled';
-  return status;
-}
+type FilterId = 'all' | 'in_progress' | 'completed' | 'cancelled';
 
 function serviceTypeLabel(st: string): string {
   if (st === 'mechanic') return t('map.filter.mechanic');
@@ -42,22 +35,49 @@ function serviceTypeLabel(st: string): string {
 const RequestCard = memo(function RequestCard({
   item,
   onPress,
+  onTrack,
+  onRate,
 }: {
   item: ServiceRequest;
   onPress: (requestId: string) => void;
+  onTrack: (requestId: string) => void;
+  onRate: (requestId: string, providerName?: string | null) => void;
 }) {
   const dateStr = item.createdAt ? new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+  const theme = getRequestStatusTheme(item.status);
+  const inProgress = isRequestInProgress(item.status);
 
   return (
     <TouchableOpacity style={styles.card} onPress={() => onPress(item.id)} activeOpacity={0.85}>
       <View style={styles.cardRow}>
-        <View style={[styles.iconWrap, { backgroundColor: colors.primaryLight }]}>
-          <MaterialCommunityIcons name="wrench" size={22} color={colors.primary} />
+        <View style={[styles.iconWrap, { backgroundColor: theme.color + '22' }]}>
+          <MaterialCommunityIcons name={theme.icon as any} size={22} color={theme.color} />
         </View>
         <View style={styles.cardBody}>
           <AppText variant="callout" weight="semibold" numberOfLines={1}>{serviceTypeLabel(item.serviceType)}</AppText>
-          <AppText variant="caption" color={colors.textSecondary}>{statusLabel(item.status)}</AppText>
-          <AppText variant="caption" color={colors.textMuted}>{dateStr}</AppText>
+          {item.providerName ? (
+            <AppText variant="caption" color={colors.textSecondary} numberOfLines={1} style={styles.providerName}>
+              {item.providerName}
+            </AppText>
+          ) : null}
+          <View style={[styles.statusBadge, { backgroundColor: theme.color + '22' }]}>
+            <Text style={[styles.statusBadgeText, { color: theme.color }]}>{t(theme.labelKey)}</Text>
+          </View>
+          <AppText variant="caption" color={colors.textMuted} style={styles.dateText}>{dateStr}</AppText>
+          <View style={styles.cardActions}>
+            {inProgress && (
+              <TouchableOpacity style={styles.cardActionBtn} onPress={() => onTrack(item.id)}>
+                <MaterialCommunityIcons name="map-marker-path" size={18} color={colors.primary} />
+                <AppText variant="caption" style={styles.cardActionText}>{t('request.trackOnMap')}</AppText>
+              </TouchableOpacity>
+            )}
+            {item.status === 'completed' && (
+              <TouchableOpacity style={styles.cardActionBtn} onPress={() => onRate(item.id, item.providerName)}>
+                <MaterialCommunityIcons name="star-outline" size={18} color={colors.primary} />
+                <AppText variant="caption" style={styles.cardActionText}>{t('request.rateProvider')}</AppText>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
         <MaterialCommunityIcons name="chevron-right" size={22} color={colors.textMuted} />
       </View>
@@ -65,12 +85,28 @@ const RequestCard = memo(function RequestCard({
   );
 });
 
+const FILTERS: { id: FilterId; labelKey: string }[] = [
+  { id: 'all', labelKey: 'request.filterAll' },
+  { id: 'in_progress', labelKey: 'request.filterInProgress' },
+  { id: 'completed', labelKey: 'request.filterCompleted' },
+  { id: 'cancelled', labelKey: 'request.filterCancelled' },
+];
+
 export function RequestHistoryScreen() {
   const navigation = useNavigation<Nav>();
+  const [filter, setFilter] = useState<FilterId>('all');
   const { requests, isLoading, isError, refetch } = useRequestHistory(true);
 
+  const filteredRequests = useMemo(() => {
+    if (filter === 'all') return requests;
+    if (filter === 'in_progress') return requests.filter((r) => ['pending', 'accepted', 'on_the_way'].includes(r.status));
+    if (filter === 'completed') return requests.filter((r) => r.status === 'completed');
+    if (filter === 'cancelled') return requests.filter((r) => r.status === 'cancelled');
+    return requests;
+  }, [requests, filter]);
+
   const handleTab = useCallback((tab: NavTabId) => {
-    if (tab === 'Home') navigation.navigate('Map');
+    if (tab === 'Home') navigation.navigate('Home');
     else if (tab === 'Profile') navigation.navigate('Profile');
     else if (tab === 'Chat') navigation.navigate('Chat');
     else if (tab === 'Notifications') navigation.navigate('Notifications');
@@ -80,9 +116,32 @@ export function RequestHistoryScreen() {
   const openRequest = useCallback((requestId: string) => {
     navigation.navigate('Request', { requestId });
   }, [navigation]);
+  const onTrack = useCallback((requestId: string) => {
+    navigation.navigate('LiveTracking', { requestId });
+  }, [navigation]);
+  const onRate = useCallback(
+    (requestId: string, providerName?: string | null) => {
+      navigation.navigate('Ratings', { requestId, providerName: providerName ?? undefined });
+    },
+    [navigation],
+  );
 
   const header = (
-    <AppHeader title={t('request.historyTitle') ?? 'My requests'} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} />
+    <>
+      <AppHeader title={t('request.historyTitle') ?? 'My requests'} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} />
+      <View style={styles.filterRow}>
+        {FILTERS.map((f) => (
+          <TouchableOpacity
+            key={f.id}
+            style={[styles.filterChip, filter === f.id && styles.filterChipActive]}
+            onPress={() => setFilter(f.id)}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.filterChipText, filter === f.id && styles.filterChipTextActive]}>{t(f.labelKey)}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </>
   );
   const emptyState = (
     <View style={styles.empty}>
@@ -93,14 +152,16 @@ export function RequestHistoryScreen() {
     </View>
   );
   const renderItem = useCallback(
-    ({ item }: { item: ServiceRequest }) => <RequestCard item={item} onPress={openRequest} />,
-    [openRequest],
+    ({ item }: { item: ServiceRequest }) => (
+      <RequestCard item={item} onPress={openRequest} onTrack={onTrack} onRate={onRate} />
+    ),
+    [openRequest, onTrack, onRate],
   );
   const keyExtractor = useCallback((r: ServiceRequest) => r.id, []);
 
   const listContent = (
     <FlatList
-      data={requests}
+      data={filteredRequests}
       keyExtractor={keyExtractor}
       renderItem={renderItem}
       contentContainerStyle={styles.list}
@@ -129,7 +190,36 @@ export function RequestHistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  list: { padding: spacing.lg, paddingBottom: 100 },
+  list: { padding: spacing.md, paddingTop: spacing.sm, paddingBottom: 100 },
+  filterRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    paddingTop: spacing.sm,
+    backgroundColor: colors.background,
+  },
+  filterChip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  filterChipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  filterChipText: {
+    fontFamily: typography.fontFamily.medium,
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  filterChipTextActive: {
+    color: colors.primaryContrast,
+  },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radii.xl,
@@ -138,10 +228,21 @@ const styles = StyleSheet.create({
     ...shadows.sm,
   },
   cardRow: { flexDirection: 'row', alignItems: 'center' },
-  iconWrap: { width: 44, height: 44, borderRadius: radii.lg, justifyContent: 'center', alignItems: 'center', marginRight: spacing.md },
+  iconWrap: { width: 48, height: 48, borderRadius: radii.lg, justifyContent: 'center', alignItems: 'center', marginRight: spacing.md },
   cardBody: { flex: 1 },
-  cardBodyTitle: { marginBottom: spacing.xs },
-  cardBodyLine: { marginBottom: spacing.xs },
+  statusBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radii.full,
+    marginTop: 4,
+  },
+  statusBadgeText: { fontFamily: typography.fontFamily.semibold, fontSize: 13 },
+  dateText: { marginTop: 4 },
+  providerName: { marginTop: 2 },
+  cardActions: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.sm },
+  cardActionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  cardActionText: { fontFamily: typography.fontFamily.medium, fontSize: 13, color: colors.primary },
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.md },
   emptyText: { marginTop: spacing.md },
 });
