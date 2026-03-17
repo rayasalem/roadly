@@ -81,7 +81,6 @@ export function AdminDashboardScreen() {
   const [sheetPayload, setSheetPayload] = useState<SheetPayload>(null);
 
   const openProfile = useCallback(() => navigation.navigate('Profile'), [navigation]);
-  const openMap = useCallback(() => navigation.navigate('Map'), [navigation]);
 
   const handleTab = useCallback(
     (tab: NavTabId) => {
@@ -301,8 +300,6 @@ export function AdminDashboardScreen() {
                     </View>
                   </View>
                   <View style={styles.cardActions}>
-                    <Button title={t('home.action.openMap')} onPress={() => openMap()} variant="outline" size="sm" />
-                    <View style={styles.actionGap} />
                     <Button title={t('admin.edit')} onPress={() => setSheetPayload({ type: 'mechanic', item: req })} variant="accent" size="sm" />
                   </View>
                 </PressableCard>
@@ -353,8 +350,6 @@ export function AdminDashboardScreen() {
                     </View>
                   </View>
                   <View style={styles.cardActions}>
-                    <Button title={t('home.action.openMap')} onPress={() => openMap()} variant="outline" size="sm" />
-                    <View style={styles.actionGap} />
                     <Button title={t('admin.edit')} onPress={() => setSheetPayload({ type: 'tow', item: req })} variant="accent" size="sm" />
                   </View>
                 </PressableCard>
@@ -412,8 +407,6 @@ export function AdminDashboardScreen() {
                     </View>
                   </View>
                   <View style={styles.cardActions}>
-                    <Button title={t('home.action.openMap')} onPress={() => openMap()} variant="outline" size="sm" />
-                    <View style={styles.actionGap} />
                     <Button title={t('admin.updateStatus')} onPress={() => setSheetPayload({ type: 'rental', item: v })} variant="accent" size="sm" />
                   </View>
                 </PressableCard>
@@ -431,17 +424,8 @@ export function AdminDashboardScreen() {
               ))}
             </View>
           </GlassCard>
-
-          <TouchableOpacity style={styles.mapBtn} onPress={openMap}>
-            <MaterialCommunityIcons name="map-marker-outline" size={18} color={colors.primaryContrast} />
-            <Text style={styles.mapBtnText}>{t('home.action.openMap')}</Text>
-          </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
-
-      <View style={styles.fabWrap}>
-        <FAB icon="map-marker-outline" onPress={openMap} role="admin" accessibilityLabel={t('home.action.openMap')} />
-      </View>
 
       <BottomSheetModal
         ref={sheetRef}
@@ -457,8 +441,6 @@ export function AdminDashboardScreen() {
               <Text style={styles.sheetMeta}>{sheetPayload.item.customerName} • {sheetPayload.item.distance} • ETA {sheetPayload.item.eta}</Text>
               <Text style={styles.sheetMeta}>Status: {sheetPayload.item.status}</Text>
               <View style={styles.sheetActions}>
-                <Button title={t('home.action.openMap')} onPress={openMap} variant="outline" fullWidth />
-                <View style={styles.sheetGap} />
                 <Button title={t('admin.edit')} onPress={handleEdit} fullWidth />
               </View>
             </>
@@ -468,8 +450,6 @@ export function AdminDashboardScreen() {
               <Text style={styles.sheetTitle}>{sheetPayload.item.title}</Text>
               <Text style={styles.sheetMeta}>{sheetPayload.item.customerName} • {sheetPayload.item.vehicle}</Text>
               <View style={styles.sheetActions}>
-                <Button title={t('home.action.openMap')} onPress={openMap} variant="outline" fullWidth />
-                <View style={styles.sheetGap} />
                 <Button title={t('admin.edit')} onPress={handleEdit} fullWidth />
               </View>
             </>
@@ -479,8 +459,6 @@ export function AdminDashboardScreen() {
               <Text style={styles.sheetTitle}>{sheetPayload.item.name}</Text>
               <Text style={styles.sheetMeta}>{sheetPayload.item.plate} • {sheetPayload.item.price} • {sheetPayload.item.status}</Text>
               <View style={styles.sheetActions}>
-                <Button title={t('home.action.openMap')} onPress={openMap} variant="outline" fullWidth />
-                <View style={styles.sheetGap} />
                 <Button title={t('admin.updateStatus')} onPress={handleEdit} fullWidth />
               </View>
             </>
