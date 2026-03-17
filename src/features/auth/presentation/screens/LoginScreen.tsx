@@ -26,6 +26,7 @@ import { useAuthStore, type AuthUser } from '../../../../store/authStore';
 import { ROLES, ROLE_LABELS, type Role } from '../../../../shared/constants/roles';
 import { APP_ENV } from '../../../../shared/constants/env';
 import { login } from '../../data/authApi';
+import { getMockLoginUser } from '../../../../mock/mockUsers';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
@@ -82,10 +83,11 @@ export function LoginScreen({ navigation }: Props) {
     async (role: Role) => {
       if (APP_ENV === 'production') return;
       try {
+        const mock = getMockLoginUser(role);
         const user: AuthUser = {
-          id: `mock-${role}`,
-          name: ROLE_LABELS[role],
-          email: `${role}@mock.roadly.dev`,
+          id: mock.id,
+          name: mock.name,
+          email: mock.email,
           role,
         };
         await setSession({
@@ -95,7 +97,7 @@ export function LoginScreen({ navigation }: Props) {
         });
         toast({
           type: 'success',
-          message: `تم تسجيل الدخول كـ ${ROLE_LABELS[role]} (بيانات تجريبية)`,
+          message: `تم تسجيل الدخول كـ ${mock.name} (بيانات تجريبية)`,
         });
         navigation.replace('App');
       } catch (e) {

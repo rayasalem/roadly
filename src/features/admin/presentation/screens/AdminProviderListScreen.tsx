@@ -1,10 +1,11 @@
 /**
- * Admin: list of providers by role with search, filter, and Verify/Block actions + toasts.
+ * Admin: list of providers by role with search, filter, and Verify + API.
  */
 import React, { useMemo, useState, useCallback } from 'react';
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { AppHeader } from '../../../../shared/components/AppHeader';
 import { GlassCard } from '../../../../shared/components/GlassCard';
@@ -17,6 +18,7 @@ import { useUIStore } from '../../../../store/uiStore';
 import type { AdminStackParamList } from '../../../../navigation/AdminStack';
 import { useAdminDashboard, type AdminProviderRole } from '../../hooks/useAdminDashboard';
 import type { AdminProviderItem } from '../../data/adminDashboardApi';
+import { verifyProvider } from '../../data/adminProvidersApi';
 
 type Route = RouteProp<AdminStackParamList, 'AdminProviderList'>;
 
@@ -34,9 +36,12 @@ function getSectionTitle(role: AdminProviderRole): string {
 
 const PAGE_SIZE = 10;
 
+const DASHBOARD_QUERY_KEY = ['dashboard', 'admin'] as const;
+
 export function AdminProviderListScreen() {
   const navigation = useNavigation();
   const toast = useUIStore((s) => s.toast);
+  const queryClient = useQueryClient();
   const { params } = useRoute<Route>();
   const role = params?.role ?? 'mechanic';
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,11 +60,22 @@ export function AdminProviderListScreen() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const theme = ROLE_THEMES[role === 'mechanic' ? 'mechanic' : role === 'tow' ? 'tow' : 'rental'];
 
-  const handleVerify = useCallback(
-    (p: AdminProviderItem) => {
+  const verifyMutation = useMutation({
+    mutationFn: ({ id, verified }: { id: string; verified: boolean }) => verifyProvider(id, verified),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEY });
       toast({ type: 'success', message: t('admin.verified') });
     },
-    [toast]
+    onError: () => {
+      toast({ type: 'error', message: t('admin.error') ?? 'Failed' });
+    },
+  });
+
+  const handleVerify = useCallback(
+    (p: AdminProviderItem) => {
+      verifyMutation.mutate({ id: p.id, verified: true });
+    },
+    [verifyMutation]
   );
 
   return (

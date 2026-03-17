@@ -31,14 +31,13 @@ const RED = '#EF4444';
 const TEXT = '#111827';
 const TEXT_MUTED = '#6B7280';
 
-type SectionId = 'dashboard' | 'incoming' | 'inProgress' | 'history' | 'map' | 'statistics' | 'profile' | 'help';
+type SectionId = 'dashboard' | 'incoming' | 'inProgress' | 'history' | 'statistics' | 'profile' | 'help';
 
 const NAV_ITEMS: { id: SectionId; icon: string; labelKey: string }[] = [
   { id: 'dashboard', icon: 'view-dashboard-outline', labelKey: 'providerDashboard.sidebar.dashboard' },
   { id: 'incoming', icon: 'bell-alert-outline', labelKey: 'providerDashboard.sidebar.incoming' },
   { id: 'inProgress', icon: 'progress-clock', labelKey: 'providerDashboard.sidebar.inProgress' },
   { id: 'history', icon: 'history', labelKey: 'providerDashboard.sidebar.history' },
-  { id: 'map', icon: 'map-marker-radius', labelKey: 'providerDashboard.sidebar.map' },
   { id: 'statistics', icon: 'chart-bar', labelKey: 'providerDashboard.sidebar.statistics' },
   { id: 'profile', icon: 'account-cog-outline', labelKey: 'providerDashboard.sidebar.profile' },
   { id: 'help', icon: 'help-circle-outline', labelKey: 'providerDashboard.sidebar.help' },
@@ -76,6 +75,7 @@ export function ProviderDashboardScreen() {
     newOrPending,
     inProgress,
     completed,
+    rejected,
     updateStatus,
     isUpdating,
     refetch,
@@ -103,9 +103,6 @@ export function ProviderDashboardScreen() {
   }, [navigation]);
   const goToSettings = useCallback(() => {
     navigation.navigate('Settings');
-  }, [navigation]);
-  const goToMap = useCallback(() => {
-    navigation.navigate('Map');
   }, [navigation]);
 
   return (
@@ -227,7 +224,7 @@ export function ProviderDashboardScreen() {
                             <TouchableOpacity
                               style={[styles.btnDecline, { backgroundColor: RED }]}
                               onPress={() => {
-                                updateStatus(req.id, 'rejected', () => {
+                                updateStatus(req.id, 'cancelled', () => {
                                   toast({ type: 'info', message: t('providerReg.decline') });
                                   refetch();
                                 });
@@ -257,10 +254,6 @@ export function ProviderDashboardScreen() {
                           <AppText variant="body" weight="semibold" style={{ color: TEXT }}>{req.customerName ?? t('request.customer')}</AppText>
                           <AppText variant="caption" color={TEXT_MUTED}>{serviceTypeLabel(req.serviceType)} — {t(theme.labelKey)}</AppText>
                           <View style={styles.inProgressActions}>
-                            <TouchableOpacity style={styles.mapLink} onPress={goToMap}>
-                              <MaterialCommunityIcons name="map-marker-outline" size={18} color={GREEN} />
-                              <AppText variant="callout" style={{ color: GREEN }}>{t('providerDashboard.viewOnMap')}</AppText>
-                            </TouchableOpacity>
                             <TouchableOpacity
                               style={[styles.btnComplete, { backgroundColor: '#F59E0B' }]}
                               onPress={() => {
@@ -323,7 +316,7 @@ export function ProviderDashboardScreen() {
                             <MaterialCommunityIcons name="check" size={20} color="#FFF" />
                             <AppText variant="callout" weight="semibold" style={styles.btnTextWhite}>{t('providerReg.accept')}</AppText>
                           </TouchableOpacity>
-                          <TouchableOpacity style={[styles.btnDecline, { backgroundColor: RED }]} onPress={() => updateStatus(req.id, 'rejected', () => { toast({ type: 'info', message: t('providerReg.decline') }); refetch(); })} disabled={isUpdating}>
+                          <TouchableOpacity style={[styles.btnDecline, { backgroundColor: RED }]} onPress={() => updateStatus(req.id, 'cancelled', () => { toast({ type: 'info', message: t('providerReg.decline') }); refetch(); })} disabled={isUpdating}>
                             <MaterialCommunityIcons name="close" size={20} color="#FFF" />
                             <AppText variant="callout" weight="semibold" style={styles.btnTextWhite}>{t('providerReg.decline')}</AppText>
                           </TouchableOpacity>
@@ -348,10 +341,6 @@ export function ProviderDashboardScreen() {
                         <AppText variant="body" weight="semibold" style={{ color: TEXT }}>{req.customerName ?? t('request.customer')}</AppText>
                         <AppText variant="caption" color={TEXT_MUTED}>{serviceTypeLabel(req.serviceType)} — {t(theme.labelKey)}</AppText>
                         <View style={styles.inProgressActions}>
-                          <TouchableOpacity style={styles.mapLink} onPress={goToMap}>
-                            <MaterialCommunityIcons name="map-marker-outline" size={18} color={GREEN} />
-                            <AppText variant="callout" style={{ color: GREEN }}>{t('providerDashboard.viewOnMap')}</AppText>
-                          </TouchableOpacity>
                           <TouchableOpacity
                             style={[styles.btnComplete, { backgroundColor: '#F59E0B' }]}
                             onPress={() => {
@@ -370,17 +359,6 @@ export function ProviderDashboardScreen() {
                     );
                   })
                 )}
-              </View>
-            )}
-
-            {activeSection === 'map' && (
-              <View style={[styles.card, { backgroundColor: CARD_BG }]}>
-                <MaterialCommunityIcons name="map-marker-radius" size={48} color={GREEN} style={styles.helpIcon} />
-                <AppText variant="subhead" weight="semibold" style={[styles.cardTitle, { color: TEXT }]}>{t('providerDashboard.sidebar.map')}</AppText>
-                <AppText variant="body" color={TEXT_MUTED} style={styles.helpDesc}>
-                  {t('providerDashboard.mapSectionDesc')}
-                </AppText>
-                <Button title={t('providerDashboard.viewOnMap')} onPress={goToMap} variant="primary" fullWidth style={styles.menuBtn} />
               </View>
             )}
 

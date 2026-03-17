@@ -103,7 +103,7 @@ export function HomeScreen() {
   }, [coords, locationError, fetchLocation]);
 
   const handleTab = useCallback((tab: NavTabId) => {
-    if (tab === 'Home') navigation.navigate('Home');
+    if (tab === 'Home') navigation.navigate('Map');
     else if (tab === 'Profile') navigation.navigate('Profile');
     else if (tab === 'Chat') navigation.navigate('Chat');
     else if (tab === 'Notifications') navigation.navigate('Notifications');

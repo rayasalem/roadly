@@ -11,6 +11,8 @@ import {
   type RentalRequesterItem,
 } from '../data/rentalDashboardApi';
 import { updateRequestStatus } from '../../requests/data/requestApi';
+import { updateProviderLocation } from '../../profile/data/providerProfileApi';
+import { locationService } from '../../location/data/locationService';
 import { isNetworkOrTimeoutError } from '../../../shared/services/http/errorMessage';
 import { MOCK_CARS } from '../../../mock/mockCars';
 
@@ -40,7 +42,13 @@ export function useRentalDashboard() {
 
   const acceptMutation = useMutation({
     mutationFn: (requestId: string) => updateRequestStatus({ requestId, status: 'accepted' }),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      locationService.getCurrentPosition().then(
+        (c) => updateProviderLocation(c.latitude, c.longitude),
+        () => {},
+      );
+    },
   });
 
   const rejectMutation = useMutation({

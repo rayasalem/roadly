@@ -20,10 +20,12 @@ import { AppHeader } from '../../../../shared/components/AppHeader';
 import { GlassCard } from '../../../../shared/components/GlassCard';
 import { PressableCard } from '../../../../shared/components/PressableCard';
 import { Button } from '../../../../shared/components/Button';
+import { StatusBadge } from '../../../../shared/components/StatusBadge';
 import { colors } from '../../../../shared/theme/colors';
 import { spacing, typography, radii, shadows } from '../../../../shared/theme';
 import { ROLE_THEMES } from '../../../../shared/theme/roleThemes';
 import { t } from '../../../../shared/i18n/t';
+import { useUIStore } from '../../../../store/uiStore';
 import { blurActiveElementForA11y } from '../../../../shared/utils/domA11y';
 import type { AdminStackParamList } from '../../../../navigation/AdminStack';
 import {
@@ -74,6 +76,7 @@ export function AdminUsersScreen() {
     servicesByCategory,
     updateUser,
     setUserAssignedServices,
+    setUserBlocked,
   } = useAdminUsers();
 
   const filteredUsers = useMemo(() => {
@@ -120,14 +123,14 @@ export function AdminUsersScreen() {
 
   const handleBlock = useCallback(
     (user: AdminUser) => {
-      const newStatus: AdminUserStatus = user.status === 'suspended' ? 'active' : 'suspended';
-      updateUser(user.id, { status: newStatus });
+      const newBlocked = user.status !== 'suspended';
+      setUserBlocked(user, newBlocked);
       toast({
-        type: newStatus === 'suspended' ? 'warning' : 'success',
-        message: newStatus === 'suspended' ? t('admin.userBlocked') : t('admin.userUnblocked'),
+        type: newBlocked ? 'warning' : 'success',
+        message: newBlocked ? t('admin.userBlocked') : t('admin.userUnblocked'),
       });
     },
-    [updateUser, toast]
+    [setUserBlocked, toast]
   );
 
   const renderServiceToggles = (category: ServiceCategory) => {

@@ -133,7 +133,7 @@ export function SettingsScreen() {
   };
 
   return (
-    <ScreenWrapper bottomNav={<BottomNavBar activeTab="Settings" onSelect={handleTab} />}>
+    <ScreenWrapper bottomNav={<BottomNavBar activeTab="Settings" onSelect={handleTab} dark={role === 'mechanic' || role === 'mechanic_tow' || role === 'car_rental' || role === 'admin'} />}>
       <AppHeader
         title={t('nav.settings')}
         onBack={navigation.canGoBack() ? () => navigation.goBack() : () => navigation.navigate('Profile')}

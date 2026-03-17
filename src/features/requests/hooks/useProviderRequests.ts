@@ -9,6 +9,7 @@ import type { ServiceRequest } from '../domain/types';
 import type { RequestStatus } from '../domain/types';
 import { isRequestInProgress } from '../constants/requestStatusTheme';
 import { MOCK_REQUESTS } from '../../../mock/mockRequests';
+import { useAuthStore } from '../../../store/authStore';
 
 const QUERY_KEY = ['requests', 'provider'] as const;
 const STALE_MS = 45 * 1000;
@@ -29,15 +30,19 @@ function mockToServiceRequest(m: import('../../../mock/mockRequests').MockReques
   };
 }
 
-function getMockFallback(): ServiceRequest[] {
-  return MOCK_REQUESTS.map(mockToServiceRequest);
+function getMockFallback(providerId: string | undefined): ServiceRequest[] {
+  const list = providerId
+    ? MOCK_REQUESTS.filter((m) => m.providerId === providerId)
+    : MOCK_REQUESTS;
+  return list.map(mockToServiceRequest);
 }
 
 export function useProviderRequests() {
   const queryClient = useQueryClient();
+  const providerId = useAuthStore((s) => s.user?.id ?? undefined);
 
   const query = useQuery({
-    queryKey: QUERY_KEY,
+    queryKey: [...QUERY_KEY, providerId],
     queryFn: async () => {
       try {
         const res = await fetchProviderRequests();
@@ -45,7 +50,7 @@ export function useProviderRequests() {
       } catch (error) {
         if (isNetworkOrTimeoutError(error)) {
           if (__DEV__) console.warn('[useProviderRequests] API failed, using mock.');
-          return getMockFallback();
+          return getMockFallback(providerId);
         }
         throw error;
       }
@@ -66,7 +71,7 @@ export function useProviderRequests() {
   const newOrPending = requests.filter((r) => r.status === 'new' || r.status === 'pending');
   const inProgress = requests.filter((r) => isRequestInProgress(r.status));
   const completed = requests.filter((r) => r.status === 'completed');
-  const rejected = requests.filter((r) => r.status === 'rejected');
+  const rejected = requests.filter((r) => r.status === 'cancelled');
 
   const updateStatus = (requestId: string, status: RequestStatus, onSuccess?: () => void) => {
     updateMutation.mutate(

@@ -37,7 +37,7 @@ export const createRequestSchemaJoi = Joi.object({
   serviceType: serviceTypeEnum.required(),
   origin: coordSchema.required(),
   destination: coordSchema.optional().allow(null),
-  providerId: Joi.string().min(1).optional().allow(null),
+  providerId: Joi.string().min(1).optional().allow(null).empty(''),
   description: Joi.string().max(2000).optional().allow(null, ''),
 });
 

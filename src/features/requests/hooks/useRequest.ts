@@ -35,6 +35,15 @@ export function useRequest(id: string | null) {
       try {
         return await getRequestById(id);
       } catch (error) {
+        // If this is a synthetic local-only request (offline_/mock_ from older sessions)
+        // and the backend no longer knows about it (e.g. after server restart),
+        // stop trying to refetch and just surface "no data" instead of spamming 404s.
+        if (id.startsWith('offline_') || id.startsWith('mock_')) {
+          if (__DEV__) {
+            console.warn('[useRequest] synthetic request id not found on server, returning null', id);
+          }
+          return null;
+        }
         const mock = MOCK_REQUESTS.find((r) => r.id === id);
         if (mock) {
           if (__DEV__) console.warn('[useRequest] API failed, using mock request', id);
@@ -51,7 +60,7 @@ export function useRequest(id: string | null) {
     staleTime: 3_000,
     refetchInterval: (data) => {
       if (!data) return false;
-      const terminal = ['completed', 'cancelled', 'rejected'].includes(data.status);
+      const terminal = ['completed', 'cancelled'].includes(data.status);
       return terminal ? false : 5_000;
     },
   });

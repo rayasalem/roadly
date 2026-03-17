@@ -10,6 +10,7 @@ import { RentalBookingsScreen } from '../features/rental/presentation/screens/Re
 import { RentalHistoryScreen } from '../features/rental/presentation/screens/RentalHistoryScreen';
 import { MapScreen } from '../features/map/presentation/screens/MapScreen';
 import { ProfileScreen } from '../features/profile/presentation/screens/ProfileScreen';
+import { ProviderProfileScreen } from '../features/profile/presentation/screens/ProviderProfileScreen';
 import { SettingsScreen } from '../features/settings/presentation/screens/SettingsScreen';
 import { NotificationsScreen } from '../features/notifications/presentation/screens/NotificationsScreen';
 import { ChatScreen } from '../features/chat/presentation/screens/ChatScreen';
@@ -24,6 +25,7 @@ export type RentalStackParamList = {
   RentalHistory: undefined;
   Map: undefined;
   Profile: undefined;
+  ProviderProfile: { providerId: string };
   Chat: undefined;
   ChatDetail: { conversationId: string; name: string };
   Settings: undefined;
@@ -41,8 +43,7 @@ const screenOptions = {
 };
 
 export const RentalStack = () => (
-  <Stack.Navigator screenOptions={screenOptions} initialRouteName="Map">
-    <Stack.Screen name="Map" component={MapScreen} />
+  <Stack.Navigator screenOptions={screenOptions} initialRouteName="RentalDashboard">
     <Stack.Screen name="ProviderDashboard" component={ProviderDashboardScreen} />
     <Stack.Screen name="RentalDashboard" component={RentalDashboardScreen} />
     <Stack.Screen name="RentalServices" component={RentalServicesScreen} />
@@ -52,6 +53,7 @@ export const RentalStack = () => (
     <Stack.Screen name="RentalHistory" component={RentalHistoryScreen} />
     <Stack.Screen name="Map" component={MapScreen} />
     <Stack.Screen name="Profile" component={ProfileScreen} />
+    <Stack.Screen name="ProviderProfile" component={ProviderProfileScreen} />
     <Stack.Screen name="Chat" component={ChatScreen} />
     <Stack.Screen name="ChatDetail" component={ChatDetailScreen} />
     <Stack.Screen name="Settings" component={SettingsScreen} />

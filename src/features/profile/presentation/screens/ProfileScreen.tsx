@@ -129,7 +129,10 @@ export function ProfileScreen() {
     if (tab === 'Profile') return;
     if (tab === 'Home') {
       if (role === ROLES.ADMIN) (navigation as any).navigate('AdminDashboard');
-      else navigation.navigate('Map');
+      else if (role === ROLES.MECHANIC) (navigation as any).navigate('MechanicDashboard');
+      else if (role === ROLES.MECHANIC_TOW) (navigation as any).navigate('TowDashboard');
+      else if (role === ROLES.CAR_RENTAL) (navigation as any).navigate('RentalDashboard');
+      else (navigation as any).navigate('Map');
       return;
     }
     if (tab === 'Chat') (navigation as any).navigate('Chat');
@@ -289,7 +292,7 @@ export function ProfileScreen() {
   }
 
   return (
-    <ScreenWrapper bottomNav={user?.role === ROLES.USER || user?.role === ROLES.ADMIN ? <BottomNavBar activeTab="Profile" onSelect={handleTab} /> : undefined}>
+    <ScreenWrapper bottomNav={user?.role === ROLES.USER ? <BottomNavBar activeTab="Profile" onSelect={handleTab} /> : (user?.role === ROLES.ADMIN || user?.role === ROLES.MECHANIC || user?.role === ROLES.MECHANIC_TOW || user?.role === ROLES.CAR_RENTAL ? <BottomNavBar activeTab="Profile" onSelect={handleTab} dark /> : undefined)}>
       <AppHeader title={t('profile.title')} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} onProfile={() => safeNavigateToSettings(navigation)} />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.containerScroll} showsVerticalScrollIndicator>
         {user && (

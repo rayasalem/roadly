@@ -22,10 +22,15 @@ export const ENDPOINTS = {
   requestsProvider: '/requests/provider',
   /** Rate a completed request (POST body: rating, ratingSpeed?, ratingQuality?, ratingProfessionalism?, comment?) */
   requestRate: (requestId: string) => `/requests/${requestId}/rate`,
-  /** List ratings received by current provider */
+  /** List ratings received by current provider (GET /providers/me/ratings). */
+  providersMeRatings: '/providers/me/ratings',
+  /** @deprecated Use providersMeRatings; backend has no /ratings route. */
   ratingsProvider: '/ratings/provider',
   adminUsers: '/admin/users',
+  adminUserBlock: (id: string) => `/admin/users/${id}/block`,
   adminProviders: '/admin/providers',
+  adminProviderVerify: (id: string) => `/admin/providers/${id}/verify`,
+  adminRequests: '/admin/requests',
   /** Dashboard data per role */
   dashboardMechanic: '/dashboard/mechanic',
   dashboardTow: '/dashboard/tow',

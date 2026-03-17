@@ -25,7 +25,15 @@ app.set('trust proxy', 1);
 const isDev = env.NODE_ENV !== 'production';
 const productionOrigins = env.CLIENT_URL.split(',').map((u) => u.trim()).filter(Boolean);
 const allowedOrigins: string[] = isDev
-  ? ['http://localhost:8081', 'http://127.0.0.1:8081', 'http://localhost:19006']
+  ? [
+      'http://localhost:8081',
+      'http://127.0.0.1:8081',
+      'http://localhost:19006',
+      'http://localhost:19000',
+      'http://127.0.0.1:19000',
+      'http://localhost:8080',
+      'http://127.0.0.1:8080',
+    ]
   : productionOrigins.length > 0
     ? productionOrigins
     : ['https://roadmapapp.vercel.app'];

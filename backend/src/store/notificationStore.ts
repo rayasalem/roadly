@@ -1,18 +1,27 @@
-const deviceTokens = new Map<string, string>(); // userId -> expo push token
+import { prisma } from '../lib/prisma.js';
+import type { NotificationType as PrismaNotificationType } from '@prisma/client';
 
-export function registerDevice(userId: string, token: string): void {
-  deviceTokens.set(userId, token);
+export async function registerDevice(userId: string, token: string): Promise<void> {
+  await prisma.deviceToken.upsert({
+    where: { userId },
+    create: { userId, token },
+    update: { token },
+  });
 }
 
-export function unregisterDevice(userId: string): void {
-  deviceTokens.delete(userId);
+export async function unregisterDevice(userId: string): Promise<void> {
+  await prisma.deviceToken.deleteMany({
+    where: { userId },
+  });
 }
 
-export function getDeviceToken(userId: string): string | undefined {
-  return deviceTokens.get(userId);
+export async function getDeviceToken(userId: string): Promise<string | undefined> {
+  const row = await prisma.deviceToken.findUnique({
+    where: { userId },
+  });
+  return row?.token;
 }
 
-/** In-app notification types for push and in-app list */
 export type NotificationType =
   | 'request_accepted'
   | 'provider_on_way'
@@ -28,44 +37,68 @@ export interface AppNotification {
   title: string;
   message: string;
   read: boolean;
-  data?: Record<string, unknown>; // e.g. requestId, providerId
+  data?: Record<string, unknown>;
   createdAt: string;
 }
 
-const notifications = new Map<string, AppNotification>();
-let notifIdCounter = 1;
-const nextNotifId = () => `notif_${notifIdCounter++}`;
+function rowToNotification(n: {
+  id: string;
+  userId: string;
+  type: PrismaNotificationType;
+  title: string;
+  message: string;
+  read: boolean;
+  data: unknown;
+  createdAt: Date;
+}): AppNotification {
+  return {
+    id: n.id,
+    userId: n.userId,
+    type: n.type as NotificationType,
+    title: n.title,
+    message: n.message,
+    read: n.read,
+    data: n.data as Record<string, unknown> | undefined,
+    createdAt: n.createdAt.toISOString(),
+  };
+}
 
-export function createNotification(
+export async function createNotification(
   userId: string,
   type: NotificationType,
   title: string,
   message: string,
   data?: Record<string, unknown>
-): AppNotification {
-  const n: AppNotification = {
-    id: nextNotifId(),
-    userId,
-    type,
-    title,
-    message,
-    read: false,
-    data,
-    createdAt: new Date().toISOString(),
-  };
-  notifications.set(n.id, n);
-  return n;
+): Promise<AppNotification> {
+  const n = await prisma.notification.create({
+    data: {
+      userId,
+      type: type as PrismaNotificationType,
+      title,
+      message,
+      data: data ?? undefined,
+    },
+  });
+  return rowToNotification(n);
 }
 
-export function listNotifications(userId: string): AppNotification[] {
-  return Array.from(notifications.values())
-    .filter((n) => n.userId === userId)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+export async function listNotifications(userId: string): Promise<AppNotification[]> {
+  const list = await prisma.notification.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+  });
+  return list.map(rowToNotification);
 }
 
-export function markNotificationRead(id: string): AppNotification | undefined {
-  const n = notifications.get(id);
+export async function markNotificationRead(
+  id: string
+): Promise<AppNotification | undefined> {
+  const n = await prisma.notification
+    .update({
+      where: { id },
+      data: { read: true },
+    })
+    .catch(() => null);
   if (!n) return undefined;
-  n.read = true;
-  return n;
+  return rowToNotification(n);
 }

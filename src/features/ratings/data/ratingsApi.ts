@@ -1,5 +1,5 @@
 /**
- * Fetch ratings received by the current provider (GET /ratings/provider).
+ * Fetch ratings received by the current provider (GET /providers/me/ratings).
  */
 import { api } from '../../../shared/services/http/api';
 import { ENDPOINTS } from '../../../shared/constants/apiEndpoints';
@@ -45,7 +45,7 @@ const MOCK_RATINGS: RequestRating[] = [
 
 export async function fetchProviderRatings(): Promise<ProviderRatingsResponse> {
   try {
-    const res = await api.get<ProviderRatingsResponse>(ENDPOINTS.ratingsProvider);
+    const res = await api.get<ProviderRatingsResponse>(ENDPOINTS.providersMeRatings);
     if (!res?.data) return { items: MOCK_RATINGS, total: MOCK_RATINGS.length, averageRating: 4.5 };
     const data = res.data;
     const items = Array.isArray(data.items) ? data.items : [];

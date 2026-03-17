@@ -439,6 +439,8 @@ export type StringKey =
   | 'admin.edit'
   | 'admin.addVehicle'
   | 'admin.updateStatus'
+  | 'admin.requests'
+  | 'admin.viewAllRequests'
   | 'admin.requestsAssigned'
   | 'admin.towingRequests'
   | 'admin.fleetVehicles'
@@ -953,6 +955,8 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'admin.edit': 'Edit',
     'admin.addVehicle': 'Add vehicle',
     'admin.updateStatus': 'Update status',
+    'admin.requests': 'Requests',
+    'admin.viewAllRequests': 'All service requests',
     'admin.requestsAssigned': 'Requests assigned',
     'admin.towingRequests': 'Towing requests',
     'admin.fleetVehicles': 'Fleet vehicles',
@@ -1486,6 +1490,8 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'admin.edit': 'تعديل',
     'admin.addVehicle': 'إضافة مركبة',
     'admin.updateStatus': 'تحديث الحالة',
+    'admin.requests': 'الطلبات',
+    'admin.viewAllRequests': 'جميع طلبات الخدمة',
     'admin.requestsAssigned': 'الطلبات المعينة',
     'admin.towingRequests': 'طلبات السحب',
     'admin.fleetVehicles': 'مركبات الأسطول',

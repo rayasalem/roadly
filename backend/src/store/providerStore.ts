@@ -1,3 +1,6 @@
+import { prisma } from '../lib/prisma.js';
+import type { Role as PrismaRole, ServiceType as PrismaServiceType } from '@prisma/client';
+
 export type Role = 'mechanic' | 'mechanic_tow' | 'car_rental';
 export type ServiceType = 'mechanic' | 'tow' | 'rental' | 'battery' | 'tire' | 'oil_change';
 
@@ -24,61 +27,122 @@ export interface Provider {
   services?: string[];
 }
 
-const providers = new Map<string, Provider>();
-
 function roleToServiceType(role: Role): ServiceType {
   if (role === 'mechanic_tow') return 'tow';
   if (role === 'car_rental') return 'rental';
   return 'mechanic';
 }
 
-export const ALL_SERVICE_TYPES: ServiceType[] = ['mechanic', 'tow', 'rental', 'battery', 'tire', 'oil_change'];
+function rowToProvider(p: {
+  userId: string;
+  name: string;
+  phone: string;
+  photo: string | null;
+  role: PrismaRole;
+  serviceType: PrismaServiceType;
+  latitude: number;
+  longitude: number;
+  locationUpdatedAt: Date | null;
+  isAvailable: boolean;
+  rating: number;
+  verified: boolean;
+  services: string[];
+}): Provider {
+  return {
+    id: p.userId,
+    name: p.name,
+    phone: p.phone,
+    photo: p.photo,
+    role: p.role as Role,
+    serviceType: p.serviceType as ServiceType,
+    location: {
+      latitude: p.latitude,
+      longitude: p.longitude,
+      lastUpdated: p.locationUpdatedAt?.toISOString() ?? new Date().toISOString(),
+    },
+    isAvailable: p.isAvailable,
+    rating: p.rating,
+    verified: p.verified,
+    services: p.services,
+  };
+}
 
-export function upsertProvider(
+export async function upsertProvider(
   id: string,
   data: Partial<Provider> & { name: string; role: Role }
-): Provider {
-  const existing = providers.get(id);
-  const now = new Date().toISOString();
-  const loc = data.location ?? existing?.location ?? {
-    latitude: 0,
-    longitude: 0,
-    lastUpdated: now,
-  };
-  const role = data.role ?? existing?.role ?? 'mechanic';
-  const provider: Provider = {
-    id,
-    name: data.name,
-    phone: data.phone ?? existing?.phone ?? '',
-    photo: data.photo ?? existing?.photo ?? null,
-    role,
-    serviceType: data.serviceType ?? existing?.serviceType ?? roleToServiceType(role),
-    location: loc,
-    isAvailable: data.isAvailable ?? existing?.isAvailable ?? true,
-    rating: data.rating ?? existing?.rating ?? 0,
-    verified: data.verified ?? existing?.verified ?? true,
-    hasTowCapability: data.hasTowCapability ?? existing?.hasTowCapability,
-    availableCars: data.availableCars ?? existing?.availableCars,
-    contact: data.contact ?? data.phone ?? existing?.contact ?? existing?.phone,
-    services: (data as { services?: string[] }).services ?? existing?.services,
-  };
-  providers.set(id, provider);
-  return provider;
+): Promise<Provider> {
+  const existing = await prisma.providerProfile.findUnique({
+    where: { userId: id },
+  });
+  const role = data.role ?? (existing?.role as Role) ?? 'mechanic';
+  const serviceType =
+    data.serviceType ?? existing?.serviceType ?? roleToServiceType(role);
+  const now = new Date();
+  const p = await prisma.providerProfile.upsert({
+    where: { userId: id },
+    create: {
+      userId: id,
+      name: data.name,
+      phone: data.phone ?? '',
+      photo: data.photo ?? null,
+      role: role as PrismaRole,
+      serviceType: serviceType as PrismaServiceType,
+      latitude: (data.location?.latitude ?? 0),
+      longitude: (data.location?.longitude ?? 0),
+      locationUpdatedAt: data.location?.lastUpdated ? new Date(data.location.lastUpdated) : now,
+      isAvailable: data.isAvailable ?? true,
+      rating: data.rating ?? 0,
+      verified: data.verified ?? true,
+      services: data.services ?? [],
+    },
+    update: {
+      ...(data.name !== undefined && { name: data.name }),
+      ...(data.phone !== undefined && { phone: data.phone }),
+      ...(data.photo !== undefined && { photo: data.photo }),
+      ...(data.role !== undefined && { role: data.role as PrismaRole }),
+      ...(data.serviceType !== undefined && { serviceType: data.serviceType as PrismaServiceType }),
+      ...(data.location !== undefined && {
+        latitude: data.location.latitude,
+        longitude: data.location.longitude,
+        locationUpdatedAt: new Date(data.location.lastUpdated),
+      }),
+      ...(data.isAvailable !== undefined && { isAvailable: data.isAvailable }),
+      ...(data.rating !== undefined && { rating: data.rating }),
+      ...(data.verified !== undefined && { verified: data.verified }),
+      ...(data.services !== undefined && { services: data.services }),
+    },
+  });
+  return rowToProvider({
+    ...p,
+    services: p.services,
+  });
 }
 
-export function getProvider(id: string): Provider | undefined {
-  return providers.get(id);
-}
-
-export function setProviderVerified(id: string, verified: boolean): Provider | undefined {
-  const p = providers.get(id);
+export async function getProvider(id: string): Promise<Provider | undefined> {
+  const p = await prisma.providerProfile.findUnique({
+    where: { userId: id },
+  });
   if (!p) return undefined;
-  p.verified = verified;
-  return p;
+  return rowToProvider({ ...p, services: p.services });
 }
 
-export function getAllProviders(): Provider[] {
-  return Array.from(providers.values());
+export async function setProviderVerified(
+  id: string,
+  verified: boolean
+): Promise<Provider | undefined> {
+  const p = await prisma.providerProfile
+    .update({
+      where: { userId: id },
+      data: { verified },
+    })
+    .catch(() => null);
+  if (!p) return undefined;
+  return rowToProvider({ ...p, services: p.services });
+}
+
+export async function getAllProviders(): Promise<Provider[]> {
+  const list = await prisma.providerProfile.findMany();
+  return list.map((p) => rowToProvider({ ...p, services: p.services }));
 }
 
 function haversineKm(
@@ -100,7 +164,7 @@ function haversineKm(
   return R * c;
 }
 
-export function findNearby(
+export async function findNearby(
   lat: number,
   lng: number,
   options: {
@@ -111,22 +175,43 @@ export function findNearby(
     page?: number;
     limit?: number;
   } = {}
-): { items: Provider[]; total: number } {
-  const { radiusKm = 50, role, availableOnly = true, verifiedOnly = true, page = 1, limit = 20 } = options;
-  let list = Array.from(providers.values());
-  if (role) list = list.filter((p) => p.role === role);
-  if (availableOnly) list = list.filter((p) => p.isAvailable);
-  if (verifiedOnly) list = list.filter((p) => p.verified);
-  type ProviderWithDistance = Provider & { distanceKm: number };
-  const withDistance: ProviderWithDistance[] = list
-    .filter((p) => {
-      const { latitude, longitude } = p.location;
-      return latitude != null && longitude != null && (latitude !== 0 || longitude !== 0);
-    })
-    .map((p) => ({
-      ...p,
-      distanceKm: haversineKm(lat, lng, p.location.latitude, p.location.longitude),
-    }));
+): Promise<{ items: Provider[]; total: number }> {
+  const {
+    radiusKm = 50,
+    role,
+    availableOnly = true,
+    verifiedOnly = true,
+    page = 1,
+    limit = 20,
+  } = options;
+
+  const where: Parameters<typeof prisma.providerProfile.findMany>[0]['where'] = {};
+  if (role) where.role = role as PrismaRole;
+  if (availableOnly) where.isAvailable = true;
+  if (verifiedOnly) where.verified = true;
+  where.OR = [
+    { latitude: { not: 0 } },
+    { longitude: { not: 0 } },
+  ];
+
+  const all = await prisma.providerProfile.findMany({
+    where,
+  });
+
+  type WithDistance = Provider & { distanceKm: number };
+  const withDistance: WithDistance[] = all
+    .filter(
+      (p) =>
+        (p.latitude !== 0 || p.longitude !== 0)
+    )
+    .map((p) => {
+      const prov = rowToProvider({ ...p, services: p.services });
+      return {
+        ...prov,
+        distanceKm: haversineKm(lat, lng, p.latitude, p.longitude),
+      };
+    });
+
   const sorted = withDistance
     .filter((p) => p.distanceKm <= radiusKm)
     .sort((a, b) => a.distanceKm - b.distanceKm);
@@ -135,3 +220,12 @@ export function findNearby(
   const items = sorted.slice(start, start + limit).map(({ distanceKm: _d, ...p }) => p);
   return { items, total };
 }
+
+export const ALL_SERVICE_TYPES: ServiceType[] = [
+  'mechanic',
+  'tow',
+  'rental',
+  'battery',
+  'tire',
+  'oil_change',
+];

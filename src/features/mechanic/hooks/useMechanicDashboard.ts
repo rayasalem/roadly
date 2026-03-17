@@ -11,6 +11,8 @@ import {
   type MechanicRequestStatus,
 } from '../data/mechanicDashboardApi';
 import { updateRequestStatus } from '../../requests/data/requestApi';
+import { updateProviderLocation } from '../../profile/data/providerProfileApi';
+import { locationService } from '../../location/data/locationService';
 import { isNetworkOrTimeoutError } from '../../../shared/services/http/errorMessage';
 
 const QUERY_KEY = ['dashboard', 'mechanic'] as const;
@@ -47,6 +49,10 @@ export function useMechanicDashboard(enabled = true) {
       updateRequestStatus({ requestId, status: 'accepted' }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      locationService.getCurrentPosition().then(
+        (coords) => updateProviderLocation(coords.latitude, coords.longitude),
+        () => {},
+      );
     },
   });
 
@@ -63,6 +69,10 @@ export function useMechanicDashboard(enabled = true) {
       updateRequestStatus({ requestId, status: 'completed' }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      locationService.getCurrentPosition().then(
+        (coords) => updateProviderLocation(coords.latitude, coords.longitude),
+        () => {},
+      );
     },
   });
 

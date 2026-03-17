@@ -1,8 +1,10 @@
 /**
- * Admin: users list and service assignments (mock state, API-ready).
- * No timing/availability — only user profile and assigned service types per role.
+ * Admin: قائمة المستخدمين من API (GET /admin/users) مع Block (PATCH /admin/users/:id/block).
  */
 import { useState, useCallback, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { MOCK_SERVICES as MOCK_SERVICES_RAW } from '../../../mock/mockServices';
+import { fetchAdminUsers, blockUser as blockUserApi, type AdminUserApiItem } from '../data/adminUsersApi';
 
 export type AdminUserRole = 'user' | 'mechanic' | 'tow' | 'rental' | 'admin';
 export type AdminUserStatus = 'active' | 'suspended' | 'pending';
@@ -23,32 +25,56 @@ export interface AdminService {
   category: ServiceCategory;
 }
 
-const MOCK_SERVICES: AdminService[] = [
-  { id: 's-m1', name: 'Tire repair', category: 'mechanic' },
-  { id: 's-m2', name: 'Engine diagnostic', category: 'mechanic' },
-  { id: 's-m3', name: 'Oil change', category: 'mechanic' },
-  { id: 's-m4', name: 'Battery service', category: 'mechanic' },
-  { id: 's-t1', name: 'Tow to garage', category: 'tow' },
-  { id: 's-t2', name: 'Roadside assistance', category: 'tow' },
-  { id: 's-t3', name: 'Long-distance tow', category: 'tow' },
-  { id: 's-r1', name: 'Daily rental', category: 'rental' },
-  { id: 's-r2', name: 'Weekly rental', category: 'rental' },
-  { id: 's-r3', name: 'Luxury vehicles', category: 'rental' },
-];
+const allServicesList: AdminService[] = MOCK_SERVICES_RAW.map((s) => ({
+  id: s.id,
+  name: s.nameEn,
+  category: s.category,
+}));
 
-const MOCK_USERS: AdminUser[] = [
-  { id: 'u1', name: 'أحمد السيد', role: 'user', status: 'active', assignedServiceIds: [] },
-  { id: 'u2', name: 'FastFix Garage', role: 'mechanic', status: 'active', assignedServiceIds: ['s-m1', 's-m2', 's-m3'] },
-  { id: 'u3', name: 'RoadTow 24/7', role: 'tow', status: 'active', assignedServiceIds: ['s-t1', 's-t2'] },
-  { id: 'u4', name: 'CityDrive Rentals', role: 'rental', status: 'active', assignedServiceIds: ['s-r1', 's-r2'] },
-  { id: 'u5', name: 'سارة علي', role: 'user', status: 'active', assignedServiceIds: [] },
-  { id: 'u6', name: 'AutoCare Pro', role: 'mechanic', status: 'active', assignedServiceIds: ['s-m1', 's-m4'] },
-];
+function apiRoleToAdmin(r: string): AdminUserRole {
+  if (r === 'mechanic') return 'mechanic';
+  if (r === 'mechanic_tow') return 'tow';
+  if (r === 'car_rental') return 'rental';
+  if (r === 'admin') return 'admin';
+  return 'user';
+}
+
+function apiItemToAdminUser(item: AdminUserApiItem): AdminUser {
+  return {
+    id: item.id,
+    name: item.name,
+    role: apiRoleToAdmin(item.role),
+    status: item.blocked ? 'suspended' : 'active',
+    assignedServiceIds: [],
+  };
+}
+
+const ADMIN_USERS_QUERY_KEY = ['admin', 'users'] as const;
 
 export function useAdminUsers() {
-  const [users, setUsers] = useState<AdminUser[]>(MOCK_USERS);
+  const queryClient = useQueryClient();
+  const [localOverrides, setLocalOverrides] = useState<Record<string, Partial<AdminUser>>>({});
 
-  const allServices = useMemo(() => MOCK_SERVICES, []);
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ADMIN_USERS_QUERY_KEY,
+    queryFn: () => fetchAdminUsers({ page: 1, limit: 500 }),
+    staleTime: 60 * 1000,
+  });
+
+  const blockMutation = useMutation({
+    mutationFn: ({ userId, blocked }: { userId: string; blocked: boolean }) => blockUserApi(userId, blocked),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ADMIN_USERS_QUERY_KEY });
+    },
+  });
+
+  const users: AdminUser[] = useMemo(() => {
+    const list = (data?.items ?? []).map(apiItemToAdminUser);
+    if (Object.keys(localOverrides).length === 0) return list;
+    return list.map((u) => (localOverrides[u.id] ? { ...u, ...localOverrides[u.id] } : u));
+  }, [data?.items, localOverrides]);
+
+  const allServices = useMemo(() => allServicesList, []);
 
   const servicesByCategory = useMemo(() => {
     const by: Record<ServiceCategory, AdminService[]> = {
@@ -61,22 +87,25 @@ export function useAdminUsers() {
 
   const updateUser = useCallback(
     (userId: string, payload: Partial<Pick<AdminUser, 'name' | 'role' | 'status'>>) => {
-      setUsers((prev) =>
-        prev.map((u) => (u.id === userId ? { ...u, ...payload } : u)),
-      );
+      setLocalOverrides((prev) => ({ ...prev, [userId]: { ...prev[userId], ...payload } }));
     },
     [],
   );
 
   const setUserAssignedServices = useCallback((userId: string, serviceIds: string[]) => {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, assignedServiceIds: serviceIds } : u)),
-    );
+    setLocalOverrides((prev) => ({ ...prev, [userId]: { ...prev[userId], assignedServiceIds: serviceIds } }));
   }, []);
 
   const getUserById = useCallback(
     (id: string) => users.find((u) => u.id === id) ?? null,
     [users],
+  );
+
+  const setUserBlocked = useCallback(
+    (user: AdminUser, blocked: boolean) => {
+      blockMutation.mutate({ userId: user.id, blocked });
+    },
+    [blockMutation],
   );
 
   return {
@@ -86,5 +115,11 @@ export function useAdminUsers() {
     updateUser,
     setUserAssignedServices,
     getUserById,
+    setUserBlocked,
+    blockMutation,
+    isLoading,
+    isError,
+    error,
+    refetch,
   };
 }

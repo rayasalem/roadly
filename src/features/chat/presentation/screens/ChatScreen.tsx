@@ -75,7 +75,8 @@ export function ChatScreen() {
   const handleTab = useCallback((tab: NavTabId) => {
     if (tab === 'Home') {
       if (role === ROLES.ADMIN) (navigation as any).navigate('AdminDashboard');
-      else navigation.navigate('Map');
+      else if (role === 'mechanic' || role === 'mechanic_tow' || role === 'car_rental') (navigation as any).navigate('ProviderDashboard');
+      else (navigation as any).navigate('Map');
       return;
     }
     if (tab === 'Profile') (navigation as any).navigate('Profile');
@@ -107,7 +108,7 @@ export function ChatScreen() {
 
   if (isLoading) {
     return (
-      <ScreenWrapper bottomNav={<BottomNavBar activeTab="Chat" onSelect={handleTab} />}>
+      <ScreenWrapper bottomNav={<BottomNavBar activeTab="Chat" onSelect={handleTab} dark={role === ROLES.ADMIN || role === 'mechanic' || role === 'mechanic_tow' || role === 'car_rental'} />}>
         <AppHeader title={t('nav.chat')} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} onProfile={() => navigation.navigate('Profile')} />
         <View style={styles.loadingWrap}><LoadingSpinner /></View>
       </ScreenWrapper>
@@ -115,7 +116,7 @@ export function ChatScreen() {
   }
   if (isError) {
     return (
-      <ScreenWrapper bottomNav={<BottomNavBar activeTab="Chat" onSelect={handleTab} />}>
+      <ScreenWrapper bottomNav={<BottomNavBar activeTab="Chat" onSelect={handleTab} dark={role === ROLES.ADMIN || role === 'mechanic' || role === 'mechanic_tow' || role === 'car_rental'} />}>
         <AppHeader title={t('nav.chat')} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} onProfile={() => navigation.navigate('Profile')} />
         <View style={styles.errorWrap}><ErrorWithRetry message="" onRetry={() => refetch()} /></View>
       </ScreenWrapper>
@@ -123,7 +124,7 @@ export function ChatScreen() {
   }
 
   return (
-    <ScreenWrapper bottomNav={<BottomNavBar activeTab="Chat" onSelect={handleTab} />}>
+    <ScreenWrapper bottomNav={<BottomNavBar activeTab="Chat" onSelect={handleTab} dark={role === ROLES.ADMIN || role === 'mechanic' || role === 'mechanic_tow' || role === 'car_rental'} />}>
       <AppHeader title={t('nav.chat')} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} onProfile={() => navigation.navigate('Profile')} />
       <FlatList
         data={conversations}

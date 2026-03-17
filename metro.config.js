@@ -40,14 +40,22 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
       // fall through
     }
   }
-  // Force resolve leaflet from project root (web bundle — avoids CDN + Tracking Prevention)
+  // Force resolve leaflet from project root (web bundle — no CDN, no Tracking Prevention)
   if (moduleName === 'leaflet' || moduleName.startsWith('leaflet/')) {
-    try {
-      const leafletMain = path.join(leafletPath, 'dist', 'leaflet.js');
-      const fs = require('fs');
+    const fs = require('fs');
+    if (moduleName === 'leaflet') {
+      const leafletMain = path.resolve(leafletPath, 'dist', 'leaflet.js');
       if (fs.existsSync(leafletMain)) {
         return { type: 'sourceFile', filePath: leafletMain };
       }
+    } else {
+      const subpath = moduleName.replace(/^leaflet\/?/, '');
+      const fullPath = path.resolve(leafletPath, subpath);
+      if (fs.existsSync(fullPath)) {
+        return { type: 'sourceFile', filePath: fullPath };
+      }
+    }
+    try {
       const resolved = require.resolve(moduleName, { paths: [projectRoot] });
       return { type: 'sourceFile', filePath: resolved };
     } catch (_) {

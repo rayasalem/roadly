@@ -87,7 +87,8 @@ export function MapScreen() {
     [isCustomer, effectiveCenter?.latitude, effectiveCenter?.longitude, filterRole]
   );
   const { data, isLoading: isLoadingProviders, isError: isProvidersError, isRefetching, refetch: refetchProviders } = useNearbyProviders(nearbyParams, true, false);
-  const providers = (isProvidersError ? MOCK_PROVIDERS : (data?.items ?? [])) as Provider[];
+  const rawItems = (data?.items ?? []) as Provider[];
+  const providers = (isProvidersError ? MOCK_PROVIDERS : rawItems) as Provider[];
   const providersWithLocation = useMemo(
     () =>
       providers.filter((p) => {

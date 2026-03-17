@@ -59,3 +59,14 @@ export async function updateProviderAvailability(isAvailable: boolean): Promise<
     throw new Error(getErrorMessage(error));
   }
 }
+
+/** Update provider's current location (PATCH /providers/me/location). Call when accepting request or starting job. */
+export async function updateProviderLocation(latitude: number, longitude: number): Promise<void> {
+  try {
+    await api.patch(ENDPOINTS.myLocation, { latitude, longitude });
+  } catch (error) {
+    if (__DEV__) {
+      console.warn('[providerProfileApi] updateProviderLocation failed:', getErrorMessage(error));
+    }
+  }
+}

@@ -17,7 +17,6 @@ import { GlassCard } from '../../../../shared/components/GlassCard';
 import { StatusBadge } from '../../../../shared/components/StatusBadge';
 import { RequestTimeline, type TimelineStep } from '../../../../shared/components/RequestTimeline';
 import { LoadingSpinner } from '../../../../shared/components/LoadingSpinner';
-import { FAB } from '../../../../shared/components/FAB';
 import { PressableCard } from '../../../../shared/components/PressableCard';
 import { StatCard } from '../../../../shared/components/StatCard';
 import { Button } from '../../../../shared/components/Button';
@@ -29,6 +28,7 @@ import { t } from '../../../../shared/i18n/t';
 import type { TowStackParamList } from '../../../../navigation/TowStack';
 import { useTowDashboard, type TowJob, type TowJobStatus } from '../../hooks/useTowDashboard';
 import { useProviderProfile } from '../../../profile/hooks/useProviderProfile';
+import { useProviderLocationSync } from '../../../profile/hooks/useProviderLocationSync';
 import { updateProviderAvailability } from '../../../profile/data/providerProfileApi';
 import { useUIStore } from '../../../../store/uiStore';
 import { useAuthStore } from '../../../../store/authStore';
@@ -54,13 +54,11 @@ function buildTowTimelineSteps(status: TowJobStatus): TimelineStep[] {
 const TowJobCard = memo(function TowJobCard({
   job,
   onPress,
-  openMap,
   onAccept,
   onReject,
 }: {
   job: TowJob;
   onPress: () => void;
-  openMap: () => void;
   onAccept?: () => void;
   onReject?: () => void;
 }) {
@@ -86,15 +84,12 @@ const TowJobCard = memo(function TowJobCard({
           <Button title={t('mechanic.accept') ?? 'Accept'} onPress={onAccept} variant="accent" size="sm" />
         </View>
       )}
-      <TouchableOpacity style={styles.mapLink} onPress={openMap}>
-        <MaterialCommunityIcons name="map-marker-outline" size={16} color={THEME.primary} />
-        <Text style={styles.mapLinkText}>{t('tow.viewRequestOnMap') ?? 'View request location on map'}</Text>
-      </TouchableOpacity>
     </PressableCard>
   );
 });
 
 export function TowDashboardScreen() {
+  useProviderLocationSync();
   const navigation = useNavigation<Nav>();
   const toast = useUIStore((s) => s.toast);
   const queryClient = useQueryClient();
@@ -118,7 +113,6 @@ export function TowDashboardScreen() {
   const [selectedJob, setSelectedJob] = useState<TowJob | null>(null);
   const { stats, jobs, requesters, statusFilter, setStatusFilter, isLoading, isError, error, refetch, acceptJob, rejectJob, isAccepting, isRejecting } = useTowDashboard();
 
-  const openMap = useCallback(() => navigation.navigate('Map'), [navigation]);
   const openProfile = useCallback(() => navigation.navigate('Profile'), [navigation]);
 
   const handleTab = useCallback(
@@ -153,7 +147,7 @@ export function TowDashboardScreen() {
         toast({ type: 'error', message: e instanceof Error ? e.message : t('common.error') });
       }
     },
-    [acceptJob, toast, navigation],
+    [acceptJob, toast, refetch],
   );
 
   const handleReject = useCallback(
@@ -268,10 +262,6 @@ export function TowDashboardScreen() {
                       {t('mechanic.unavailable') ?? 'Unavailable'}
                     </AppText>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.heroMapQuick} onPress={openMap} activeOpacity={0.85}>
-                    <MaterialCommunityIcons name="map-marker-outline" size={18} color={THEME.primary} />
-                    <Text style={styles.heroMapQuickText}>{t('tow.viewRequestOnMap') ?? 'View on map'}</Text>
-                  </TouchableOpacity>
                 </View>
 
                 <View style={styles.statsRow}>
@@ -332,7 +322,6 @@ export function TowDashboardScreen() {
             <TowJobCard
               job={job}
               onPress={() => handleJobPress(job)}
-              openMap={openMap}
               onAccept={job.status === 'queued' ? () => handleAccept(job) : undefined}
               onReject={job.status === 'queued' ? () => handleReject(job) : undefined}
             />
@@ -345,10 +334,6 @@ export function TowDashboardScreen() {
           }
         />
       </SafeAreaView>
-
-      <View style={styles.fabWrap}>
-        <FAB icon="map-marker-outline" onPress={openMap} role="tow" accessibilityLabel={t('home.action.openMap')} />
-      </View>
 
       <BottomSheetModal
         ref={bottomSheetRef}
@@ -380,17 +365,13 @@ export function TowDashboardScreen() {
                   <Button title={t('mechanic.accept') ?? 'Accept'} onPress={() => handleAccept(selectedJob)} fullWidth disabled={actionLoading} loading={isAccepting} />
                 </View>
               )}
-              <TouchableOpacity style={styles.sheetMapBtn} onPress={openMap}>
-                <MaterialCommunityIcons name="map-marker-outline" size={20} color={THEME.primary} />
-                <Text style={styles.mapLinkText}>{t('tow.viewRequestLocationOnMap') ?? 'View request location on map'}</Text>
-              </TouchableOpacity>
             </>
           ) : null}
         </View>
       </BottomSheetModal>
 
       <View style={styles.bottomNavWrap}>
-        <BottomNavBar activeTab="Home" onSelect={handleTab} />
+        <BottomNavBar activeTab="Home" onSelect={handleTab} dark />
       </View>
     </View>
   );

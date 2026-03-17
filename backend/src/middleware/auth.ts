@@ -42,22 +42,24 @@ export function authGuard(req: Request, res: Response, next: NextFunction): void
     return;
   }
 
-  try {
-    const decoded = verifyAccess(token);
-    if (!decoded || typeof (decoded as { id?: unknown }).id !== 'string') {
+  (async () => {
+    try {
+      const decoded = verifyAccess(token);
+      if (!decoded || typeof (decoded as { id?: unknown }).id !== 'string') {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+      }
+      const user = await findUserById(decoded.id);
+      if (user && 'blocked' in user && user.blocked === true) {
+        res.status(403).json({ message: 'Account is blocked' });
+        return;
+      }
+      req.user = decoded as UserPayload;
+      next();
+    } catch {
       res.status(401).json({ message: 'Unauthorized' });
-      return;
     }
-    const user = findUserById(decoded.id);
-    if (user && 'blocked' in user && user.blocked === true) {
-      res.status(403).json({ message: 'Account is blocked' });
-      return;
-    }
-    req.user = decoded as UserPayload;
-    next();
-  } catch {
-    res.status(401).json({ message: 'Unauthorized' });
-  }
+  })().catch(next);
 }
 
 /** Optional auth: if Bearer token is valid (or mock in dev), set req.user; otherwise continue without user (no 401). */
@@ -76,20 +78,22 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction): 
     return;
   }
 
-  try {
-    const decoded = verifyAccess(token);
-    if (!decoded || typeof (decoded as { id?: unknown }).id !== 'string') {
-      next();
-      return;
+  (async () => {
+    try {
+      const decoded = verifyAccess(token);
+      if (!decoded || typeof (decoded as { id?: unknown }).id !== 'string') {
+        next();
+        return;
+      }
+      const user = await findUserById(decoded.id);
+      if (user && 'blocked' in user && user.blocked === true) {
+        next();
+        return;
+      }
+      req.user = decoded as UserPayload;
+    } catch {
+      // ignore invalid/expired token
     }
-    const user = findUserById(decoded.id);
-    if (user && 'blocked' in user && user.blocked === true) {
-      next();
-      return;
-    }
-    req.user = decoded as UserPayload;
-  } catch {
-    // ignore invalid/expired token
-  }
-  next();
+    next();
+  })().catch(next);
 }

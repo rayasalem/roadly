@@ -8,6 +8,7 @@ import { fetchCustomerRequests } from '../data/requestApi';
 import { isNetworkOrTimeoutError } from '../../../shared/services/http/errorMessage';
 import type { ServiceRequest } from '../domain/types';
 import { MOCK_REQUESTS } from '../../../mock/mockRequests';
+import { useAuthStore } from '../../../store/authStore';
 
 const QUERY_KEY = ['requests', 'customer'] as const;
 const STALE_MS = 60 * 1000;
@@ -28,14 +29,17 @@ function mockToServiceRequest(m: import('../../../mock/mockRequests').MockReques
   };
 }
 
-function getMockFallback(): CustomerRequestsResponse {
-  const items: ServiceRequest[] = MOCK_REQUESTS.map(mockToServiceRequest);
+function getMockFallback(customerId: string | undefined): CustomerRequestsResponse {
+  const list = customerId ? MOCK_REQUESTS.filter((m) => m.customerId === customerId) : MOCK_REQUESTS;
+  const items: ServiceRequest[] = list.map(mockToServiceRequest);
   return { items, total: items.length };
 }
 
 export function useRequestHistory(enabled = true) {
+  const customerId = useAuthStore((s) => s.user?.role === 'user' ? s.user?.id : undefined);
+
   const query = useQuery({
-    queryKey: QUERY_KEY,
+    queryKey: [...QUERY_KEY, customerId],
     queryFn: async () => {
       try {
         return await fetchCustomerRequests();
@@ -43,7 +47,7 @@ export function useRequestHistory(enabled = true) {
         if (__DEV__) {
           console.warn('[useRequestHistory] API failed, using mock requests.', error instanceof Error ? error.message : error);
         }
-        return getMockFallback();
+        return getMockFallback(customerId);
       }
     },
     staleTime: STALE_MS,

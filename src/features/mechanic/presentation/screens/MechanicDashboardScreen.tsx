@@ -16,7 +16,6 @@ import { GlassCard } from '../../../../shared/components/GlassCard';
 import { StatusBadge } from '../../../../shared/components/StatusBadge';
 import { useUIStore } from '../../../../store/uiStore';
 import { LoadingSpinner } from '../../../../shared/components/LoadingSpinner';
-import { FAB } from '../../../../shared/components/FAB';
 import { PressableCard } from '../../../../shared/components/PressableCard';
 import { StatCard } from '../../../../shared/components/StatCard';
 import { Button } from '../../../../shared/components/Button';
@@ -32,6 +31,7 @@ import {
   type MechanicRequestStatus,
 } from '../../hooks/useMechanicDashboard';
 import { useProviderProfile } from '../../../profile/hooks/useProviderProfile';
+import { useProviderLocationSync } from '../../../profile/hooks/useProviderLocationSync';
 import { updateProviderAvailability } from '../../../profile/data/providerProfileApi';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ROLES } from '../../../../shared/constants/roles';
@@ -92,6 +92,7 @@ const MechanicJobCard = memo(function MechanicJobCard({
 });
 
 export function MechanicDashboardScreen() {
+  useProviderLocationSync();
   const navigation = useNavigation<Nav>();
   const toast = useUIStore((s) => s.toast);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
@@ -151,10 +152,6 @@ export function MechanicDashboardScreen() {
     [navigation],
   );
 
-  const openMap = useCallback(() => {
-    navigation.navigate('Map');
-  }, [navigation]);
-
   const openProfile = useCallback(() => {
     navigation.navigate('Profile');
   }, [navigation]);
@@ -175,7 +172,7 @@ export function MechanicDashboardScreen() {
       try {
         await acceptJob(requestId);
         toast({ type: 'success', message: t('mechanic.accepted') });
-        navigation.navigate('Map');
+        refetch();
       } catch (e) {
         toast({ type: 'error', message: e instanceof Error ? e.message : t('common.error') });
       }
@@ -308,12 +305,6 @@ export function MechanicDashboardScreen() {
                       {t('mechanic.unavailable')}
                     </AppText>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.heroMapQuick} onPress={openMap} activeOpacity={0.85}>
-                    <MaterialCommunityIcons name="map-marker-outline" size={18} color={THEME.primary} />
-                    <AppText variant="callout" style={styles.heroMapQuickText}>
-                      {t('mechanic.viewRequestOnMap') ?? 'عرض الطلبات على الخريطة'}
-                    </AppText>
-                  </TouchableOpacity>
                 </View>
 
                 <View style={styles.statsRow}>
@@ -399,10 +390,6 @@ export function MechanicDashboardScreen() {
         />
       </SafeAreaView>
 
-      <View style={[styles.fabWrap, jobs.some((j) => j.status === 'new') && styles.fabWrapPulse]}>
-        <FAB icon="map-marker-outline" onPress={openMap} role="mechanic" accessibilityLabel={t('home.action.openMap')} />
-      </View>
-
       <BottomSheetModal
         ref={bottomSheetRef}
         snapPoints={[280]}
@@ -456,19 +443,13 @@ export function MechanicDashboardScreen() {
                   />
                 )}
               </View>
-              <TouchableOpacity style={styles.mapLink} onPress={openMap}>
-                <MaterialCommunityIcons name="map-marker-outline" size={20} color={THEME.primary} />
-                <AppText variant="callout" weight="semibold" style={styles.mapLinkText}>
-                  {t('mechanic.viewRequestLocationOnMap') ?? (selectedJob.status === 'on_the_way' || selectedJob.status === 'in_garage' ? 'Navigate to customer' : 'View request location on map')}
-                </AppText>
-              </TouchableOpacity>
             </>
           ) : null}
         </View>
       </BottomSheetModal>
 
       <View style={styles.bottomNavWrap}>
-        <BottomNavBar activeTab="Home" onSelect={handleTab} />
+        <BottomNavBar activeTab="Home" onSelect={handleTab} dark />
       </View>
     </View>
   );

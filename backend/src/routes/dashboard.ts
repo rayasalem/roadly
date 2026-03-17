@@ -3,15 +3,33 @@ import { authGuard } from '../middleware/auth.js';
 import { requireRole } from '../middleware/roleGuard.js';
 import { listPendingRequests, listRequestsByProvider, computeEtaMinutes } from '../store/requestStore.js';
 import { getProvider } from '../store/providerStore.js';
+import { asyncHandler } from '../middleware/asyncHandler.js';
 
 const router = Router();
 router.use(authGuard);
 
-router.get('/mechanic', requireRole('mechanic'), (req, res) => {
+router.get('/mechanic', requireRole('mechanic'), asyncHandler(async (req, res) => {
   const providerId = req.user!.id;
-  const provider = getProvider(providerId);
-  const pending = listPendingRequests('mechanic');
-  const myRequests = listRequestsByProvider(providerId);
+  let provider: Awaited<ReturnType<typeof getProvider>>;
+  let pending: Awaited<ReturnType<typeof listPendingRequests>>;
+  let myRequests: Awaited<ReturnType<typeof listRequestsByProvider>>;
+  try {
+    [provider, pending, myRequests] = await Promise.all([
+      getProvider(providerId),
+      listPendingRequests('mechanic'),
+      listRequestsByProvider(providerId),
+    ]);
+  } catch (e) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[dashboard/mechanic] DB failed:', e instanceof Error ? e.message : e);
+    }
+    res.json({
+      stats: { jobsToday: 0, onTheWay: 0, rating: '0' },
+      jobs: [],
+      requesters: [],
+    });
+    return;
+  }
   const pendingJobs = pending.map((r) => {
     const etaMin = provider?.location ? computeEtaMinutes(provider.location, r.origin) : null;
     return {
@@ -48,13 +66,30 @@ router.get('/mechanic', requireRole('mechanic'), (req, res) => {
       status: j.status,
     })),
   });
-});
+}));
 
-router.get('/tow', requireRole('mechanic_tow'), (req, res) => {
+router.get('/tow', requireRole('mechanic_tow'), asyncHandler(async (req, res) => {
   const providerId = req.user!.id;
-  const provider = getProvider(providerId);
-  const pending = listPendingRequests('tow');
-  const myRequests = listRequestsByProvider(providerId);
+  let provider: Awaited<ReturnType<typeof getProvider>>;
+  let pending: Awaited<ReturnType<typeof listPendingRequests>>;
+  let myRequests: Awaited<ReturnType<typeof listRequestsByProvider>>;
+  try {
+    [provider, pending, myRequests] = await Promise.all([
+      getProvider(providerId),
+      listPendingRequests('tow'),
+      listRequestsByProvider(providerId),
+    ]);
+  } catch (e) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[dashboard/tow] DB failed:', e instanceof Error ? e.message : e);
+    }
+    res.json({
+      stats: { active: 0, waiting: 0, fleet: 0 },
+      jobs: [],
+      requesters: [],
+    });
+    return;
+  }
   const pendingJobs = pending.map((r) => {
     const etaMin = provider?.location ? computeEtaMinutes(provider.location, r.origin) : null;
     return {
@@ -90,13 +125,32 @@ router.get('/tow', requireRole('mechanic_tow'), (req, res) => {
       status: j.status,
     })),
   });
-});
+}));
 
-router.get('/rental', requireRole('car_rental'), (req, res) => {
+router.get('/rental', requireRole('car_rental'), asyncHandler(async (req, res) => {
   const providerId = req.user!.id;
-  const provider = getProvider(providerId);
-  const pending = listPendingRequests('rental');
-  const myRequests = listRequestsByProvider(providerId);
+  let provider: Awaited<ReturnType<typeof getProvider>>;
+  let pending: Awaited<ReturnType<typeof listPendingRequests>>;
+  let myRequests: Awaited<ReturnType<typeof listRequestsByProvider>>;
+  try {
+    [provider, pending, myRequests] = await Promise.all([
+      getProvider(providerId),
+      listPendingRequests('rental'),
+      listRequestsByProvider(providerId),
+    ]);
+  } catch (e) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[dashboard/rental] DB failed:', e instanceof Error ? e.message : e);
+    }
+    res.json({
+      stats: { total: 0, available: 0, rented: 0 },
+      vehicles: [],
+      upcomingBookings: [],
+      jobs: [],
+      requesters: [],
+    });
+    return;
+  }
   const pendingJobs = pending.map((r) => {
     const etaMin = provider?.location ? computeEtaMinutes(provider.location, r.origin) : null;
     return {
@@ -130,6 +184,6 @@ router.get('/rental', requireRole('car_rental'), (req, res) => {
       status: j.status,
     })),
   });
-});
+}));
 
 export default router;

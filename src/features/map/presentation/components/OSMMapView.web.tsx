@@ -1,7 +1,6 @@
 /**
- * Web: Leaflet loaded via CDN (no Metro require = no "Cannot find module 'leaflet'").
- * Safe load: if Leaflet fails, show clear error. Markers: profession emoji 🔧🚛🚗 + availability color.
- * Popup "Request service" calls onRequestService (same navigation as Native).
+ * Web: Leaflet loaded from same-origin (public/leaflet.js, public/leaflet.css).
+ * No CDN, no Metro resolution. Markers: emoji + availability color. Popup "Request service" → onRequestService.
  */
 import React, { useEffect, useRef, useCallback, useState, memo } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
@@ -12,96 +11,73 @@ import { t } from '../../../../shared/i18n/t';
 import { getMarkerColorByStatus, getServiceTypeEmoji, getAvailabilityLabel, buildProviderPopupHtml } from '../../utils/mapMarkerUtils';
 import { LEAFLET_CRITICAL_CSS } from '../../leafletCriticalCss';
 
-const LEAFLET_CDN_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-const LEAFLET_CDN_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-
-type LeafletLib = {
-  map: (el: HTMLElement, o?: object) => { setView: (lat: number[], zoom: number) => void; remove: () => void };
-  tileLayer: (url: string, o?: object) => { addTo: (map: unknown) => void };
-  marker: (latlng: [number, number], o?: object) => { addTo: (map: unknown) => unknown; bindPopup: (html: string, o?: object) => void; on: (e: string, fn: () => void) => void; remove?: () => void };
-  divIcon: (o: { html: string; className: string; iconSize: [number, number]; iconAnchor: [number, number] }) => unknown;
-  circleMarker: (latlng: [number, number], o?: object) => { addTo: (map: unknown) => void };
-};
-
-function getLeafletFromWindow(): LeafletLib | null {
-  if (typeof window === 'undefined') return null;
-  const w = window as unknown as { L?: LeafletLib };
-  return w.L ?? null;
+declare global {
+  interface Window {
+    L?: {
+      map: (el: HTMLElement, o: { center: [number, number]; zoom: number; zoomControl?: boolean; dragging?: boolean; scrollWheelZoom?: boolean }) => { setView: (c: [number, number], z: number) => void; remove: () => void };
+      tileLayer: (url: string, o: { attribution?: string }) => { addTo: (m: unknown) => unknown };
+      circleMarker: (latlng: [number, number], o: Record<string, unknown>) => { addTo: (m: unknown) => unknown };
+      marker: (latlng: [number, number], o: { icon: unknown }) => { addTo: (m: unknown) => unknown; bindPopup: (html: string, o?: { maxWidth?: number }) => void; on: (e: string, cb: () => void) => void };
+      divIcon: (o: { html: string; className: string; iconSize: [number, number]; iconAnchor: [number, number] }) => unknown;
+    };
+  }
 }
 
-/** Load Leaflet via script tag (CDN) so Metro never has to resolve 'leaflet'. */
-function useLeaflet(): { L: LeafletLib | null; error: string | null; loading: boolean } {
-  const [L, setL] = useState<LeafletLib | null>(() => getLeafletFromWindow());
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(!getLeafletFromWindow());
-  const loadingRef = useRef(false);
-
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    const existing = getLeafletFromWindow();
-    if (existing) {
-      setL(existing);
-      setLoading(false);
-      return;
-    }
-    if (loadingRef.current) return;
-    loadingRef.current = true;
-
-    const onLoad = () => {
-      const lib = getLeafletFromWindow();
-      if (lib) {
-        setL(lib);
-        setError(null);
-      } else {
-        setError('Leaflet script loaded but L not found.');
-      }
-      setLoading(false);
-      loadingRef.current = false;
-    };
-
-    const onError = () => {
-      setError('Failed to load map library.');
-      setLoading(false);
-      loadingRef.current = false;
-    };
-
-    if (document.querySelector('script[data-mechnow-leaflet]')) {
-      if (getLeafletFromWindow()) onLoad();
-      else setTimeout(onLoad, 100);
-      return;
-    }
-
-    if (!document.getElementById(LEAFLET_STYLE_ID)) {
-      const style = document.createElement('style');
-      style.id = LEAFLET_STYLE_ID;
-      style.textContent = LEAFLET_CRITICAL_CSS;
-      document.head.appendChild(style);
-    }
-
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = LEAFLET_CDN_CSS;
-    link.onerror = () => {}; // optional
-    document.head.appendChild(link);
-
-    const script = document.createElement('script');
-    script.setAttribute('data-mechnow-leaflet', '1');
-    script.src = LEAFLET_CDN_JS;
-    script.async = true;
-    script.onload = onLoad;
-    script.onerror = onError;
-    document.head.appendChild(script);
-
-    return () => {};
-  }, []);
-
-  return { L, error, loading };
-}
-
+const LEAFLET_JS = '/leaflet.js';
+const LEAFLET_CSS = '/leaflet.css';
 const OSM_TILES = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 const LEAFLET_STYLE_ID = 'mechnow-leaflet-inline-css';
 const MAX_MARKERS = 150;
 const PULSE_STYLE_ID = 'mechnow-marker-pulse';
+
+function useLeafletSameOrigin(): { L: typeof window.L; error: string | null; ready: boolean } {
+  const [L, setL] = useState<typeof window.L>(typeof window !== 'undefined' ? window.L : undefined);
+  const [error, setError] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (window.L) {
+      setL(window.L);
+      setReady(true);
+      return;
+    }
+    if (!document.querySelector(`script[src=\"${LEAFLET_JS}\"]`)) {
+      const style = document.createElement('style');
+      style.id = LEAFLET_STYLE_ID;
+      style.textContent = LEAFLET_CRITICAL_CSS;
+      document.head.appendChild(style);
+
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = LEAFLET_CSS;
+      document.head.appendChild(link);
+
+      const script = document.createElement('script');
+      script.src = LEAFLET_JS;
+      script.async = false;
+      script.onerror = () => setError('Leaflet failed to load');
+      script.onload = () => {
+        if (window.L) {
+          setL(window.L);
+          setReady(true);
+        } else setError('Leaflet not on window');
+      };
+      document.head.appendChild(script);
+    } else {
+      const check = setInterval(() => {
+        if (window.L) {
+          setL(window.L);
+          setReady(true);
+          clearInterval(check);
+        }
+      }, 50);
+      return () => clearInterval(check);
+    }
+  }, []);
+
+  return { L: L ?? undefined, error, ready };
+}
 
 export interface OSMMapViewProps {
   center: { latitude: number; longitude: number };
@@ -109,39 +85,40 @@ export interface OSMMapViewProps {
   userLocation: { latitude: number; longitude: number } | null;
   selectedProviderId: string | null;
   nearestProviderId?: string | null;
-  /** عند الضغط على الماركر / فتح البوب آب */
   onProviderPress: (provider: Provider) => void;
-  /** اختياري: عند الضغط على زر "طلب خدمة" في البوب آب — نفس سلوك Native (انتقال لـ RequestScreen) */
   onRequestService?: (provider: Provider) => void;
 }
 
 function OSMMapViewWebInner(props: OSMMapViewProps) {
   const { center, providers, userLocation, selectedProviderId, nearestProviderId, onProviderPress, onRequestService } = props;
-  const { L, error: leafletError, loading: leafletLoading } = useLeaflet();
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<ReturnType<LeafletLib['map']> | null>(null);
+  const mapRef = useRef<ReturnType<LType['map']> | null>(null);
   const markersRef = useRef<unknown[]>([]);
   const onProviderPressRef = useRef(onProviderPress);
   const onRequestServiceRef = useRef(onRequestService);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [leafletReady, setLeafletReady] = useState(false);
+
+  const { L, error: leafletError, ready: leafletReady } = useLeafletSameOrigin();
+
   onProviderPressRef.current = onProviderPress;
   onRequestServiceRef.current = onRequestService;
 
   useEffect(() => {
-    if (typeof document === 'undefined' || !L) return;
-    if (!document.getElementById(LEAFLET_STYLE_ID)) {
-      const style = document.createElement('style');
-      style.id = LEAFLET_STYLE_ID;
-      style.textContent = LEAFLET_CRITICAL_CSS;
-      document.head.appendChild(style);
+    if (leafletError) {
+      setLoadError(leafletError);
+      return;
     }
+    setLoadError(null);
+  }, [leafletError]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined' || !L) return;
 
     const el = containerRef.current;
-    if (!el) return;
+    if (!el || !leafletReady) return;
 
     setLoadError(null);
-    const map = L.map(el, {
+    const map = L!.map(el, {
       center: [center.latitude, center.longitude],
       zoom: 14,
       zoomControl: true,
@@ -149,26 +126,22 @@ function OSMMapViewWebInner(props: OSMMapViewProps) {
       scrollWheelZoom: true,
     });
     mapRef.current = map;
-    L.tileLayer(OSM_TILES, { attribution: '© OpenStreetMap' }).addTo(map);
-    setLeafletReady(true);
+    L!.tileLayer(OSM_TILES, { attribution: '© OpenStreetMap' }).addTo(map);
     return () => {
       map.remove();
       mapRef.current = null;
       markersRef.current = [];
-      setLeafletReady(false);
     };
-  }, [L]);
+  }, [L, leafletReady]);
 
   useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-    map.setView([center.latitude, center.longitude], 14);
+    if (!mapRef.current) return;
+    mapRef.current.setView([center.latitude, center.longitude], 14);
   }, [center.latitude, center.longitude]);
 
   useEffect(() => {
-    if (!L) return;
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || !L) return;
     markersRef.current.forEach((m: { remove?: () => void }) => {
       if (typeof m?.remove === 'function') m.remove();
     });
@@ -204,7 +177,6 @@ function OSMMapViewWebInner(props: OSMMapViewProps) {
       const divClass = isNearestMarker ? 'mechnow-marker-nearest' : '';
       const emoji = getServiceTypeEmoji(provider);
       const avail = getAvailabilityLabel(provider);
-      // Marker: دائرة ملوّنة حسب الحالة + Emoji للمهنة في الوسط
       const markerHtml = `<div class="${divClass}" title="${emoji} ${avail.text}" style="width:40px;height:40px;border-radius:50%;background:${color};border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;font-size:20px;line-height:1;">${emoji}</div>`;
       const marker = L.marker(latlng, {
         icon: L.divIcon({
@@ -223,32 +195,23 @@ function OSMMapViewWebInner(props: OSMMapViewProps) {
           (btn as HTMLElement).dataset.bound = '1';
           btn.addEventListener('click', () => {
             const cb = onRequestServiceRef.current;
-            if (cb) {
-              cb(provider);
-            } else {
-              onProviderPressRef.current(provider);
-            }
+            if (cb) cb(provider);
+            else onProviderPressRef.current(provider);
           });
         }
       });
       markersRef.current.push(marker);
     });
-  }, [providers, userLocation, selectedProviderId, nearestProviderId, center.latitude, center.longitude, leafletReady]);
+  }, [L, leafletReady, providers, userLocation, selectedProviderId, nearestProviderId, center.latitude, center.longitude]);
 
   const setRef = useCallback((r: unknown) => {
     containerRef.current = (r as HTMLDivElement | null) ?? null;
   }, []);
 
-  const showError = (!L && !leafletLoading) || !!loadError || !!leafletError;
-  if (showError) {
-    const message =
-      loadError ||
-      leafletError ||
-      t('map.webMapLoadFailed') ||
-      'Map could not load (e.g. blocked by tracking prevention). Try disabling it for this site or use another browser.';
+  if (loadError) {
     return (
       <View style={[styles.container, styles.errorContainer]}>
-        <Text style={styles.errorText}>{message}</Text>
+        <Text style={styles.errorText}>{loadError}</Text>
         {typeof window !== 'undefined' && (
           <TouchableOpacity style={styles.retryButton} onPress={() => window.location.reload()} activeOpacity={0.8}>
             <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
@@ -261,7 +224,7 @@ function OSMMapViewWebInner(props: OSMMapViewProps) {
   return (
     <View style={[styles.container, styles.containerWeb]}>
       <View style={StyleSheet.absoluteFill} ref={setRef as (r: View | null) => void} collapsable={false} />
-      {(leafletLoading || !leafletReady) && (
+      {!leafletReady && !loadError && (
         <View style={styles.loadingOverlay} pointerEvents="none">
           <Text style={styles.loadingText}>{t('map.mapLoading')}</Text>
         </View>

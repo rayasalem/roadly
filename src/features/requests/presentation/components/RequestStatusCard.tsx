@@ -192,7 +192,7 @@ export function RequestStatusCard({
           {['new', 'pending'].includes(request.status) && (
             <>
               <Button title={t('providerReg.accept')} onPress={() => onUpdateStatus('accepted')} size="sm" disabled={isUpdating} />
-              <Button title={t('providerReg.decline')} onPress={() => onUpdateStatus('rejected')} size="sm" variant="outline" disabled={isUpdating} />
+              <Button title={t('providerReg.decline')} onPress={() => onUpdateStatus('cancelled')} size="sm" variant="outline" disabled={isUpdating} />
             </>
           )}
           {(request.status === 'accepted' || request.status === 'in_progress' || request.status === 'on_the_way') && (

@@ -192,6 +192,19 @@ export function AdminDashboardScreen() {
 
           <TouchableOpacity
             style={styles.manageUsersCard}
+            onPress={() => navigation.navigate('AdminRequests')}
+            activeOpacity={0.85}
+          >
+            <MaterialCommunityIcons name="clipboard-list-outline" size={28} color={THEME.primary} />
+            <View style={styles.manageUsersTextWrap}>
+              <Text style={styles.manageUsersTitle}>{t('admin.requests') ?? 'View requests'}</Text>
+              <Text style={styles.manageUsersSubtitle}>{t('admin.viewAllRequests') ?? 'All service requests'}</Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.manageUsersCard}
             onPress={() => navigation.navigate('AdminReports')}
             activeOpacity={0.85}
           >
@@ -476,7 +489,7 @@ export function AdminDashboardScreen() {
       </BottomSheetModal>
 
       <View style={styles.bottomNavWrap}>
-        <BottomNavBar activeTab="Home" onSelect={handleTab} />
+        <BottomNavBar activeTab="Home" onSelect={handleTab} dark />
       </View>
     </View>
   );

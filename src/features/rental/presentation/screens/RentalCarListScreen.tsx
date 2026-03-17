@@ -24,6 +24,7 @@ import { PressableCard } from '../../../../shared/components/PressableCard';
 import { useTheme, spacing, typography, radii, shadows } from '../../../../shared/theme';
 import { blurActiveElementForA11y } from '../../../../shared/utils/domA11y';
 import { t } from '../../../../shared/i18n/t';
+import { MOCK_CARS } from '../../../../mock/mockCars';
 
 const CAR_IMAGE_PLACEHOLDER = 'https://placehold.co/320x200/e8f4ea/1a472a?text=🚗';
 
@@ -39,7 +40,30 @@ type LocalCar = {
   photoUrl?: string;
 };
 
-const INITIAL_CARS: LocalCar[] = [];
+function mockToLocalCar(m: { id: string; name: string; year: number; pricePerDay: number; transmission: 'automatic' | 'manual'; seats: number }): LocalCar {
+  return {
+    id: m.id,
+    name: m.name,
+    model: m.name,
+    year: String(m.year),
+    pricePerDay: String(m.pricePerDay),
+    description: '',
+    transmission: m.transmission,
+    seats: String(m.seats),
+    photoUrl: undefined,
+  };
+}
+
+const INITIAL_CARS: LocalCar[] = MOCK_CARS.slice(0, 8).map((m) =>
+  mockToLocalCar({
+    id: m.id,
+    name: m.name,
+    year: m.year,
+    pricePerDay: m.pricePerDay,
+    transmission: m.transmission,
+    seats: m.seats,
+  }),
+);
 
 export function RentalCarListScreen() {
   const navigation = useNavigation<any>();

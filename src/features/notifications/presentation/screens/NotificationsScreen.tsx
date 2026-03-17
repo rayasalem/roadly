@@ -157,7 +157,7 @@ export function NotificationsScreen() {
   );
 
   return (
-    <ScreenWrapper bottomNav={<BottomNavBar activeTab="Notifications" onSelect={handleTab} />}>
+    <ScreenWrapper bottomNav={<BottomNavBar activeTab="Notifications" onSelect={handleTab} dark={isProvider || role === ROLES.ADMIN} />}>
       <ListScreenLayout
         header={header}
         isLoading={isLoading}

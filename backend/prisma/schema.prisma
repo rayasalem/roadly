@@ -1,0 +1,174 @@
+// MechNow Backend - PostgreSQL schema
+// Run: npx prisma migrate dev
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  user
+  mechanic
+  mechanic_tow
+  car_rental
+  admin
+}
+
+enum ServiceType {
+  mechanic
+  tow
+  rental
+  battery
+  tire
+  oil_change
+}
+
+enum RequestStatus {
+  pending
+  accepted
+  on_the_way
+  completed
+  cancelled
+}
+
+enum NotificationType {
+  request_accepted
+  provider_on_way
+  provider_arrived
+  service_completed
+  request_created
+  general
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(user)
+  blocked      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  providerProfile   ProviderProfile?
+  refreshTokens     RefreshToken[]
+  deviceToken       DeviceToken?
+  requestsAsCustomer Request[]       @relation("CustomerRequests")
+  requestsAsProvider Request[]       @relation("ProviderRequests")
+  ratingsGiven      Rating[]        @relation("CustomerRatings")
+  ratingsReceived   Rating[]        @relation("ProviderRatings")
+  notifications     Notification[]
+  chatMessages      ChatMessage[]
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+}
+
+model ProviderProfile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  name         String
+  phone        String   @default("")
+  photo        String?
+  role         Role
+  serviceType  ServiceType
+  latitude     Float    @default(0)
+  longitude    Float    @default(0)
+  locationUpdatedAt DateTime?
+  isAvailable  Boolean  @default(true)
+  rating       Float    @default(0)
+  verified     Boolean  @default(true)
+  services     String[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model DeviceToken {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  token     String
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Request {
+  id            String        @id @default(cuid())
+  customerId    String
+  providerId    String?
+  serviceType   ServiceType
+  status        RequestStatus @default(pending)
+  description   String?
+  originLat     Float
+  originLng     Float
+  destLat       Float?
+  destLng       Float?
+  priceEstimate Float?
+  etaMinutes    Int?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  customer User   @relation("CustomerRequests", fields: [customerId], references: [id], onDelete: Cascade)
+  provider User?  @relation("ProviderRequests", fields: [providerId], references: [id], onDelete: SetNull)
+  ratings  Rating[]
+  chatMessages ChatMessage[]
+
+  @@index([customerId])
+  @@index([providerId])
+  @@index([status])
+}
+
+model Rating {
+  id         String   @id @default(cuid())
+  providerId String
+  customerId String
+  requestId  String
+  rating     Int      // 1-5
+  comment    String?
+  createdAt  DateTime @default(now())
+
+  provider User    @relation("ProviderRatings", fields: [providerId], references: [id], onDelete: Cascade)
+  customer User    @relation("CustomerRatings", fields: [customerId], references: [id], onDelete: Cascade)
+  request  Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, requestId])
+  @@index([providerId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean           @default(false)
+  data      Json?
+  createdAt DateTime          @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  requestId String
+  senderId  String
+  text      String
+  createdAt DateTime @default(now())
+
+  request Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  sender  User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  @@index([requestId])
+}

@@ -37,7 +37,7 @@ router.post('/register', authLimiter, validateBodyJoi(registerSchemaJoi), asyncH
     const payload = { id: user.id, email: user.email, role: user.role };
     const accessToken = signAccess(payload);
     const refreshToken = signRefresh(payload);
-    storeRefreshToken(refreshToken, user.id);
+    await storeRefreshToken(refreshToken, user.id);
     res.status(201).json({
       user: toUserResponse(user),
       accessToken,
@@ -51,7 +51,7 @@ router.post('/register', authLimiter, validateBodyJoi(registerSchemaJoi), asyncH
 
 router.post('/login', authLimiter, validateBodyJoi(loginSchemaJoi), asyncHandler(async (req, res) => {
   const { email, password } = req.validated!.body as { email: string; password: string };
-  const user = findUserByEmail(email);
+  const user = await findUserByEmail(email);
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
     res.status(401).json({ message: 'Invalid email or password' });
     return;
@@ -63,7 +63,7 @@ router.post('/login', authLimiter, validateBodyJoi(loginSchemaJoi), asyncHandler
   const payload = { id: user.id, email: user.email, role: user.role };
   const accessToken = signAccess(payload);
   const refreshToken = signRefresh(payload);
-  storeRefreshToken(refreshToken, user.id);
+  await storeRefreshToken(refreshToken, user.id);
   res.json({
     user: toUserResponse(user),
     accessToken,
@@ -75,12 +75,12 @@ router.post('/refresh', validateBodyJoi(refreshSchemaJoi), asyncHandler(async (r
   const { refreshToken } = req.validated!.body as { refreshToken: string };
   try {
     const payload = verifyRefresh(refreshToken);
-    const userId = consumeRefreshToken(refreshToken);
+    const userId = await consumeRefreshToken(refreshToken);
     if (!userId || userId !== payload.id) {
       res.status(401).json({ message: 'Invalid or reused refresh token' });
       return;
     }
-    const user = findUserById(userId);
+    const user = await findUserById(userId);
     if (!user) {
       res.status(401).json({ message: 'User not found' });
       return;
@@ -88,33 +88,33 @@ router.post('/refresh', validateBodyJoi(refreshSchemaJoi), asyncHandler(async (r
     const newPayload = { id: user.id, email: user.email, role: user.role };
     const accessToken = signAccess(newPayload);
     const newRefreshToken = signRefresh(newPayload);
-    storeRefreshToken(newRefreshToken, user.id);
+    await storeRefreshToken(newRefreshToken, user.id);
     res.json({ accessToken, refreshToken: newRefreshToken });
   } catch {
     res.status(401).json({ message: 'Invalid refresh token' });
   }
 }));
 
-router.post('/logout', (req, res) => {
+router.post('/logout', asyncHandler(async (req, res) => {
   const auth = req.headers.authorization;
   if (auth?.startsWith('Bearer ')) {
     try {
       const payload = verifyAccess(auth.slice(7));
-      revokeAllRefreshTokensForUser(payload.id);
+      await revokeAllRefreshTokensForUser(payload.id);
     } catch {
       // ignore invalid token
     }
   }
   res.status(204).send();
-});
+}));
 
-router.get('/me', authGuard, (req, res) => {
-  const user = findUserById(req.user!.id);
+router.get('/me', authGuard, asyncHandler(async (req, res) => {
+  const user = await findUserById(req.user!.id);
   if (!user) {
     res.status(404).json({ message: 'User not found' });
     return;
   }
   res.json(toUserResponse(user));
-});
+}));
 
 export default router;

@@ -14,8 +14,6 @@ import { LEAFLET_CRITICAL_CSS } from '../../leafletCriticalCss';
 
 const OSM_TILES = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 const LEAFLET_STYLE_ID = 'mechnow-leaflet-inline-css';
-const LEAFLET_JS_CDN = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js';
-const LEAFLET_JS_CDN_FALLBACK = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js';
 /** Cap markers for performance on large provider lists */
 const MAX_MARKERS = 150;
 
@@ -95,32 +93,9 @@ function OSMMapViewInner({
       return false;
     };
 
-    if (tryInitFromWindow()) return;
-
-    const loadScript = (src: string): Promise<void> =>
-      new Promise((resolve, reject) => {
-        if (typeof document === 'undefined') { reject(new Error('no document')); return; }
-        if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
-        const s = document.createElement('script');
-        s.src = src;
-        s.onload = () => resolve();
-        s.onerror = () => reject(new Error('Leaflet load failed'));
-        document.head.appendChild(s);
-      });
-
-    loadScript(LEAFLET_JS_CDN)
-      .then(() => {
-        const L = (window as unknown as { L?: LType }).L;
-        if (L) runInit(L);
-      })
-      .catch(() => {
-        loadScript(LEAFLET_JS_CDN_FALLBACK)
-          .then(() => {
-            const L = (window as unknown as { L?: LType }).L;
-            if (L) runInit(L);
-          })
-          .catch(() => setLoadError('leaflet_failed'));
-      });
+    if (!tryInitFromWindow()) {
+      setLoadError('leaflet_failed');
+    }
 
     return () => {
       const map = mapRef.current as { remove?: () => void } | null;

@@ -144,13 +144,15 @@ export function MapScreen() {
 
   const handleTab = useCallback(
     (tab: NavTabId) => {
-      if (tab === 'Home') navigation.navigate('Map');
-      else if (tab === 'Profile') navigation.navigate('Profile');
-      else if (tab === 'Chat') navigation.navigate('Chat');
-      else if (tab === 'Notifications') navigation.navigate('Notifications');
+      if (tab === 'Home') {
+        if (isCustomer) navigation.navigate('Map');
+        else (navigation as any).navigate('ProviderDashboard');
+      } else if (tab === 'Profile') (navigation as any).navigate('Profile');
+      else if (tab === 'Chat') (navigation as any).navigate('Chat');
+      else if (tab === 'Notifications') (navigation as any).navigate('Notifications');
       else if (tab === 'Settings') safeNavigateToSettings(navigation);
     },
-    [navigation]
+    [navigation, isCustomer]
   );
 
   const showLocationOverlay = isLoading && !coords && !locationError;
@@ -244,7 +246,7 @@ export function MapScreen() {
           />
         </View>
 
-        <BottomNavBar activeTab="Home" onSelect={handleTab} />
+        <BottomNavBar activeTab="Home" onSelect={handleTab} dark={!isCustomer} />
       </SafeAreaView>
 
       <ProviderBottomSheet

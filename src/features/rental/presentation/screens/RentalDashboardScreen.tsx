@@ -16,7 +16,6 @@ import { ErrorWithRetry } from '../../../../shared/components/ErrorWithRetry';
 import { GlassCard } from '../../../../shared/components/GlassCard';
 import { StatusBadge } from '../../../../shared/components/StatusBadge';
 import { LoadingSpinner } from '../../../../shared/components/LoadingSpinner';
-import { FAB } from '../../../../shared/components/FAB';
 import { PressableCard } from '../../../../shared/components/PressableCard';
 import { StatCard } from '../../../../shared/components/StatCard';
 import { BottomNavBar, type NavTabId } from '../../../../shared/components/BottomNavBar';
@@ -31,6 +30,7 @@ import { useAuthStore } from '../../../../store/authStore';
 import { useRentalDashboard, type RentalVehicle, type VehicleStatus, type RentalJob } from '../../hooks/useRentalDashboard';
 import { Button } from '../../../../shared/components/Button';
 import { useProviderProfile } from '../../../profile/hooks/useProviderProfile';
+import { useProviderLocationSync } from '../../../profile/hooks/useProviderLocationSync';
 import { updateProviderAvailability } from '../../../profile/data/providerProfileApi';
 
 type Nav = NativeStackNavigationProp<RentalStackParamList, 'RentalDashboard'>;
@@ -72,6 +72,7 @@ const RentalVehicleCard = memo(function RentalVehicleCard({
 });
 
 export function RentalDashboardScreen() {
+  useProviderLocationSync();
   const navigation = useNavigation<Nav>();
   const toast = useUIStore((s) => s.toast);
   const queryClient = useQueryClient();
@@ -95,7 +96,6 @@ export function RentalDashboardScreen() {
   const [selectedVehicle, setSelectedVehicle] = useState<RentalVehicle | null>(null);
   const { stats, vehicles, bookings, jobs, acceptJob, rejectJob, isAccepting, isRejecting, isLoading, isError, error, refetch } = useRentalDashboard();
 
-  const openMap = useCallback(() => navigation.navigate('Map'), [navigation]);
   const openProfile = useCallback(() => navigation.navigate('Profile'), [navigation]);
 
   const handleTab = useCallback(
@@ -213,10 +213,6 @@ export function RentalDashboardScreen() {
                       {t('mechanic.unavailable') ?? 'Unavailable'}
                     </AppText>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.heroMapQuick} onPress={openMap} activeOpacity={0.85}>
-                    <MaterialCommunityIcons name="map-marker-outline" size={18} color={THEME.primary} />
-                    <Text style={styles.heroMapQuickText}>{t('rental.viewRequestOnMap') ?? 'View on map'}</Text>
-                  </TouchableOpacity>
                 </View>
 
                 <View style={styles.statsRow}>
@@ -297,10 +293,6 @@ export function RentalDashboardScreen() {
         />
       </SafeAreaView>
 
-      <View style={styles.fabWrap}>
-        <FAB icon="map-marker-outline" onPress={openMap} role="rental" accessibilityLabel={t('home.action.openMap')} />
-      </View>
-
       <BottomSheetModal ref={bottomSheetRef} snapPoints={[240]} enablePanDownToClose onDismiss={() => { require('../../../../shared/utils/domA11y').blurActiveElementForA11y(); setSelectedVehicle(null); }} backgroundStyle={styles.sheetBg}>
         <View style={styles.sheetContent}>
           {selectedVehicle ? (
@@ -308,10 +300,6 @@ export function RentalDashboardScreen() {
               <Text style={styles.sheetTitle}>{selectedVehicle.name}</Text>
               <Text style={styles.sheetMeta}>{selectedVehicle.plate} • {selectedVehicle.price}</Text>
               <StatusBadge label={statusLabel(selectedVehicle.status)} variant={statusVariant(selectedVehicle.status)} size="sm" />
-              <TouchableOpacity style={[styles.sheetMapBtn, selectedVehicle.status !== 'available' && styles.sheetMapBtnDisabled]} onPress={openMap} disabled={selectedVehicle.status !== 'available'}>
-                <MaterialCommunityIcons name="map-marker-outline" size={20} color={THEME.primary} />
-                <Text style={styles.mapLinkText}>{t('rental.viewRequestLocationOnMap') ?? 'View request location on map'}</Text>
-              </TouchableOpacity>
               {selectedVehicle.status === 'available' && (
                 <TouchableOpacity style={styles.bookBtn} onPress={() => toast({ type: 'success', message: t('rental.bookingStarted') })} activeOpacity={0.85}>
                   <MaterialCommunityIcons name="calendar-check" size={20} color={colors.primaryContrast} />
@@ -324,7 +312,7 @@ export function RentalDashboardScreen() {
       </BottomSheetModal>
 
       <View style={styles.bottomNavWrap}>
-        <BottomNavBar activeTab="Home" onSelect={handleTab} />
+        <BottomNavBar activeTab="Home" onSelect={handleTab} dark />
       </View>
     </View>
   );

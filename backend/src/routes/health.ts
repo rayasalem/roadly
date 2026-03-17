@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from 'express';
+import { prisma } from '../lib/prisma.js';
 
 const router = Router();
 
@@ -7,7 +8,7 @@ router.get('/', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-/** GET /health/ready – readiness: can accept traffic? (DB, Redis, external services when configured) */
+/** GET /health/ready – readiness: can accept traffic? (DB, Redis when configured) */
 router.get('/ready', async (_req: Request, res: Response) => {
   const checks: Record<string, { status: string; latencyMs?: number; message?: string }> = {};
   let overallOk = true;
@@ -16,7 +17,7 @@ router.get('/ready', async (_req: Request, res: Response) => {
   if (dbUrl && dbUrl.startsWith('postgres')) {
     const start = Date.now();
     try {
-      // Optional: add pg client and run SELECT 1
+      await prisma.$queryRaw`SELECT 1`;
       checks.database = { status: 'ok', latencyMs: Date.now() - start };
     } catch (e) {
       checks.database = { status: 'error', message: (e as Error).message };

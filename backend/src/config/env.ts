@@ -8,12 +8,16 @@ const required = (key: string): string => {
 
 const optional = (key: string, def: string): string => process.env[key] ?? def;
 
+const isProd = process.env.NODE_ENV === 'production';
+
 export const env = {
   NODE_ENV: optional('NODE_ENV', 'development'),
   PORT: parseInt(optional('PORT', '8082'), 10),
-  /** In production set CLIENT_URL. In development defaults to allow common localhost ports. */
   CLIENT_URL: optional('CLIENT_URL', 'http://localhost:8081'),
-  JWT_SECRET: required('JWT_SECRET'),
-  JWT_REFRESH_SECRET: required('JWT_REFRESH_SECRET'),
+  /** In production required. In development defaults to local PostgreSQL so server can start. */
+  DATABASE_URL: isProd ? required('DATABASE_URL') : optional('DATABASE_URL', 'postgresql://localhost:5432/mechnow'),
+  /** In production required. In development use a default so server can start (dev only). */
+  JWT_SECRET: isProd ? required('JWT_SECRET') : optional('JWT_SECRET', 'dev-jwt-access-secret-min-32-characters-long'),
+  JWT_REFRESH_SECRET: isProd ? required('JWT_REFRESH_SECRET') : optional('JWT_REFRESH_SECRET', 'dev-jwt-refresh-secret-min-32-characters'),
   BCRYPT_ROUNDS: parseInt(optional('BCRYPT_ROUNDS', '12'), 10),
 } as const;

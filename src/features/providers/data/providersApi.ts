@@ -108,12 +108,9 @@ export async function fetchNearbyProviders(
           availableCars: typeof i.availableCars === 'number' ? i.availableCars : undefined,
         } as Provider;
       });
-    // إذا الـ API رجع ناجح لكن بدون مزودين، استخدم القائمة التجريبية حتى لا تبقى الخريطة فارغة
-    const useFallback = items.length === 0;
-    const finalItems = useFallback ? getFallbackNearbyProviders(params.role) : items;
     return {
-      items: finalItems,
-      total: useFallback ? finalItems.length : (data.total ?? items.length),
+      items,
+      total: data.total ?? items.length,
       page: data.page ?? 1,
       limit: data.limit ?? params.limit ?? 20,
     };
