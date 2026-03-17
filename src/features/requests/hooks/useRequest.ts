@@ -57,6 +57,17 @@ export function useRequest(id: string | null) {
       }
     },
     enabled,
+    // Avoid aggressive background refetching when there is no active change,
+    // especially on web where this can generate a lot of noise.
+    refetchOnWindowFocus: false,
+    retry: (failureCount, error) => {
+      // For network / timeout errors: retry a couple of times then stop.
+      if (isNetworkOrTimeoutError(error)) {
+        return failureCount < 2;
+      }
+      // For other errors (e.g. 4xx, server validation) do not auto‑retry.
+      return false;
+    },
     staleTime: 3_000,
     refetchInterval: (data) => {
       if (!data) return false;
