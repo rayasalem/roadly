@@ -1,5 +1,5 @@
 import { prisma } from '../lib/prisma.js';
-import type { Role as PrismaRole, ServiceType as PrismaServiceType } from '@prisma/client';
+import type { Prisma, Role as PrismaRole, ServiceType as PrismaServiceType } from '@prisma/client';
 
 export type Role = 'mechanic' | 'mechanic_tow' | 'car_rental';
 export type ServiceType = 'mechanic' | 'tow' | 'rental' | 'battery' | 'tire' | 'oil_change';
@@ -185,7 +185,7 @@ export async function findNearby(
     limit = 20,
   } = options;
 
-  const where: Parameters<typeof prisma.providerProfile.findMany>[0]['where'] = {};
+  const where: Prisma.ProviderProfileWhereInput = {};
   if (role) where.role = role as PrismaRole;
   if (availableOnly) where.isAvailable = true;
   if (verifiedOnly) where.verified = true;

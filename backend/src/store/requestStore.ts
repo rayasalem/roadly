@@ -1,5 +1,9 @@
 import { prisma } from '../lib/prisma.js';
-import type { ServiceType as PrismaServiceType, RequestStatus as PrismaRequestStatus } from '@prisma/client';
+import type {
+  Prisma,
+  ServiceType as PrismaServiceType,
+  RequestStatus as PrismaRequestStatus,
+} from '@prisma/client';
 
 export type ServiceType = 'mechanic' | 'tow' | 'rental' | 'battery' | 'tire' | 'oil_change';
 export type RequestStatus =
@@ -226,7 +230,7 @@ export async function listAllRequestsForAdmin(options: ListAllRequestsOptions): 
   const page = Math.max(1, options.page ?? 1);
   const limit = Math.min(100, Math.max(1, options.limit ?? 20));
   const skip = (page - 1) * limit;
-  const where: Parameters<typeof prisma.request.findMany>[0]['where'] = {};
+  const where: Prisma.RequestWhereInput = {};
   if (options.status) where.status = options.status as PrismaRequestStatus;
   if (options.serviceType) where.serviceType = options.serviceType as PrismaServiceType;
   const [items, total] = await Promise.all([

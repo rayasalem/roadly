@@ -1,5 +1,5 @@
 import { prisma } from '../lib/prisma.js';
-import type { NotificationType as PrismaNotificationType } from '@prisma/client';
+import type { NotificationType as PrismaNotificationType, Prisma } from '@prisma/client';
 
 export async function registerDevice(userId: string, token: string): Promise<void> {
   await prisma.deviceToken.upsert({
@@ -76,7 +76,7 @@ export async function createNotification(
       type: type as PrismaNotificationType,
       title,
       message,
-      data: data ?? undefined,
+      data: data !== undefined ? (data as Prisma.InputJsonValue) : undefined,
     },
   });
   return rowToNotification(n);
