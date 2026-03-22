@@ -36,6 +36,7 @@ import { updateProviderAvailability } from '../../../profile/data/providerProfil
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ROLES } from '../../../../shared/constants/roles';
 import { useAuthStore } from '../../../../store/authStore';
+import { openExternalMap } from '../../../../shared/utils/navigation';
 
 type Nav = NativeStackNavigationProp<MechanicStackParamList, 'MechanicDashboard'>;
 const THEME = ROLE_THEMES.mechanic;
@@ -59,11 +60,13 @@ const MechanicJobCard = memo(function MechanicJobCard({
   onPress,
   onAccept,
   onDecline,
+  onNavigate,
 }: {
   job: MechanicJob;
   onPress: () => void;
   onAccept: () => void;
   onDecline: () => void;
+  onNavigate?: () => void;
 }) {
   return (
     <PressableCard onPress={onPress} style={styles.jobCard}>
@@ -84,6 +87,8 @@ const MechanicJobCard = memo(function MechanicJobCard({
       </View>
       <View style={styles.actionRow}>
         <Button title={t('mechanic.decline')} onPress={onDecline} variant="outline" size="sm" />
+        <View style={styles.actionSpacer} />
+        <Button title={t('home.action.navigate') ?? 'Navigate'} onPress={onNavigate} variant="ghost" size="sm" />
         <View style={styles.actionSpacer} />
         <Button title={t('mechanic.accept')} onPress={onAccept} variant="accent" size="sm" />
       </View>
@@ -158,6 +163,13 @@ export function MechanicDashboardScreen() {
 
   const handleJobPress = useCallback((job: MechanicJob) => {
     setSelectedJob(job);
+  }, []);
+
+  const handleNavigate = useCallback((job: MechanicJob) => {
+    const anyJob = job as any;
+    const origin = anyJob.origin as { latitude: number; longitude: number } | undefined;
+    if (!origin) return;
+    void openExternalMap(origin.latitude, origin.longitude);
   }, []);
 
   useEffect(() => {
@@ -379,6 +391,7 @@ export function MechanicDashboardScreen() {
               onPress={() => handleJobPress(job)}
               onAccept={() => handleAccept(job)}
               onDecline={() => handleDecline(job)}
+              onNavigate={() => handleNavigate(job)}
             />
           )}
           ListEmptyComponent={

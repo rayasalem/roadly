@@ -13,10 +13,12 @@ import authRoutes from './routes/auth.js';
 import requestRoutes from './routes/requests.js';
 import providerRoutes from './routes/providers.js';
 import notificationRoutes from './routes/notifications.js';
+import vehicleRoutes from './routes/vehicles.js';
 import healthRoutes from './routes/health.js';
 import dashboardRoutes from './routes/dashboard.js';
 import adminRoutes from './routes/admin.js';
 import chatRoutes from './routes/chat.js';
+import uploadRoutes from './routes/uploads.js';
 
 const app = express();
 
@@ -24,19 +26,23 @@ app.set('trust proxy', 1);
 
 const isDev = env.NODE_ENV !== 'production';
 const productionOrigins = env.CLIENT_URL.split(',').map((u) => u.trim()).filter(Boolean);
-const allowedOrigins: string[] = isDev
-  ? [
-      'http://localhost:8081',
-      'http://127.0.0.1:8081',
-      'http://localhost:19006',
-      'http://localhost:19000',
-      'http://127.0.0.1:19000',
-      'http://localhost:8080',
-      'http://127.0.0.1:8080',
-    ]
-  : productionOrigins.length > 0
-    ? productionOrigins
-    : ['https://roadmapapp.vercel.app'];
+const baseDevOrigins = [
+  'http://localhost:8081',
+  'http://127.0.0.1:8081',
+  'http://localhost:19006',
+  'http://localhost:19000',
+  'http://127.0.0.1:19000',
+  'http://localhost:8080',
+  'http://127.0.0.1:8080',
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://roadmapapp.vercel.app',
+];
+const baseProdOrigins =
+  productionOrigins.length > 0 ? productionOrigins : ['https://roadmapapp.vercel.app'];
+const allowedOrigins: string[] = Array.from(
+  new Set(isDev ? baseDevOrigins : baseProdOrigins.concat('https://roadmapapp.vercel.app')),
+);
 
 function getCorsOrigin(req: express.Request): string {
   const origin = req.headers.origin;
@@ -80,6 +86,7 @@ app.use(
 );
 
 app.use(helmet());
+app.use('/uploads', express.static('uploads'));
 app.use(requestIdMiddleware);
 app.use(requestLoggerMiddleware);
 app.use(express.json({ limit: '1mb' }));
@@ -90,6 +97,8 @@ app.use('/auth', authRoutes);
 app.use('/requests', requestRoutes);
 app.use('/providers', providerRoutes);
 app.use('/notifications', notificationRoutes);
+app.use('/', vehicleRoutes);
+app.use('/', uploadRoutes);
 app.use('/dashboard', dashboardRoutes);
 app.use('/admin', adminRoutes);
 app.use('/chat', chatRoutes);

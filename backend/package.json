@@ -11,9 +11,11 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "test": "npm run test:validation && npm run test:integration",
+    "test": "npm run test:validation && npm run test:integration && npm run test:unit",
     "test:validation": "npx tsx src/test/validation/schemas.test.ts",
-    "test:integration": "npx tsx src/test/integration/healthAndAuth.test.ts"
+    "test:integration": "npx tsx src/test/integration/healthAndAuth.test.ts && npx tsx src/test/integration/routesApi.test.ts",
+    "test:unit": "npx tsx src/test/validation/joiSchemas.test.ts",
+    "test:api": "npm run test:integration"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
@@ -25,6 +27,7 @@
     "helmet": "^7.1.0",
     "joi": "^17.11.0",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
     "pino": "^9.5.0",
     "sanitize-html": "^2.11.0",
     "zod": "^3.22.4"

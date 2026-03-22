@@ -1,7 +1,8 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { fireEvent } from '@testing-library/react-native';
 
 import { MechanicDashboardScreen } from '../../../src/features/mechanic/presentation/screens/MechanicDashboardScreen';
+import { renderWithProviders } from '../../../test-utils/renderWithProviders';
 
 jest.mock('@react-navigation/native', () => {
   const actual = jest.requireActual('@react-navigation/native');
@@ -29,19 +30,47 @@ jest.mock('../../../src/features/mechanic/hooks/useMechanicDashboard', () => ({
     ],
     statusFilter: 'all',
     setStatusFilter: jest.fn(),
+    isLoading: false,
+    isError: false,
+    error: null,
+    refetch: jest.fn(),
+    acceptJob: jest.fn(),
+    declineJob: jest.fn(),
+    completeJob: jest.fn(),
+    isAccepting: false,
+    isDeclining: false,
+    isCompleting: false,
+  }),
+}));
+
+jest.mock('../../../src/store/authStore', () => ({
+  useAuthStore: (sel: (s: { user: { id: string; name: string; role: string } | null }) => unknown) =>
+    sel({
+      user: { id: 'm1', name: 'Mechanic', role: 'mechanic' },
+    }),
+}));
+
+jest.mock('../../../src/features/profile/hooks/useProviderLocationSync', () => ({
+  useProviderLocationSync: () => {},
+}));
+
+jest.mock('../../../src/features/profile/hooks/useProviderProfile', () => ({
+  useProviderProfile: () => ({
+    profile: { isAvailable: true },
+    refetch: jest.fn(),
   }),
 }));
 
 describe('MechanicDashboardScreen', () => {
   it('renders stats and active requests', () => {
-    const { getByText } = render(<MechanicDashboardScreen />);
+    const { getByText, getAllByText } = renderWithProviders(<MechanicDashboardScreen />);
 
-    expect(getByText('mechanic.dashboard.title')).toBeTruthy();
+    expect(getAllByText('mechanic.dashboard.title').length).toBeGreaterThan(0);
     expect(getByText('Job 1')).toBeTruthy();
   });
 
   it('allows pressing filter chips', () => {
-    const { getByText } = render(<MechanicDashboardScreen />);
+    const { getByText } = renderWithProviders(<MechanicDashboardScreen />);
 
     const allChip = getByText('mechanic.filterAll');
     fireEvent.press(allChip);

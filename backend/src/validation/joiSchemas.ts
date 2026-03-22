@@ -115,6 +115,24 @@ export const notificationRegisterSchemaJoi = Joi.object({
   token: Joi.string().min(1).max(500).required(),
 });
 
+/** POST /providers/vehicles */
+export const createVehicleSchemaJoi = Joi.object({
+  name: Joi.string().min(1).max(200).required(),
+  type: Joi.string().min(1).max(100).required(),
+  pricePerHour: Joi.number().min(0).max(1_000_000).required(),
+  description: Joi.string().max(2000).optional().allow(null, ''),
+  images: Joi.array().items(Joi.string().uri().max(2000)).max(10).optional(),
+});
+
+/** PATCH /providers/vehicles/:id */
+export const updateVehicleSchemaJoi = Joi.object({
+  name: Joi.string().min(1).max(200).optional(),
+  type: Joi.string().min(1).max(100).optional(),
+  pricePerHour: Joi.number().min(0).max(1_000_000).optional(),
+  description: Joi.string().max(2000).optional().allow(null, ''),
+  images: Joi.array().items(Joi.string().uri().max(2000)).max(10).optional(),
+}).min(1);
+
 /** Path param :id (generic) */
 export const idParamSchemaJoi = Joi.object({
   id: Joi.string().min(1).max(100).required(),

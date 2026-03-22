@@ -34,9 +34,9 @@ export function MapSearchBar(p: MapSearchBarProps) {
           <MaterialCommunityIcons name="microphone" size={22} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
-      {p.showSuggestions && p.suggestions.length > 0 && (
+      {p.showSuggestions && (p.suggestions?.length ?? 0) > 0 && (
         <View style={[styles.suggestionsBox, { backgroundColor: colors.surface }, shadows.lg]}>
-          {p.suggestions.slice(0, 6).map((s) => (
+          {(p.suggestions ?? []).slice(0, 6).map((s) => (
             <TouchableOpacity key={s.id} style={styles.suggestionRow} onPress={() => p.onSelectSuggestion(s)} activeOpacity={ACTIVE_OPACITY}>
               <MaterialCommunityIcons name="map-marker" size={18} color={colors.primary} />
               <AppText variant="callout" numberOfLines={1} style={[styles.suggestionText, { color: colors.text }]}>{s.description}</AppText>

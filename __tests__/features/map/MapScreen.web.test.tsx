@@ -1,7 +1,8 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { fireEvent } from '@testing-library/react-native';
 
 import { MapScreen } from '../../../src/features/map/presentation/screens/MapScreen.web';
+import { renderWithProviders } from '../../../test-utils/renderWithProviders';
 
 // Mock navigation and hooks used by MapScreen
 jest.mock('@react-navigation/native', () => {
@@ -45,6 +46,8 @@ jest.mock('../../../src/features/map/hooks/usePlacesSearch', () => ({
     query: '',
     setQuery: jest.fn(),
     selectedPlace: null,
+    suggestions: [],
+    selectPlace: jest.fn(),
   }),
 }));
 
@@ -54,16 +57,16 @@ jest.mock('../../../src/shared/i18n/t', () => ({
 
 describe('MapScreen (web)', () => {
   it('renders search input and filters without crashing', () => {
-    const { getByPlaceholderText, getByText } = render(<MapScreen />);
+    const { getByPlaceholderText, getByText } = renderWithProviders(<MapScreen />);
 
-    expect(getByPlaceholderText('map.searchPlaceholder')).toBeTruthy();
+    expect(getByPlaceholderText('map.searchHerePlaceholder')).toBeTruthy();
     expect(getByText('map.filter.all')).toBeTruthy();
   });
 
   it('allows typing into search input', () => {
-    const { getByPlaceholderText } = render(<MapScreen />);
+    const { getByPlaceholderText } = renderWithProviders(<MapScreen />);
 
-    const input = getByPlaceholderText('map.searchPlaceholder');
+    const input = getByPlaceholderText('map.searchHerePlaceholder');
     fireEvent.changeText(input, 'test');
   });
 });

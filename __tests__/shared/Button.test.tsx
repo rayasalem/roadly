@@ -1,4 +1,5 @@
 import React from 'react';
+import { ActivityIndicator } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 
 import { Button } from '../../src/shared/components/Button';
@@ -23,9 +24,9 @@ describe('Button', () => {
   });
 
   it('shows loader when loading', () => {
-    const { getByRole } = render(<Button title="تحميل" onPress={() => {}} loading />);
+    const { UNSAFE_getByType } = render(<Button title="تحميل" onPress={() => {}} loading />);
 
-    expect(getByRole('progressbar')).toBeTruthy();
+    expect(UNSAFE_getByType(ActivityIndicator)).toBeTruthy();
   });
 });
 

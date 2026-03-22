@@ -39,4 +39,7 @@ export const ENDPOINTS = {
   /** Notifications: list and mark read */
   notifications: '/notifications',
   notificationMarkRead: (id: string) => `/notifications/${id}/read`,
+  /** Rental provider vehicles management */
+  providerVehicles: '/providers/vehicles',
+  providerVehicleById: (id: string) => `/providers/vehicles/${id}`,
 } as const;

@@ -1,7 +1,8 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { fireEvent } from '@testing-library/react-native';
 
 import { AdminDashboardScreen } from '../../../src/features/admin/presentation/screens/AdminDashboardScreen';
+import { renderWithProviders } from '../../../test-utils/renderWithProviders';
 
 jest.mock('@react-navigation/native', () => {
   const actual = jest.requireActual('@react-navigation/native');
@@ -60,14 +61,14 @@ jest.mock('../../../src/features/admin/hooks/useAdminDashboard', () => {
 
 describe('AdminDashboardScreen', () => {
   it('renders global stats and mechanic panel', () => {
-    const { getByText } = render(<AdminDashboardScreen />);
+    const { getByText } = renderWithProviders(<AdminDashboardScreen />);
 
     expect(getByText('admin.dashboard.title')).toBeTruthy();
     expect(getByText('mechanic.stats.jobsToday')).toBeTruthy();
   });
 
   it('allows switching tabs', () => {
-    const { getByText } = render(<AdminDashboardScreen />);
+    const { getByText } = renderWithProviders(<AdminDashboardScreen />);
 
     const mechTab = getByText('admin.section.mechanics');
     fireEvent.press(mechTab);

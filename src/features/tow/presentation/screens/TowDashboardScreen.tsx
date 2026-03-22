@@ -32,6 +32,7 @@ import { useProviderLocationSync } from '../../../profile/hooks/useProviderLocat
 import { updateProviderAvailability } from '../../../profile/data/providerProfileApi';
 import { useUIStore } from '../../../../store/uiStore';
 import { useAuthStore } from '../../../../store/authStore';
+import { openExternalMap } from '../../../../shared/utils/navigation';
 
 type Nav = NativeStackNavigationProp<TowStackParamList, 'TowDashboard'>;
 const THEME = ROLE_THEMES.tow;
@@ -80,6 +81,8 @@ const TowJobCard = memo(function TowJobCard({
       {isQueued && onAccept && onReject && (
         <View style={styles.actionRow}>
           <Button title={t('mechanic.decline') ?? 'Reject'} onPress={onReject} variant="outline" size="sm" />
+          <View style={styles.actionSpacer} />
+          <Button title={t('home.action.navigate') ?? 'Navigate'} onPress={onPress} variant="ghost" size="sm" />
           <View style={styles.actionSpacer} />
           <Button title={t('mechanic.accept') ?? 'Accept'} onPress={onAccept} variant="accent" size="sm" />
         </View>
@@ -133,6 +136,13 @@ export function TowDashboardScreen() {
   );
 
   const handleJobPress = useCallback((job: TowJob) => setSelectedJob(job), []);
+
+  const handleNavigate = useCallback((job: TowJob) => {
+    const anyJob = job as any;
+    const origin = anyJob.origin as { latitude: number; longitude: number } | undefined;
+    if (!origin) return;
+    void openExternalMap(origin.latitude, origin.longitude);
+  }, []);
 
   const handleAccept = useCallback(
     async (job: TowJob) => {
@@ -321,7 +331,7 @@ export function TowDashboardScreen() {
           renderItem={({ item: job }) => (
             <TowJobCard
               job={job}
-              onPress={() => handleJobPress(job)}
+              onPress={() => handleNavigate(job)}
               onAccept={job.status === 'queued' ? () => handleAccept(job) : undefined}
               onReject={job.status === 'queued' ? () => handleReject(job) : undefined}
             />
