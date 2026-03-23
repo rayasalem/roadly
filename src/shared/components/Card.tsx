@@ -6,8 +6,7 @@
  */
 import React, { useRef } from 'react';
 import { Animated, Pressable, View, StyleSheet, ViewStyle } from 'react-native';
-import { colors } from '../theme/colors';
-import { spacing, radii, shadows } from '../theme';
+import { spacing, radii, shadows, useTheme } from '../theme';
 import { springPress, PRESS_SCALE } from '../utils/animations';
 import { HIT_SLOP_DEFAULT } from '../constants/ux';
 
@@ -54,6 +53,7 @@ export const Card = React.memo(function Card({
   onPress,
   style,
 }: CardProps) {
+  const { colors } = useTheme();
   const elevation = elevationProp ?? (variant === 'elevated' ? 'sm' : 'none');
   const scale = useRef(new Animated.Value(1)).current;
 
@@ -71,7 +71,8 @@ export const Card = React.memo(function Card({
   const radiusVal = radiusMap[radius];
   const cardStyle: ViewStyle[] = [
     styles.base,
-    { borderRadius: radiusVal, padding: paddingVal, marginVertical: 10 },
+    // Keep spacing responsibilities outside the Card for consistent layouts.
+    { borderRadius: radiusVal, padding: paddingVal, marginVertical: 0 },
     variant === 'elevated' && elevation !== 'none' && shadows[elevation],
     variant === 'outlined' && styles.outlined,
     style,
@@ -96,11 +97,8 @@ export const Card = React.memo(function Card({
 });
 
 const styles = StyleSheet.create({
-  base: {
-    backgroundColor: colors.surface,
-  },
+  base: {},
   outlined: {
     borderWidth: 1,
-    borderColor: colors.border,
   },
 });

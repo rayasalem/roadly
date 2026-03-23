@@ -1,38 +1,23 @@
 /**
- * Ride-style bottom navigation: dark teal background, 5 icons, green active.
- * Icons: Home, Chat, Notifications, Profile, Settings.
+ * Ride-style bottom navigation: 5 tabs, green active (light) or Uber dark.
+ * Tab config shared with SideNavRail via NAV_TABS.
  */
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Text, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme';
 import { t } from '../i18n/t';
 import { ACTIVE_OPACITY, HIT_SLOP_DEFAULT } from '../constants/ux';
+import { NAV_TABS, type NavTabId } from '../navigation/navTabs';
 
-export type NavTabId = 'Home' | 'Chat' | 'Notifications' | 'Profile' | 'Settings';
-
-type TabConfig = {
-  id: NavTabId;
-  icon: keyof typeof MaterialCommunityIcons.glyphMap;
-  labelKey: string;
-};
-
-const TABS: TabConfig[] = [
-  { id: 'Home', icon: 'home', labelKey: 'nav.home' },
-  { id: 'Chat', icon: 'message-text-outline', labelKey: 'nav.chat' },
-  { id: 'Notifications', icon: 'bell-outline', labelKey: 'nav.notifications' },
-  { id: 'Profile', icon: 'account-outline', labelKey: 'nav.profile' },
-  { id: 'Settings', icon: 'cog-outline', labelKey: 'nav.settings' },
-];
+export type { NavTabId };
 
 type BottomNavBarProps = {
   activeTab: NavTabId;
   onSelect: (tab: NavTabId) => void;
-  /** Optional labels map (key = NavTabId, value = string) for i18n */
   labels?: Partial<Record<NavTabId, string>>;
-  /** Uber-style: dark background, white/gray icons and labels */
   dark?: boolean;
 };
 
@@ -58,7 +43,7 @@ export function BottomNavBar({ activeTab, onSelect, labels, dark = false }: Bott
         { paddingBottom: Math.max(insets.bottom, spacing.sm), pointerEvents: 'box-none' as const },
       ]}
     >
-      {TABS.map((tab) => {
+      {NAV_TABS.map((tab) => {
         const isActive = activeTab === tab.id;
         return (
           <TouchableOpacity
@@ -72,7 +57,7 @@ export function BottomNavBar({ activeTab, onSelect, labels, dark = false }: Bott
             accessibilityLabel={L[tab.id]}
           >
             <MaterialCommunityIcons
-              name={tab.icon as any}
+              name={tab.icon as keyof typeof MaterialCommunityIcons.glyphMap}
               size={22}
               color={isActive ? activeColor : inactiveColor}
             />
@@ -112,6 +97,7 @@ const styles = StyleSheet.create({
   },
   label: {
     marginTop: 2,
-    fontSize: 11,
+    // Slightly larger labels on mobile for readability, tighter on web to fit.
+    fontSize: Platform.OS === 'web' ? 11 : 12,
   },
 });

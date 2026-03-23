@@ -135,9 +135,13 @@ export const Button = React.memo(function Button({
       <Pressable
         testID={testID}
         hitSlop={HIT_SLOP_DEFAULT}
-        style={({ pressed }) => [
+        style={(state) => [
           btnStyle,
-          pressed && !isDisabled && styles.pressed,
+          state.pressed && !isDisabled && styles.pressed,
+          Platform.OS === 'web' &&
+            (state as { hovered?: boolean }).hovered &&
+            !isDisabled &&
+            styles.hoverWeb,
         ]}
         onPress={onPress}
         onPressIn={handlePressIn}
@@ -161,7 +165,7 @@ const styles = StyleSheet.create({
   btn: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 14,
+    borderRadius: radii.lg,
     minHeight: PRIMARY_HEIGHT,
     paddingVertical: 14,
     paddingHorizontal: 20,
@@ -185,6 +189,9 @@ const styles = StyleSheet.create({
   fullWidth: { width: '100%' },
   disabled: { opacity: 0.6 },
   pressed: { opacity: 0.85 },
+  hoverWeb: {
+    opacity: 0.94,
+  },
   text: {
     fontFamily: typography.fontFamily.semibold,
   },

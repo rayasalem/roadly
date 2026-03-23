@@ -13,8 +13,7 @@ import {
   ViewStyle,
   Platform,
 } from 'react-native';
-import { colors } from '../theme/colors';
-import { spacing, typography, radii } from '../theme';
+import { spacing, typography, radii, useTheme } from '../theme';
 
 export interface InputProps extends Omit<TextInputProps, 'style'> {
   label?: string;
@@ -40,6 +39,7 @@ export const Input = React.memo(function Input({
   onBlur,
   ...rest
 }: InputProps) {
+  const { colors } = useTheme();
   const [focused, setFocused] = useState(false);
   const hasError = Boolean(error);
 
@@ -60,14 +60,26 @@ export const Input = React.memo(function Input({
 
   const wrapStyle = [
     styles.inputWrap,
-    hasError && styles.inputWrapError,
-    focused && !hasError && styles.inputWrapFocused,
+    { backgroundColor: colors.surface, borderColor: colors.border },
+    hasError && [styles.inputWrapError, { borderColor: colors.error, backgroundColor: colors.errorLight }],
+    focused &&
+      !hasError && [
+        styles.inputWrapFocused,
+        { borderColor: colors.borderFocus },
+        Platform.OS === 'ios' && {
+          shadowColor: colors.primary,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.15,
+          shadowRadius: 4,
+          elevation: 2,
+        },
+      ],
   ];
 
   return (
     <View style={[styles.container, containerStyle]}>
       {label ? (
-        <Text style={styles.label} accessibilityRole="text">
+        <Text style={[styles.label, { color: colors.text }]} accessibilityRole="text">
           {label}
         </Text>
       ) : null}
@@ -77,6 +89,7 @@ export const Input = React.memo(function Input({
           placeholderTextColor={colors.textMuted}
           style={[
             styles.input,
+            { color: colors.text },
             leftAdornment && styles.inputWithLeft,
             rightAdornment && styles.inputWithRight,
           ]}
@@ -91,7 +104,7 @@ export const Input = React.memo(function Input({
       </View>
       {error ? (
         <Text
-          style={styles.error}
+          style={[styles.error, { color: colors.error }]}
           numberOfLines={2}
           accessibilityLiveRegion="polite"
           accessibilityRole="alert"
@@ -100,7 +113,7 @@ export const Input = React.memo(function Input({
         </Text>
       ) : null}
       {hint && !error ? (
-        <Text style={styles.helper} numberOfLines={2}>
+        <Text style={[styles.helper, { color: colors.textMuted }]} numberOfLines={2}>
           {hint}
         </Text>
       ) : null}
@@ -115,16 +128,13 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: typography.fontFamily.medium,
     fontSize: typography.presets.caption.fontSize,
-    color: colors.text,
     marginBottom: spacing.xs,
   },
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     minHeight: 48,
     ...(Platform.OS === 'web' && {
       outlineStyle: 'none',
@@ -132,16 +142,7 @@ const styles = StyleSheet.create({
   },
   inputWrapFocused: {
     borderWidth: FOCUS_RING_WIDTH,
-    borderColor: colors.borderFocus,
-    ...(Platform.OS === 'ios'
-      ? {
-          shadowColor: colors.primary,
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.15,
-          shadowRadius: 4,
-          elevation: 2,
-        }
-      : Platform.OS === 'web'
+    ...(Platform.OS === 'web'
       ? {
           boxShadow: '0px 0px 6px rgba(34,197,94,0.4)',
         }
@@ -149,8 +150,6 @@ const styles = StyleSheet.create({
   },
   inputWrapError: {
     borderWidth: ERROR_RING_WIDTH,
-    borderColor: colors.error,
-    backgroundColor: colors.errorLight,
   },
   input: {
     flex: 1,
@@ -158,7 +157,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     fontFamily: typography.fontFamily.regular,
     fontSize: typography.presets.body.fontSize,
-    color: colors.text,
   },
   inputWithLeft: { paddingLeft: spacing.xs },
   inputWithRight: { paddingRight: spacing.xs },
@@ -168,13 +166,11 @@ const styles = StyleSheet.create({
   error: {
     fontFamily: typography.fontFamily.regular,
     fontSize: typography.presets.caption.fontSize,
-    color: colors.error,
     marginTop: spacing.xs,
   },
   helper: {
     fontFamily: typography.fontFamily.regular,
     fontSize: typography.presets.caption.fontSize,
-    color: colors.textMuted,
     marginTop: spacing.xs,
   },
 });
