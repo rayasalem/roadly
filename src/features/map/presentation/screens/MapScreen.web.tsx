@@ -2,7 +2,7 @@
  * Web map screen: search, filters, OSM map, sheet with providers. No component > 200 lines.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, TouchableOpacity, Platform, Linking } from 'react-native';
+import { View, TouchableOpacity, Platform, Linking, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -14,7 +14,10 @@ import type { Provider } from '../../../providers/domain/types';
 import { ROLES } from '../../../../shared/constants/roles';
 import { AppText } from '../../../../shared/components/AppText';
 import { AppHeader } from '../../../../shared/components/AppHeader';
-import { BottomNavBar, type NavTabId } from '../../../../shared/components/BottomNavBar';
+import { BottomNavBar } from '../../../../shared/components/BottomNavBar';
+import { SideNavRail } from '../../../../shared/components/SideNavRail';
+import { BREAKPOINT_DESKTOP } from '../../../../shared/design/layout';
+import type { NavTabId } from '../../../../shared/navigation/navTabs';
 import { LoadingSpinner } from '../../../../shared/components/LoadingSpinner';
 import { ProviderBottomSheet } from '../../../../shared/components/ProviderBottomSheet';
 import { WebMapView } from '../components/WebMapView';
@@ -50,6 +53,8 @@ type Nav = NativeStackNavigationProp<CustomerStackParamList, 'Map'>;
 
 export function MapScreen() {
   const { colors } = useTheme();
+  const { width } = useWindowDimensions();
+  const isDesktopShell = Platform.OS === 'web' && width >= BREAKPOINT_DESKTOP;
   const navigation = useNavigation<Nav>();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const userRole = useAuthStore((s) => s.user?.role ?? null);
@@ -80,6 +85,8 @@ export function MapScreen() {
       ),
     [sortedProviders]
   );
+  // If we still have providers to show (fallback/mock), don't block UI with "network error".
+  const shouldShowProvidersError = isProvidersError && visibleProviders.length === 0;
   const nearestVisible = visibleProviders[0] ?? null;
   const showEmptyProviders = !isLoading && visibleProviders.length === 0;
   const selectedProviderDistanceKm = selectedProvider ? getDistanceKm(selectedProvider) ?? null : null;
@@ -168,7 +175,18 @@ export function MapScreen() {
   }
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.background }]}>
+    <View
+      style={{
+        flex: 1,
+        flexDirection: isDesktopShell ? 'row' : 'column',
+        backgroundColor: colors.background,
+      }}
+    >
+      {isDesktopShell ? (
+        <SideNavRail activeTab="Home" onSelect={handleTab} dark={!isCustomer} />
+      ) : null}
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <View style={[styles.root, { backgroundColor: colors.background }]}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <View style={styles.searchBarContainer}>
           <MapSearchBar
@@ -234,7 +252,7 @@ export function MapScreen() {
         <View style={styles.sheet}>
           <MapSheetContent
             isLoading={isLoading}
-            isError={isProvidersError}
+            isError={shouldShowProvidersError}
             isRefetching={isRefetching}
             onRetry={() => refetchProviders()}
             showEmpty={showEmptyProviders}
@@ -246,7 +264,7 @@ export function MapScreen() {
           />
         </View>
 
-        <BottomNavBar activeTab="Home" onSelect={handleTab} dark={!isCustomer} />
+        {!isDesktopShell ? <BottomNavBar activeTab="Home" onSelect={handleTab} dark={!isCustomer} /> : null}
       </SafeAreaView>
 
       <ProviderBottomSheet
@@ -259,6 +277,8 @@ export function MapScreen() {
         requestServiceDisabled={!isCustomer}
         distanceKm={selectedProviderDistanceKm ?? undefined}
       />
+        </View>
+      </View>
     </View>
   );
 }

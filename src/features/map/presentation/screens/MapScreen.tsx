@@ -99,6 +99,9 @@ export function MapScreen() {
       }),
     [providers]
   );
+  // If we already have mock/fallback providers, don't block the UI with a "network error" banner.
+  // Note: we check providersWithLocation (offline filtered) not just providers length.
+  const shouldShowProvidersError = isProvidersError && providersWithLocation.length === 0;
   const sortedProviders = useMemo(() => sortByNearest(providersWithLocation, (p) => p.location, effectiveCenter), [providersWithLocation, effectiveCenter.latitude, effectiveCenter.longitude]);
   const nearest = sortedProviders[0] ?? providers[0] ?? null;
   const showEmptyProviders = !isLoadingProviders && !isProvidersError && providers.length === 0;
@@ -341,7 +344,7 @@ export function MapScreen() {
       onCreateRequest={() => (isCustomer ? navigation.navigate('Request', { serviceType: 'mechanic' }) : toast({ type: 'info', message: t('map.onlyCustomersCanRequest') }))}
       onRetry={() => refetchProviders()}
       showLocationOverlay={Boolean(isLoading && !coords && !locationError)}
-      isProvidersError={isProvidersError}
+      isProvidersError={shouldShowProvidersError}
       isRefetching={isRefetching}
       isCustomer={isCustomer}
       getFilterLabel={getFilterLabel}
@@ -502,7 +505,7 @@ export function MapScreen() {
           <MapBottomCard
             nearest={nearest}
             isLoading={isLoadingProviders}
-            isError={isProvidersError}
+            isError={shouldShowProvidersError}
             isRefetching={isRefetching}
             showEmpty={!nearestRequest}
             onRetry={() => refetchProviders()}
