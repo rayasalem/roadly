@@ -21,3 +21,10 @@ export const env = {
   JWT_REFRESH_SECRET: isProd ? required('JWT_REFRESH_SECRET') : optional('JWT_REFRESH_SECRET', 'dev-jwt-refresh-secret-min-32-characters'),
   BCRYPT_ROUNDS: parseInt(optional('BCRYPT_ROUNDS', '12'), 10),
 } as const;
+
+// Prisma reads DATABASE_URL directly from process.env.
+// In dev we allow a default via env.ts, but we must also set process.env so Prisma doesn't throw:
+// "Environment variable not found: DATABASE_URL."
+if (!process.env.DATABASE_URL && env.DATABASE_URL) {
+  process.env.DATABASE_URL = env.DATABASE_URL;
+}
