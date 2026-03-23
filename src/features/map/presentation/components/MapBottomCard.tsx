@@ -112,7 +112,7 @@ export function MapBottomCard({
           <Skeleton width="100%" height={48} radius={radii.lg} style={styles.skeletonButton} />
         </>
       )}
-      {isError && (
+      {isError && !nearest && (
         <ErrorWithRetry testID="map-retry-providers" message={t('error.network')} onRetry={onRetry} isRetrying={isRefetching} />
       )}
       {showEmpty && !isLoading && (

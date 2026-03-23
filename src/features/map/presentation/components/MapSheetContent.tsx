@@ -54,7 +54,7 @@ export function MapSheetContent({
           <Skeleton width="100%" height={48} radius={radii.lg} style={styles.skeletonCta} />
         </View>
       )}
-      {isError && (
+      {isError && providers.length === 0 && (
         <View style={styles.section}>
           <ErrorWithRetry message={t('error.network')} onRetry={onRetry} isRetrying={isRefetching} />
         </View>
