@@ -16,6 +16,7 @@ import { LocaleRTLSync } from './LocaleRTLSync';
 import { QueryErrorFallback } from './QueryErrorFallback';
 import { UnauthorizedHandler } from './UnauthorizedHandler';
 import { AuthBootstrap } from './AuthBootstrap';
+import { GlobalRuntimeProtection } from './GlobalRuntimeProtection';
 
 export function AppProviders() {
   const queryClient = useMemo(() => createQueryClient(), []);
@@ -23,6 +24,7 @@ export function AppProviders() {
 
   return (
     <ErrorBoundary>
+      <GlobalRuntimeProtection />
       <ThemeProvider>
       <FontLoader>
         <QueryClientProvider client={queryClient}>

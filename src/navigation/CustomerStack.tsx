@@ -18,6 +18,7 @@ import { PaymentScreen } from '../features/payment/presentation/screens/PaymentS
 import { FavoritesScreen } from '../features/favorites/presentation/screens/FavoritesScreen';
 import { HelpSupportScreen } from '../features/help/presentation/screens/HelpSupportScreen';
 import { AllProvidersScreen } from '../features/providers/presentation/screens/AllProvidersScreen';
+import { NotFoundScreen } from '../shared/components/NotFoundScreen';
 
 export type CustomerStackParamList = {
   Home: undefined;
@@ -36,6 +37,7 @@ export type CustomerStackParamList = {
   Payment: undefined;
   Favorites: undefined;
   HelpSupport: undefined;
+  NotFound: undefined;
 };
 
 const Stack = createNativeStackNavigator<CustomerStackParamList>();
@@ -66,6 +68,7 @@ export const CustomerStack = () => (
     <Stack.Screen name="Payment" component={PaymentScreen} />
     <Stack.Screen name="Favorites" component={FavoritesScreen} />
     <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
+    <Stack.Screen name="NotFound" component={NotFoundScreen} />
   </Stack.Navigator>
 );
 

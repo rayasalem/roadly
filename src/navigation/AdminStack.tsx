@@ -13,6 +13,7 @@ import { ChatDetailScreen } from '../features/chat/presentation/screens/ChatDeta
 import { ProfileScreen } from '../features/profile/presentation/screens/ProfileScreen';
 import { SettingsScreen } from '../features/settings/presentation/screens/SettingsScreen';
 import { NotificationsScreen } from '../features/notifications/presentation/screens/NotificationsScreen';
+import { NotFoundScreen } from '../shared/components/NotFoundScreen';
 
 export type AdminStackParamList = {
   AdminDashboard: undefined;
@@ -27,6 +28,7 @@ export type AdminStackParamList = {
   Profile: undefined;
   Settings: undefined;
   Notifications: undefined;
+  NotFound: undefined;
 };
 
 const Stack = createNativeStackNavigator<AdminStackParamList>();
@@ -53,5 +55,6 @@ export const AdminStack = () => (
     <Stack.Screen name="Profile" component={ProfileScreen} />
     <Stack.Screen name="Settings" component={SettingsScreen} />
     <Stack.Screen name="Notifications" component={NotificationsScreen} />
+    <Stack.Screen name="NotFound" component={NotFoundScreen} />
   </Stack.Navigator>
 );

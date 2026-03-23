@@ -13,6 +13,7 @@ import { SettingsScreen } from '../features/settings/presentation/screens/Settin
 import { NotificationsScreen } from '../features/notifications/presentation/screens/NotificationsScreen';
 import { ChatScreen } from '../features/chat/presentation/screens/ChatScreen';
 import { ChatDetailScreen } from '../features/chat/presentation/screens/ChatDetailScreen';
+import { NotFoundScreen } from '../shared/components/NotFoundScreen';
 
 export type TowStackParamList = {
   ProviderDashboard: undefined;
@@ -27,6 +28,7 @@ export type TowStackParamList = {
   ChatDetail: { conversationId: string; name: string };
   Settings: undefined;
   Notifications: undefined;
+  NotFound: undefined;
 };
 
 const Stack = createNativeStackNavigator<TowStackParamList>();
@@ -53,6 +55,7 @@ export const TowStack = () => (
     <Stack.Screen name="ChatDetail" component={ChatDetailScreen} />
     <Stack.Screen name="Settings" component={SettingsScreen} />
     <Stack.Screen name="Notifications" component={NotificationsScreen} />
+    <Stack.Screen name="NotFound" component={NotFoundScreen} />
   </Stack.Navigator>
 );
 
