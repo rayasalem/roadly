@@ -67,6 +67,9 @@ export const NearbyProvidersList = React.memo(function NearbyProvidersList({
       showsVerticalScrollIndicator={false}
       initialNumToRender={8}
       windowSize={5}
+      removeClippedSubviews={true}
+      maxToRenderPerBatch={5}
+      updateCellsBatchingPeriod={50}
     />
   );
 });

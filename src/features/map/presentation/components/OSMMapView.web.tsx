@@ -93,7 +93,10 @@ function OSMMapViewWebInner(props: OSMMapViewProps) {
   const { center, providers, userLocation, selectedProviderId, nearestProviderId, onProviderPress, onRequestService } = props;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<ReturnType<LType['map']> | null>(null);
-  const markersRef = useRef<unknown[]>([]);
+  const markersByProviderIdRef = useRef<Record<string, unknown>>({});
+  const userMarkerRef = useRef<unknown | null>(null);
+  const circleUserMarkerRef = useRef<unknown | null>(null);
+  const providersByIdRef = useRef<Record<string, Provider>>({});
   const onProviderPressRef = useRef(onProviderPress);
   const onRequestServiceRef = useRef(onRequestService);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -130,7 +133,10 @@ function OSMMapViewWebInner(props: OSMMapViewProps) {
     return () => {
       map.remove();
       mapRef.current = null;
-      markersRef.current = [];
+      markersByProviderIdRef.current = {};
+      circleUserMarkerRef.current = null;
+      userMarkerRef.current = null;
+      providersByIdRef.current = {};
     };
   }, [L, leafletReady]);
 
@@ -142,24 +148,16 @@ function OSMMapViewWebInner(props: OSMMapViewProps) {
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !L) return;
-    markersRef.current.forEach((m: { remove?: () => void }) => {
-      if (typeof m?.remove === 'function') m.remove();
-    });
-    markersRef.current = [];
-
     const providersToShow = providers.length > MAX_MARKERS ? providers.slice(0, MAX_MARKERS) : providers;
+    const nextProviderIds: Record<string, true> = {};
 
-    if (userLocation) {
-      const userM = L.circleMarker([userLocation.latitude, userLocation.longitude], {
-        radius: 8,
-        fillColor: colors.mapUser,
-        color: '#fff',
-        weight: 2,
-        fillOpacity: 1,
-      });
-      userM.addTo(map);
-      markersRef.current.push(userM);
-    }
+    // Maintain latest providers by id for popup button click handlers.
+    const nextProvidersById: Record<string, Provider> = {};
+    providersToShow.forEach((p) => {
+      nextProvidersById[p.id] = p;
+      nextProviderIds[p.id] = true;
+    });
+    providersByIdRef.current = nextProvidersById;
 
     if (typeof document !== 'undefined' && !document.getElementById(PULSE_STYLE_ID)) {
       const style = document.createElement('style');
@@ -167,6 +165,42 @@ function OSMMapViewWebInner(props: OSMMapViewProps) {
       style.textContent = `@keyframes mechnow-pulse{0%,100%{transform:scale(1);box-shadow:0 1px 4px rgba(0,0,0,0.25)}50%{transform:scale(1.2);box-shadow:0 0 0 8px rgba(34,197,94,0.3)}}.mechnow-marker-nearest{animation:mechnow-pulse 1.8s ease-in-out infinite}`;
       document.head.appendChild(style);
     }
+
+    // Update user marker (circleMarker) without recreating all providers.
+    if (userLocation) {
+      const lat = userLocation.latitude;
+      const lng = userLocation.longitude;
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        if (circleUserMarkerRef.current) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (circleUserMarkerRef.current as any).setLatLng?.([lat, lng]);
+        } else {
+          const userM = L.circleMarker([lat, lng], {
+            radius: 8,
+            fillColor: colors.mapUser,
+            color: '#fff',
+            weight: 2,
+            fillOpacity: 1,
+          });
+          userM.addTo(map);
+          circleUserMarkerRef.current = userM;
+        }
+      }
+    } else if (circleUserMarkerRef.current) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (circleUserMarkerRef.current as any).remove?.();
+      circleUserMarkerRef.current = null;
+    }
+
+    // Remove markers that are no longer in view.
+    const existingIds = Object.keys(markersByProviderIdRef.current);
+    existingIds.forEach((id) => {
+      if (!nextProviderIds[id]) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (markersByProviderIdRef.current[id] as any)?.remove?.();
+        delete markersByProviderIdRef.current[id];
+      }
+    });
 
     providersToShow.forEach((provider) => {
       const loc = provider.location;
@@ -178,6 +212,28 @@ function OSMMapViewWebInner(props: OSMMapViewProps) {
       const emoji = getServiceTypeEmoji(provider);
       const avail = getAvailabilityLabel(provider);
       const markerHtml = `<div class="${divClass}" title="${emoji} ${avail.text}" style="width:40px;height:40px;border-radius:50%;background:${color};border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;font-size:20px;line-height:1;">${emoji}</div>`;
+
+      const popupHtml = buildProviderPopupHtml(provider, t('map.requestService'));
+
+      const existing = markersByProviderIdRef.current[provider.id];
+      if (existing) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (existing as any).setLatLng?.(latlng);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (existing as any).setIcon?.(
+          L.divIcon({
+            html: markerHtml,
+            className: '',
+            iconSize: [40, 40],
+            iconAnchor: [20, 20],
+          })
+        );
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const popup = (existing as any).getPopup?.();
+        if (popup?.setContent) popup.setContent(popupHtml);
+        return;
+      }
+
       const marker = L.marker(latlng, {
         icon: L.divIcon({
           html: markerHtml,
@@ -186,23 +242,29 @@ function OSMMapViewWebInner(props: OSMMapViewProps) {
           iconAnchor: [20, 20],
         }),
       });
-      const popupHtml = buildProviderPopupHtml(provider, t('map.requestService'));
-      const m = marker.addTo(map);
-      m.bindPopup(popupHtml, { maxWidth: 320 });
-      m.on('popupopen', () => {
-        const btn = document.querySelector(`[data-provider-id="${provider.id}"]`);
-        if (btn && !(btn as HTMLElement).dataset.bound) {
-          (btn as HTMLElement).dataset.bound = '1';
-          btn.addEventListener('click', () => {
-            const cb = onRequestServiceRef.current;
-            if (cb) cb(provider);
-            else onProviderPressRef.current(provider);
-          });
-        }
+
+      marker.addTo(map);
+      marker.bindPopup(popupHtml, { maxWidth: 320 });
+      marker.on('popupopen', () => {
+        // Bind popup button click only when popup opens.
+        const btn = document.querySelector(`[data-provider-id="${provider.id}"]`) as HTMLElement | null;
+        if (!btn) return;
+        if (btn.dataset.bound === '1') return;
+        btn.dataset.bound = '1';
+        btn.addEventListener('click', () => {
+          const providerId = btn.dataset.providerId || provider.id;
+          const currentProvider = providersByIdRef.current[providerId];
+          const cb = onRequestServiceRef.current;
+          if (currentProvider) {
+            if (cb) cb(currentProvider);
+            else onProviderPressRef.current(currentProvider);
+          }
+        });
       });
-      markersRef.current.push(marker);
+
+      markersByProviderIdRef.current[provider.id] = marker;
     });
-  }, [L, leafletReady, providers, userLocation, selectedProviderId, nearestProviderId, center.latitude, center.longitude]);
+  }, [L, leafletReady, providers, userLocation, selectedProviderId, nearestProviderId]);
 
   const setRef = useCallback((r: unknown) => {
     containerRef.current = (r as HTMLDivElement | null) ?? null;

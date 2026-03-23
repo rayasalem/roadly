@@ -23,7 +23,7 @@ export function usePlacesSearch() {
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      setDebouncedQuery(query);
+      setDebouncedQuery(query.trim());
       debounceRef.current = null;
     }, DEBOUNCE_MS);
     return () => {
@@ -37,18 +37,23 @@ export function usePlacesSearch() {
     enabled: debouncedQuery.trim().length >= 2,
     staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
+    keepPreviousData: true,
     retry: 2,
     retryDelay: 800,
   });
 
   const selectPlace = useCallback(async (suggestion: PlaceSuggestion) => {
-    setQuery(suggestion.description);
-    const coords = await fetchPlaceCoordinates(suggestion.id);
-    if (coords) {
-      setSelectedPlace({
-        ...coords,
-        description: suggestion.description,
-      });
+    try {
+      setQuery(suggestion.description);
+      const coords = await fetchPlaceCoordinates(suggestion.id);
+      if (coords && Number.isFinite(coords.latitude) && Number.isFinite(coords.longitude)) {
+        setSelectedPlace({
+          ...coords,
+          description: suggestion.description,
+        });
+      }
+    } catch {
+      // Swallow to avoid breaking the map; keep previous selection.
     }
   }, []);
 
