@@ -1,11 +1,12 @@
 /**
- * Native map screen: full-screen map for customer with draggable bottom sheet; provider flow unchanged.
+ * Native map screen: customer sees full-screen map + scrollable provider list below + dock;
+ * provider/admin flows use map with bottom card and modal sheet. Web uses MapScreen.web.tsx.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Platform, Animated, Linking, StyleSheet, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Platform, Animated, Linking, StyleSheet, Text, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import BottomSheet, { BottomSheetModal } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import MapView from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -24,15 +25,18 @@ import { LoadingSpinner } from '../../../../shared/components/LoadingSpinner';
 import { Button } from '../../../../shared/components/Button';
 import { Skeleton } from '../../../../shared/components/Skeleton';
 import { t } from '../../../../shared/i18n/t';
+import { trailingChevronForLocale } from '../../../../shared/i18n/rtlUtils';
+import { useLocaleStore } from '../../../../store/localeStore';
 import { useAuthStore } from '../../../../store/authStore';
 import { useUIStore } from '../../../../store/uiStore';
+import { useNetworkStore } from '../../../../store/networkStore';
 import { useUserLocation } from '../../../location/hooks/useUserLocation';
 import { useNearbyProviders } from '../../../providers/hooks/useNearbyProviders';
 import { useMapFilters } from '../../hooks/useMapFilters';
 import { usePlacesSearch } from '../../hooks/usePlacesSearch';
 import { providerRoleToServiceType } from '../../utils/providerToServiceType';
 import { sortByNearest, haversineDistanceKm } from '../../../location/data/haversine';
-import { DEFAULT_MAP_CENTER, MOCK_PROVIDERS, toRegion, filterRoleToArcId, arcIdToFilterRole, getFilterLabel } from '../../utils/mapHelpers';
+import { DEFAULT_MAP_CENTER, toRegion, filterRoleToArcId, arcIdToFilterRole, getFilterLabel } from '../../utils/mapHelpers';
 import { useMapScreenDerivedData } from '../../hooks/useMapScreenDerivedData';
 import type { MapFilterRole } from '../../hooks/useMapFilters';
 import { safeNavigateToSettings } from '../../../../navigation/navigationRef';
@@ -42,18 +46,29 @@ import { colors } from '../../../../shared/theme/colors';
 import { radii } from '../../../../shared/theme';
 import { ROLE_THEMES } from '../../../../shared/theme/roleThemes';
 
+const CUSTOMER_LIST_SNAP_POINTS = ['25%', '50%', '85%'] as const;
+/** Approximate fraction of window height covered by the sheet at each snap (for lifting map chrome). */
+const CUSTOMER_SHEET_LIFT_FRAC: readonly number[] = [0.25, 0.5, 0.85];
+
 export function MapScreen() {
+  const locale = useLocaleStore((s) => s.locale);
+  const trailingChevron = trailingChevronForLocale(locale);
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
   const navigation = useNavigation<any>();
   const mapRef = useRef<MapView | null>(null);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
-  const customerSheetRef = useRef<BottomSheet>(null);
   const cardAnimated = useRef(new Animated.Value(0)).current;
+  /** Measured height of MapDockWithFAB so BottomSheet `bottomInset` clears the dock. */
+  const [customerDockHeight, setCustomerDockHeight] = useState(200);
+  const [customerSheetIndex, setCustomerSheetIndex] = useState(0);
 
   const { coords, isLoading, error: locationError, fetchLocation } = useUserLocation();
   const userRole = useAuthStore((s) => s.user?.role ?? null);
   const isCustomer = userRole === ROLES.USER;
   const isProviderRole = userRole === 'mechanic' || userRole === 'mechanic_tow' || userRole === 'car_rental';
+  const isInsuranceProvider = userRole === ROLES.INSURANCE;
   const isAdmin = userRole === ROLES.ADMIN;
   const { jobs: mechanicJobs } = useMechanicDashboard(userRole === 'mechanic');
   const { filterRole, setFilter, filterOptions } = useMapFilters();
@@ -88,7 +103,7 @@ export function MapScreen() {
   );
   const { data, isLoading: isLoadingProviders, isError: isProvidersError, isRefetching, refetch: refetchProviders } = useNearbyProviders(nearbyParams, true, false);
   const rawItems = (data?.items ?? []) as Provider[];
-  const providers = (isProvidersError ? MOCK_PROVIDERS : rawItems) as Provider[];
+  const providers = rawItems;
   const providersWithLocation = useMemo(
     () =>
       providers.filter((p) => {
@@ -99,8 +114,7 @@ export function MapScreen() {
       }),
     [providers]
   );
-  // If we already have mock/fallback providers, don't block the UI with a "network error" banner.
-  // Note: we check providersWithLocation (offline filtered) not just providers length.
+  // Show network/API error only when there are no providers to display after filtering.
   const shouldShowProvidersError = isProvidersError && providersWithLocation.length === 0;
   const sortedProviders = useMemo(() => sortByNearest(providersWithLocation, (p) => p.location, effectiveCenter), [providersWithLocation, effectiveCenter.latitude, effectiveCenter.longitude]);
   const nearest = sortedProviders[0] ?? providers[0] ?? null;
@@ -189,9 +203,7 @@ export function MapScreen() {
       } catch (_) {}
     }
     if (isCustomer) {
-      try {
-        (customerSheetRef.current as any)?.snapToIndex(1);
-      } catch (_) {}
+      setCustomerSheetIndex(1);
     } else {
       try {
         bottomSheetRef.current?.present();
@@ -200,6 +212,7 @@ export function MapScreen() {
   }, [isCustomer]);
 
   const toast = useUIStore((s) => s.toast);
+  const isOnline = useNetworkStore((s) => s.isOnline);
   const handleRequestService = useCallback(
     (provider: Provider | null | undefined) => {
       if (!provider) return;
@@ -210,6 +223,10 @@ export function MapScreen() {
       }
       if (!isCustomer) {
         toast({ type: 'info', message: t('map.onlyCustomersCanRequest') });
+        return;
+      }
+      if (!isOnline) {
+        toast({ type: 'error', message: t('map.offlineCannotRequest') });
         return;
       }
       try {
@@ -223,7 +240,7 @@ export function MapScreen() {
         if (typeof navigation.goBack === 'function') navigation.goBack();
       }
     },
-    [navigation, isCustomer, toast]
+    [navigation, isCustomer, isOnline, toast]
   );
 
   const handleMyLocation = useCallback(() => {
@@ -272,14 +289,23 @@ export function MapScreen() {
       if (tab === 'home') {
         // الخريطة هي الصفحة الرئيسية الآن لكل الأدوار
         if (isCustomer) navigation.navigate('Map');
+        else if (isInsuranceProvider) (navigation as any).navigate('InsuranceDashboard');
         else if (isProviderRole) (navigation as any).navigate('ProviderDashboard');
         else if (isAdmin) (navigation as any).navigate('AdminDashboard');
       } else if (tab === 'notifications') (navigation as any).navigate('Notifications');
       else if (tab === 'bookmark') navigation.navigate('Profile');
       else safeNavigateToSettings(navigation);
     },
-    [navigation, isCustomer, isProviderRole, isAdmin]
+    [navigation, isCustomer, isInsuranceProvider, isProviderRole, isAdmin]
   );
+
+  const customerListSnapPoints = useMemo(() => [...CUSTOMER_LIST_SNAP_POINTS], []);
+  const customerSheetLiftPx = useMemo(() => {
+    if (!isCustomer) return 0;
+    const frac = CUSTOMER_SHEET_LIFT_FRAC[customerSheetIndex] ?? CUSTOMER_SHEET_LIFT_FRAC[0];
+    return Math.round(windowHeight * frac);
+  }, [isCustomer, customerSheetIndex, windowHeight]);
+  const customerSheetBottomInset = Math.max(Math.ceil(customerDockHeight), Math.ceil(insets.bottom));
 
   if (locationError && !coords) {
     return (
@@ -341,7 +367,17 @@ export function MapScreen() {
       onSelectProvider={handleSelectProvider}
       onRequestService={handleRequestService}
       onMyLocation={handleMyLocation}
-      onCreateRequest={() => (isCustomer ? navigation.navigate('Request', { serviceType: 'mechanic' }) : toast({ type: 'info', message: t('map.onlyCustomersCanRequest') }))}
+      onCreateRequest={() => {
+        if (!isCustomer) {
+          toast({ type: 'info', message: t('map.onlyCustomersCanRequest') });
+          return;
+        }
+        if (!isOnline) {
+          toast({ type: 'error', message: t('map.offlineCannotRequest') });
+          return;
+        }
+        navigation.navigate('Request', { serviceType: 'mechanic' });
+      }}
       onRetry={() => refetchProviders()}
       showLocationOverlay={Boolean(isLoading && !coords && !locationError)}
       isProvidersError={shouldShowProvidersError}
@@ -355,6 +391,7 @@ export function MapScreen() {
       placeSuggestions={isCustomer ? suggestions : []}
       onSelectPlace={isCustomer ? selectPlace : undefined}
       origin={effectiveCenter}
+      sheetLiftPx={isCustomer ? customerSheetLiftPx : undefined}
     />
   );
 
@@ -381,15 +418,25 @@ export function MapScreen() {
                 />
               </SafeAreaView>
             </View>
-            {/* Card section below the map — short height, list of all available providers */}
-            <View style={localStyles.sheetBg}>
-              <ScrollView
-                style={localStyles.sheetScroll}
+            <BottomSheet
+              index={customerSheetIndex}
+              snapPoints={customerListSnapPoints}
+              onChange={setCustomerSheetIndex}
+              enablePanDownToClose={false}
+              enableDynamicSizing={false}
+              bottomInset={customerSheetBottomInset}
+              backgroundStyle={{
+                backgroundColor: colors.surface,
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+              }}
+              handleIndicatorStyle={localStyles.sheetHandle}
+              style={localStyles.customerBottomSheet}
+            >
+              <BottomSheetScrollView
                 contentContainerStyle={localStyles.sheetContent}
-                showsVerticalScrollIndicator={true}
+                showsVerticalScrollIndicator
                 keyboardShouldPersistTaps="handled"
-                bounces={true}
-                nestedScrollEnabled={true}
               >
               {isLoadingProviders ? (
                 <>
@@ -424,7 +471,7 @@ export function MapScreen() {
                   >
                     <MaterialCommunityIcons name="clipboard-list-outline" size={22} color={colors.primary} />
                     <Text style={[localStyles.myRequestsText, { color: colors.primary }]}>{t('request.historyTitle')}</Text>
-                    <MaterialCommunityIcons name="chevron-left" size={22} color={colors.primary} style={{ transform: [{ scaleX: -1 }] }} />
+                    <MaterialCommunityIcons name={trailingChevron} size={22} color={colors.primary} />
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[localStyles.myRequestsRow, { backgroundColor: colors.surface }]}
@@ -433,7 +480,7 @@ export function MapScreen() {
                   >
                     <MaterialCommunityIcons name="account-group-outline" size={22} color={colors.primary} />
                     <Text style={[localStyles.myRequestsText, { color: colors.text }]}>{t('providersPage.viewAll')}</Text>
-                    <MaterialCommunityIcons name="chevron-left" size={22} color={colors.textSecondary} style={{ transform: [{ scaleX: -1 }] }} />
+                    <MaterialCommunityIcons name={trailingChevron} size={22} color={colors.textSecondary} />
                   </TouchableOpacity>
                   <Text style={[localStyles.providersListTitle, { color: colors.text }]}>
                     {t('map.availableProviders')}
@@ -452,7 +499,12 @@ export function MapScreen() {
                       <View style={localStyles.providerRowCenter}>
                         <Text style={[localStyles.providerRowName, { color: colors.text }]} numberOfLines={1}>{p.name}</Text>
                         <Text style={[localStyles.providerRowMeta, { color: colors.textSecondary }]}>
-                          {d != null ? (d < 1 ? `${(d * 1000).toFixed(0)} m` : `${d.toFixed(1)} km`) : '—'} • {t('map.status.available')}
+                          {d != null
+                            ? d < 1
+                              ? `${(d * 1000).toFixed(0)} ${t('map.distanceMeters')}`
+                              : `${d.toFixed(1)} ${t('map.distanceKm')}`
+                            : '—'}{' '}
+                          • {t('map.status.available')}
                         </Text>
                       </View>
                       <Button
@@ -465,15 +517,18 @@ export function MapScreen() {
                   );})}
                 </>
               )}
-              </ScrollView>
-            </View>
-          <MapDockWithFAB
-            activeId={filterRoleToArcId(filterRole)}
-            onArcIconPress={(id) => setFilter(arcIdToFilterRole(id))}
-            onFABPress={() => nearest && handleRequestService(nearest)}
-            onDockTabPress={handleDockTabPress}
-            inFlow
-          />
+              </BottomSheetScrollView>
+            </BottomSheet>
+          <View style={localStyles.dockOverlay} pointerEvents="box-none">
+            <MapDockWithFAB
+              activeId={filterRoleToArcId(filterRole)}
+              onArcIconPress={(id) => setFilter(arcIdToFilterRole(id))}
+              onFABPress={() => nearest && handleRequestService(nearest)}
+              onDockTabPress={handleDockTabPress}
+              inFlow={false}
+              onLayoutHeight={setCustomerDockHeight}
+            />
+          </View>
           </View>
         </>
       ) : (
@@ -488,7 +543,7 @@ export function MapScreen() {
           {mapContainer}
           {(isProviderRole || isAdmin) && (
             <TouchableOpacity
-              style={localStyles.dashboardFab}
+              style={[localStyles.dashboardFab, { bottom: spacing.xl + insets.bottom + 96 }]}
               activeOpacity={0.8}
               onPress={() => {
                 if (isProviderRole) (navigation as any).navigate('ProviderDashboard');
@@ -512,7 +567,11 @@ export function MapScreen() {
             onDirectionsPress={handleSelectProvider}
             cardAnimated={cardAnimated}
             nearestRequest={nearestRequest}
-            onBackToDashboard={() => (navigation as any).navigate('MechanicDashboard')}
+            onBackToDashboard={() =>
+              isInsuranceProvider
+                ? (navigation as any).navigate('InsuranceDashboard')
+                : (navigation as any).navigate('MechanicDashboard')
+            }
           />
           <MapDockWithFAB
             activeId={filterRoleToArcId(filterRole)}
@@ -564,18 +623,19 @@ const localStyles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
+    zIndex: 30,
+  },
+  customerBottomSheet: {
+    ...StyleSheet.absoluteFillObject,
     zIndex: 10,
   },
-  sheetBg: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    height: Platform.OS === 'web' ? 220 : 150,
-    minHeight: Platform.OS === 'web' ? 200 : 140,
-    maxHeight: Platform.OS === 'web' ? 280 : 170,
-  },
-  sheetScroll: {
-    flex: 1,
+  dockOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 100,
+    ...(Platform.OS === 'android' ? { elevation: 24 } : {}),
   },
   sheetHandle: {
     backgroundColor: colors.border,
@@ -583,7 +643,8 @@ const localStyles = StyleSheet.create({
   },
   sheetContent: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xl + 80,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.xl,
   },
   myRequestsRow: {
     flexDirection: 'row',
@@ -611,7 +672,7 @@ const localStyles = StyleSheet.create({
     borderRadius: radii.lg,
     marginBottom: spacing.xs,
   },
-  providerRowCenter: { flex: 1, minWidth: 0, marginLeft: spacing.md },
+  providerRowCenter: { flex: 1, minWidth: 0, marginStart: spacing.md },
   providerRowName: {
     fontFamily: typography.fontFamily.semibold,
     fontSize: typography.fontSize.callout,
@@ -630,7 +691,7 @@ const localStyles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: spacing.xs,
   },
-  providerRowBtn: { marginLeft: spacing.sm },
+  providerRowBtn: { marginStart: spacing.sm },
   skeletonLabel: {
     fontFamily: typography.fontFamily.regular,
     fontSize: typography.fontSize.callout,
@@ -652,14 +713,14 @@ const localStyles = StyleSheet.create({
   dashboardFab: {
     position: 'absolute',
     right: spacing.lg,
-    bottom: spacing.lg,
     width: 44,
     height: 44,
     borderRadius: 22,
     backgroundColor: '#000',
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadows.sm,
+    zIndex: 40,
+    ...shadows.md,
   },
 });
 

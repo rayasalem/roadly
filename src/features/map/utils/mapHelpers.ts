@@ -12,13 +12,14 @@ export const DEFAULT_REGION_DELTA = { latitudeDelta: 0.05, longitudeDelta: 0.05 
 export const DEFAULT_MAP_CENTER: GeoPoint = { latitude: 25.2048, longitude: 55.2708 };
 
 export type FilterRole = MapFilterRole;
-export type ArcIconId = 'all' | 'mechanic' | 'tow' | 'rental';
+export type ArcIconId = 'all' | 'mechanic' | 'tow' | 'rental' | 'insurance';
 
 export function filterRoleToArcId(role: FilterRole): ArcIconId {
   if (role === null) return 'all';
   if (role === ROLES.MECHANIC) return 'mechanic';
   if (role === ROLES.MECHANIC_TOW) return 'tow';
   if (role === ROLES.CAR_RENTAL) return 'rental';
+  if (role === ROLES.INSURANCE) return 'insurance';
   return 'all';
 }
 
@@ -27,6 +28,7 @@ export function arcIdToFilterRole(id: ArcIconId): MapFilterRole {
   if (id === 'mechanic') return ROLES.MECHANIC;
   if (id === 'tow') return ROLES.MECHANIC_TOW;
   if (id === 'rental') return ROLES.CAR_RENTAL;
+  if (id === 'insurance') return ROLES.INSURANCE;
   return null;
 }
 
@@ -54,6 +56,7 @@ export function getFilterLabel(role: MapFilterRole): string {
   if (role === 'mechanic') return t('map.filter.mechanic');
   if (role === 'mechanic_tow') return t('map.filter.tow');
   if (role === 'car_rental') return t('map.filter.rental');
+  if (role === 'insurance') return t('map.filter.insurance');
   return t('map.filter.all');
 }
 

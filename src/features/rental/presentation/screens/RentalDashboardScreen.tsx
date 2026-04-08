@@ -12,10 +12,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { AppHeader } from '../../../../shared/components/AppHeader';
 import { AppText } from '../../../../shared/components/AppText';
-import { ErrorWithRetry } from '../../../../shared/components/ErrorWithRetry';
+import {
+  DashboardShell,
+  DashboardEmptyState,
+  DashboardSectionHeader,
+} from '../../../../shared/components/dashboard';
 import { GlassCard } from '../../../../shared/components/GlassCard';
 import { StatusBadge } from '../../../../shared/components/StatusBadge';
-import { LoadingSpinner } from '../../../../shared/components/LoadingSpinner';
 import { PressableCard } from '../../../../shared/components/PressableCard';
 import { StatCard } from '../../../../shared/components/StatCard';
 import { BottomNavBar, type NavTabId } from '../../../../shared/components/BottomNavBar';
@@ -106,10 +109,8 @@ export function RentalDashboardScreen() {
         navigation.navigate('Profile');
       } else if (tab === 'Chat') {
         (navigation as any).navigate('Chat');
-      } else if (tab === 'Notifications') {
-        (navigation as any).navigate('Notifications');
-      } else if (tab === 'Settings') {
-        (navigation as any).navigate('Settings');
+      } else if (tab === 'Requests') {
+        (navigation as any).navigate('RentalBookings');
       }
     },
     [navigation],
@@ -122,11 +123,19 @@ export function RentalDashboardScreen() {
     if (selectedVehicle) bottomSheetRef.current?.present();
   }, [selectedVehicle]);
 
-  if (isLoading) return <LoadingSpinner />;
-  if (isError) return <ErrorWithRetry message={error?.message ?? ''} onRetry={() => refetch()} testID="rental-dashboard-retry" />;
-
   return (
-    <View style={styles.root}>
+    <DashboardShell
+      isLoading={isLoading}
+      isError={isError}
+      errorMessage={error?.message ?? ''}
+      onRetry={() => refetch()}
+      loadingHint={t('common.loading')}
+      bottomSlot={
+        <View style={styles.bottomNavWrap}>
+          <BottomNavBar activeTab="Home" onSelect={handleTab} dark />
+        </View>
+      }
+    >
       <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
         <AppHeader title={t('rental.dashboard.title')} rightIcon="profile" onProfile={openProfile} />
         <FlatList
@@ -137,6 +146,7 @@ export function RentalDashboardScreen() {
           initialNumToRender={10}
           maxToRenderPerBatch={10}
           windowSize={5}
+          updateCellsBatchingPeriod={50}
           ListHeaderComponent={
             <>
               <GlassCard role="rental" style={styles.heroCard}>
@@ -245,17 +255,22 @@ export function RentalDashboardScreen() {
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.sectionTitle}>{t('rental.fleetOverview')}</Text>
+          <DashboardSectionHeader title={t('rental.fleetOverview')} />
             </>
           }
           ListFooterComponent={
             <>
-              <Text style={styles.sectionTitle}>{t('rental.requestsList') ?? 'Service requests'}</Text>
+              <DashboardSectionHeader title={t('rental.requestsList') ?? 'Service requests'} />
               <GlassCard role="rental">
                 {jobs.length === 0 ? (
-                  <View style={styles.bookingEmpty}>
-                    <AppText variant="callout" color={colors.textMuted}>{t('rental.noBookings') ?? 'No requests yet.'}</AppText>
-                  </View>
+                  <DashboardEmptyState
+                    icon="calendar-blank-outline"
+                    title={t('rental.noBookings') ?? 'No requests yet.'}
+                    subtitle={t('rental.addCarHint')}
+                    ctaTitle={t('rental.viewRequestOnMap')}
+                    onCtaPress={() => navigation.navigate('Map')}
+                    style={styles.bookingEmptyState}
+                  />
                 ) : (
                   jobs.map((job: RentalJob) => (
                     <View key={job.id} style={styles.bookingRow}>
@@ -311,15 +326,11 @@ export function RentalDashboardScreen() {
         </View>
       </BottomSheetModal>
 
-      <View style={styles.bottomNavWrap}>
-        <BottomNavBar activeTab="Home" onSelect={handleTab} dark />
-      </View>
-    </View>
+    </DashboardShell>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
   safe: { flex: 1 },
   scroll: { paddingHorizontal: spacing.md, paddingBottom: 100 },
   heroCard: {
@@ -409,7 +420,6 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   mapBtnText: { fontFamily: typography.fontFamily.semibold, fontSize: typography.presets.bodySmall.fontSize, color: colors.primaryContrast },
-  sectionTitle: { fontFamily: typography.fontFamily.semibold, fontSize: 18, lineHeight: 24, color: colors.text, marginBottom: spacing.md },
   actionCardsRow: { flexDirection: 'row', gap: spacing.card, marginBottom: spacing.lg },
   actionCard: {
     flex: 1,
@@ -431,7 +441,14 @@ const styles = StyleSheet.create({
   statusRented: { backgroundColor: colors.warningLight },
   statusMaint: { backgroundColor: colors.errorLight },
   statusText: { fontFamily: typography.fontFamily.medium, fontSize: typography.presets.caption.fontSize, color: colors.text },
-  bookingEmpty: { paddingVertical: spacing.lg, alignItems: 'center' },
+  bookingEmptyState: { paddingVertical: spacing.md },
+  emptyWrap: { alignItems: 'center', paddingVertical: spacing.xl, gap: spacing.sm },
+  emptyText: {
+    fontFamily: typography.fontFamily.medium,
+    fontSize: typography.presets.body.fontSize,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
   bookingRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm },
   bookingIcon: { width: 40, height: 40, borderRadius: radii.xl, backgroundColor: THEME.primaryLight + '80', justifyContent: 'center', alignItems: 'center', marginRight: spacing.md },
   bookingMain: { flex: 1, minWidth: 0 },
@@ -459,8 +476,6 @@ const styles = StyleSheet.create({
   },
   bookBtnText: { fontFamily: typography.fontFamily.semibold, fontSize: typography.presets.bodySmall.fontSize, color: colors.primaryContrast },
   mapLinkText: { fontFamily: typography.fontFamily.medium, fontSize: typography.presets.bodySmall.fontSize, color: THEME.primary },
-  emptyWrap: { alignItems: 'center', paddingVertical: spacing.lg },
-  emptyText: { fontFamily: typography.fontFamily.regular, fontSize: typography.presets.bodySmall.fontSize, color: colors.textMuted, marginTop: spacing.md },
   bottomNavWrap: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,

@@ -8,7 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppHeader } from '../../../../shared/components/AppHeader';
-import { BottomNavBar, type NavTabId } from '../../../../shared/components/BottomNavBar';
+import type { NavTabId } from '../../../../shared/navigation/navTabs';
 import { ScreenWrapper } from '../../../../shared/components/ScreenWrapper';
 import { AppText } from '../../../../shared/components/AppText';
 import { LoadingSpinner } from '../../../../shared/components/LoadingSpinner';
@@ -21,8 +21,6 @@ import { ROLES } from '../../../../shared/constants/roles';
 import { useChatConversations } from '../../hooks/useChatConversations';
 import type { ChatConversation } from '../../data/chatApi';
 import type { CustomerStackParamList } from '../../../../navigation/CustomerStack';
-import { safeNavigateToSettings } from '../../../../navigation/navigationRef';
-
 type Nav = NativeStackNavigationProp<CustomerStackParamList, 'Chat'>;
 
 function formatTimeAgo(iso: string): string {
@@ -73,15 +71,25 @@ export function ChatScreen() {
   const { conversations, isLoading, isError, refetch } = useChatConversations();
 
   const handleTab = useCallback((tab: NavTabId) => {
+    const nav = navigation as any;
     if (tab === 'Home') {
-      if (role === ROLES.ADMIN) (navigation as any).navigate('AdminDashboard');
-      else if (role === 'mechanic' || role === 'mechanic_tow' || role === 'car_rental') (navigation as any).navigate('ProviderDashboard');
-      else (navigation as any).navigate('Map');
+      if (role === ROLES.ADMIN) nav.navigate('AdminDashboard');
+      else if (role === ROLES.INSURANCE) nav.navigate('InsuranceDashboard');
+      else if (role === 'mechanic' || role === 'mechanic_tow' || role === 'car_rental') nav.navigate('ProviderDashboard');
+      else nav.navigate('Map');
       return;
     }
-    if (tab === 'Profile') (navigation as any).navigate('Profile');
-    if (tab === 'Notifications') (navigation as any).navigate('Notifications');
-    if (tab === 'Settings') safeNavigateToSettings(navigation);
+    if (tab === 'Requests') {
+      if (role === ROLES.USER) nav.navigate('RequestHistory');
+      else if (role === 'mechanic') nav.navigate('MechanicJobHistory');
+      else if (role === 'mechanic_tow') nav.navigate('TowJobHistory');
+      else if (role === 'car_rental') nav.navigate('RentalBookings');
+      else if (role === ROLES.INSURANCE) nav.navigate('InsuranceRequests');
+      else if (role === ROLES.ADMIN) nav.navigate('AdminRequests');
+      return;
+    }
+    if (tab === 'Profile') nav.navigate('Profile');
+    if (tab === 'Chat') return;
   }, [navigation, role]);
 
   const handleOpenChat = useCallback((conversationId: string, name: string) => {
@@ -94,6 +102,13 @@ export function ChatScreen() {
   );
 
   const keyExtractor = useCallback((item: ChatConversation) => item.id, []);
+
+  const navDark =
+    role === ROLES.ADMIN ||
+    role === ROLES.INSURANCE ||
+    role === 'mechanic' ||
+    role === 'mechanic_tow' ||
+    role === 'car_rental';
 
   const listEmptyComponent = useCallback(
     () => (
@@ -108,7 +123,7 @@ export function ChatScreen() {
 
   if (isLoading) {
     return (
-      <ScreenWrapper bottomNav={<BottomNavBar activeTab="Chat" onSelect={handleTab} dark={role === ROLES.ADMIN || role === 'mechanic' || role === 'mechanic_tow' || role === 'car_rental'} />}>
+      <ScreenWrapper responsiveNav bottomNavConfig={{ activeTab: 'Chat', onSelect: handleTab, dark: navDark }}>
         <AppHeader title={t('nav.chat')} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} onProfile={() => navigation.navigate('Profile')} />
         <View style={styles.loadingWrap}><LoadingSpinner /></View>
       </ScreenWrapper>
@@ -116,15 +131,15 @@ export function ChatScreen() {
   }
   if (isError) {
     return (
-      <ScreenWrapper bottomNav={<BottomNavBar activeTab="Chat" onSelect={handleTab} dark={role === ROLES.ADMIN || role === 'mechanic' || role === 'mechanic_tow' || role === 'car_rental'} />}>
+      <ScreenWrapper responsiveNav bottomNavConfig={{ activeTab: 'Chat', onSelect: handleTab, dark: navDark }}>
         <AppHeader title={t('nav.chat')} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} onProfile={() => navigation.navigate('Profile')} />
-        <View style={styles.errorWrap}><ErrorWithRetry message="" onRetry={() => refetch()} /></View>
+        <View style={styles.errorWrap}><ErrorWithRetry compact message="" onRetry={() => refetch()} /></View>
       </ScreenWrapper>
     );
   }
 
   return (
-    <ScreenWrapper bottomNav={<BottomNavBar activeTab="Chat" onSelect={handleTab} dark={role === ROLES.ADMIN || role === 'mechanic' || role === 'mechanic_tow' || role === 'car_rental'} />}>
+    <ScreenWrapper responsiveNav bottomNavConfig={{ activeTab: 'Chat', onSelect: handleTab, dark: navDark }}>
       <AppHeader title={t('nav.chat')} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} onProfile={() => navigation.navigate('Profile')} />
       <FlatList
         data={conversations}
@@ -138,6 +153,7 @@ export function ChatScreen() {
         initialNumToRender={10}
         maxToRenderPerBatch={10}
         windowSize={5}
+        updateCellsBatchingPeriod={50}
         removeClippedSubviews
       />
     </ScreenWrapper>

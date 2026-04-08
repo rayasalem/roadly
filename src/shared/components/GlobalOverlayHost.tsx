@@ -3,6 +3,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useUIStore } from '../../store/uiStore';
 import { colors } from '../theme/colors';
 import { ToastHost } from './ToastHost';
+import { OfflineBadge } from './OfflineBadge';
 
 export const GlobalOverlayHost = React.memo(function GlobalOverlayHost() {
   const loadingCount = useUIStore((s) => s.loadingCount);
@@ -17,6 +18,7 @@ export const GlobalOverlayHost = React.memo(function GlobalOverlayHost() {
           </View>
         </View>
       ) : null}
+      <OfflineBadge />
       <ToastHost />
     </>
   );

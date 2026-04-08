@@ -10,11 +10,13 @@ import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity } from 're
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppHeader } from '../../../../shared/components/AppHeader';
-import { BottomNavBar, type NavTabId } from '../../../../shared/components/BottomNavBar';
+import type { NavTabId } from '../../../../shared/navigation/navTabs';
 import { ScreenWrapper } from '../../../../shared/components/ScreenWrapper';
 import { useTheme, spacing, typography, radii, shadows } from '../../../../shared/theme';
 import type { ColorPalette } from '../../../../shared/theme';
 import { t } from '../../../../shared/i18n/t';
+import { trailingChevronForLocale } from '../../../../shared/i18n/rtlUtils';
+import { useLocaleStore } from '../../../../store/localeStore';
 import { useThemeStore, type ColorSchemePreference } from '../../../../store/themeStore';
 import { useAuthStore } from '../../../../store/authStore';
 import { useUIStore } from '../../../../store/uiStore';
@@ -31,46 +33,46 @@ type SettingsItem = {
 const ACCOUNT_ITEMS: SettingsItem[] = [
   {
     id: 'profile',
-    label: 'بيانات الحساب',
-    value: 'عرض وتعديل المعلومات',
+    label: t('settings.account.profile'),
+    value: t('settings.account.profileHint'),
     icon: 'account-circle-outline',
     type: 'link',
   },
   {
     id: 'security',
-    label: 'الأمان',
-    value: 'كلمة المرور والجلسات',
+    label: t('settings.account.security'),
+    value: t('settings.account.securityHint'),
     icon: 'shield-lock-outline',
     type: 'link',
   },
 ];
 
 const APP_ITEMS: SettingsItem[] = [
-  { id: 'language', label: 'اللغة', value: 'العربية / الإنجليزية', icon: 'translate', type: 'link' },
-  { id: 'notifications', label: 'الإشعارات', icon: 'bell-outline', type: 'toggle' },
+  { id: 'language', label: t('settings.language'), value: t('settings.languageValue'), icon: 'translate', type: 'link' },
+  { id: 'notifications', label: t('settings.notifications'), icon: 'bell-outline', type: 'toggle' },
 ];
 
 const VEHICLE_ITEMS: SettingsItem[] = [
   {
     id: 'vehicle',
-    label: 'مركبتي',
-    value: 'تويوتا كورولا ٢٠٢٠',
+    label: t('settings.vehicle'),
+    value: t('settings.vehicleValue'),
     icon: 'car-info',
     type: 'link',
   },
   {
     id: 'preferredService',
-    label: 'الخدمة المفضّلة',
-    value: 'ميكانيكي + ونش',
+    label: t('settings.preferredService'),
+    value: t('settings.preferredServiceValue'),
     icon: 'tow-truck',
     type: 'link',
   },
 ];
 
 const THEME_OPTIONS: { value: ColorSchemePreference; label: string; icon: keyof typeof MaterialCommunityIcons.glyphMap }[] = [
-  { value: 'light', label: 'نهاري', icon: 'white-balance-sunny' },
-  { value: 'dark', label: 'ليلي', icon: 'weather-night' },
-  { value: 'system', label: 'حسب الجهاز', icon: 'theme-light-dark' },
+  { value: 'light', label: t('settings.theme.light'), icon: 'white-balance-sunny' },
+  { value: 'dark', label: t('settings.theme.dark'), icon: 'weather-night' },
+  { value: 'system', label: t('settings.theme.system'), icon: 'theme-light-dark' },
 ];
 
 export function SettingsScreen() {
@@ -94,11 +96,6 @@ export function SettingsScreen() {
   } = useNotificationPreferencesStore();
 
   const handleTab = (tab: NavTabId) => {
-    if (tab === 'Settings') return;
-    if (tab === 'Notifications') {
-      navigation.navigate('Notifications');
-      return;
-    }
     if (tab === 'Profile') {
       navigation.navigate('Profile');
       return;
@@ -107,8 +104,18 @@ export function SettingsScreen() {
       if (role === 'mechanic') navigation.navigate('MechanicDashboard');
       else if (role === 'mechanic_tow') navigation.navigate('TowDashboard');
       else if (role === 'car_rental') navigation.navigate('RentalDashboard');
+      else if (role === 'insurance') navigation.navigate('InsuranceDashboard');
       else if (role === 'admin') navigation.navigate('AdminDashboard');
       else navigation.navigate('Map');
+      return;
+    }
+    if (tab === 'Requests') {
+      if (role === 'user') navigation.navigate('RequestHistory');
+      else if (role === 'mechanic') navigation.navigate('MechanicJobHistory');
+      else if (role === 'mechanic_tow') navigation.navigate('TowJobHistory');
+      else if (role === 'car_rental') navigation.navigate('RentalBookings');
+      else if (role === 'insurance') navigation.navigate('InsuranceRequests');
+      else if (role === 'admin') navigation.navigate('AdminRequests');
       return;
     }
     if (tab === 'Chat') {
@@ -133,7 +140,19 @@ export function SettingsScreen() {
   };
 
   return (
-    <ScreenWrapper bottomNav={<BottomNavBar activeTab="Settings" onSelect={handleTab} dark={role === 'mechanic' || role === 'mechanic_tow' || role === 'car_rental' || role === 'admin'} />}>
+    <ScreenWrapper
+      responsiveNav
+      bottomNavConfig={{
+        activeTab: 'Profile',
+        onSelect: handleTab,
+        dark:
+          role === 'mechanic' ||
+          role === 'mechanic_tow' ||
+          role === 'car_rental' ||
+          role === 'insurance' ||
+          role === 'admin',
+      }}
+    >
       <AppHeader
         title={t('nav.settings')}
         onBack={navigation.canGoBack() ? () => navigation.goBack() : () => navigation.navigate('Profile')}
@@ -151,9 +170,9 @@ export function SettingsScreen() {
               <MaterialCommunityIcons name="account" size={24} color={colors.primary} />
             </View>
             <View style={styles.userInfo}>
-              <Text style={[styles.userName, { color: colors.text }]}>{user?.name ?? 'ضيف Roadly'}</Text>
+              <Text style={[styles.userName, { color: colors.text }]}>{user?.name ?? t('settings.guestName')}</Text>
               <Text style={[styles.userMeta, { color: colors.textSecondary }]}>
-                {user?.email ?? 'guest@roadly.app'} • {user?.role ?? 'guest'}
+                {user?.email ?? t('settings.guestEmail')} • {user?.role ?? t('settings.guestRole')}
               </Text>
             </View>
           </View>
@@ -165,7 +184,7 @@ export function SettingsScreen() {
 
         {/* إعدادات التطبيق */}
         <View style={[styles.card, { backgroundColor: colors.surface }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>App</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('settings.appSection')}</Text>
           {/* Light / Dark / System toggle */}
           <View style={styles.themeSection}>
             <Text style={[styles.themeLabel, { color: colors.text }]}>{t('settings.appearance')}</Text>
@@ -232,7 +251,7 @@ export function SettingsScreen() {
 
         {/* السيارة / الخدمة */}
         <View style={[styles.card, { backgroundColor: colors.surface }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Vehicle & Service</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('settings.vehicleServiceSection')}</Text>
           {VEHICLE_ITEMS.map((item) => (
             <SettingsRow key={item.id} item={item} onPress={handlePressItem} colors={colors} />
           ))}
@@ -259,6 +278,8 @@ type RowProps = {
 };
 
 function SettingsRow({ item, onPress, colors }: RowProps) {
+  const locale = useLocaleStore((s) => s.locale);
+  const trailingChevron = trailingChevronForLocale(locale);
   return (
     <TouchableOpacity style={styles.row} onPress={() => onPress(item)} activeOpacity={0.85}>
       <View style={styles.rowLeft}>
@@ -267,7 +288,7 @@ function SettingsRow({ item, onPress, colors }: RowProps) {
       </View>
       <View style={styles.rowRight}>
         {item.value ? <Text style={[styles.rowValue, { color: colors.textSecondary }]}>{item.value}</Text> : null}
-        <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
+        <MaterialCommunityIcons name={trailingChevron} size={20} color={colors.textMuted} />
       </View>
     </TouchableOpacity>
   );
@@ -297,7 +318,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.md,
+    marginEnd: spacing.md,
   },
   userInfo: { flex: 1 },
   userName: {
@@ -343,7 +364,7 @@ const styles = StyleSheet.create({
   },
   prefsSection: {
     marginTop: spacing.sm,
-    marginLeft: spacing.lg,
+    marginStart: spacing.lg,
     paddingVertical: spacing.xs,
     gap: spacing.xs,
   },
@@ -362,7 +383,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: typography.fontFamily.regular,
     fontSize: typography.fontSize.callout,
-    marginRight: spacing.sm,
+    marginEnd: spacing.sm,
   },
   rowLeft: {
     flexDirection: 'row',

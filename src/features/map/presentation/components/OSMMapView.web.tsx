@@ -11,10 +11,22 @@ import { t } from '../../../../shared/i18n/t';
 import { getMarkerColorByStatus, getServiceTypeEmoji, getAvailabilityLabel, buildProviderPopupHtml } from '../../utils/mapMarkerUtils';
 import { LEAFLET_CRITICAL_CSS } from '../../leafletCriticalCss';
 
+/** Minimal Leaflet map instance used by this screen (zoom + events). */
+export type LeafletMapInstance = {
+  setView: (c: [number, number], z: number) => void;
+  remove: () => void;
+  getZoom?: () => number;
+  on: (e: string, fn: () => void) => void;
+  off?: (e: string, fn: () => void) => void;
+};
+
 declare global {
   interface Window {
     L?: {
-      map: (el: HTMLElement, o: { center: [number, number]; zoom: number; zoomControl?: boolean; dragging?: boolean; scrollWheelZoom?: boolean }) => { setView: (c: [number, number], z: number) => void; remove: () => void };
+      map: (
+        el: HTMLElement,
+        o: { center: [number, number]; zoom: number; zoomControl?: boolean; dragging?: boolean; scrollWheelZoom?: boolean }
+      ) => LeafletMapInstance;
       tileLayer: (url: string, o: { attribution?: string }) => { addTo: (m: unknown) => unknown };
       circleMarker: (latlng: [number, number], o: Record<string, unknown>) => { addTo: (m: unknown) => unknown };
       marker: (latlng: [number, number], o: { icon: unknown }) => { addTo: (m: unknown) => unknown; bindPopup: (html: string, o?: { maxWidth?: number }) => void; on: (e: string, cb: () => void) => void };
@@ -92,7 +104,7 @@ export interface OSMMapViewProps {
 function OSMMapViewWebInner(props: OSMMapViewProps) {
   const { center, providers, userLocation, selectedProviderId, nearestProviderId, onProviderPress, onRequestService } = props;
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<ReturnType<LType['map']> | null>(null);
+  const mapRef = useRef<LeafletMapInstance | null>(null);
   const markersByProviderIdRef = useRef<Record<string, unknown>>({});
   const userMarkerRef = useRef<unknown | null>(null);
   const circleUserMarkerRef = useRef<unknown | null>(null);
@@ -100,6 +112,7 @@ function OSMMapViewWebInner(props: OSMMapViewProps) {
   const onProviderPressRef = useRef(onProviderPress);
   const onRequestServiceRef = useRef(onRequestService);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [leafletZoom, setLeafletZoom] = useState<number>(14);
 
   const { L, error: leafletError, ready: leafletReady } = useLeafletSameOrigin();
 
@@ -129,7 +142,16 @@ function OSMMapViewWebInner(props: OSMMapViewProps) {
       scrollWheelZoom: true,
     });
     mapRef.current = map;
+    setLeafletZoom(typeof map.getZoom === 'function' ? map.getZoom() : 14);
     L!.tileLayer(OSM_TILES, { attribution: '© OpenStreetMap' }).addTo(map);
+    const onZoomEnd = () => {
+      try {
+        if (typeof map.getZoom === 'function') setLeafletZoom(map.getZoom());
+      } catch {
+        // ignore
+      }
+    };
+    map.on('zoomend', onZoomEnd);
     return () => {
       map.remove();
       mapRef.current = null;
@@ -137,6 +159,11 @@ function OSMMapViewWebInner(props: OSMMapViewProps) {
       circleUserMarkerRef.current = null;
       userMarkerRef.current = null;
       providersByIdRef.current = {};
+      try {
+        map.off?.('zoomend', onZoomEnd);
+      } catch {
+        // ignore
+      }
     };
   }, [L, leafletReady]);
 
@@ -148,7 +175,45 @@ function OSMMapViewWebInner(props: OSMMapViewProps) {
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !L) return;
-    const providersToShow = providers.length > MAX_MARKERS ? providers.slice(0, MAX_MARKERS) : providers;
+    // "Smart clustering" without extra leaflet plugins:
+    // when providers are dense, we pick representative providers per geo grid cell
+    // (still keeping marker selection consistent via provider ids).
+    const scoreProvider = (p: Provider): number => {
+      if (p.id === selectedProviderId) return 1000;
+      if (p.id === nearestProviderId) return 900;
+      if (p.displayStatus === 'offline' || !p.isAvailable) return 10;
+      if (p.displayStatus === 'busy') return 600;
+      if (p.displayStatus === 'on_the_way') return 700;
+      return 800;
+    };
+
+    const computeClusterRepresentatives = (all: Provider[]): Provider[] => {
+      const zoom = leafletZoom;
+      const zoomDelta = zoom - 14;
+      // Smaller cells on higher zoom.
+      const rawStep = 0.02 / Math.pow(2, zoomDelta);
+      const step = Math.max(0.003, Math.min(0.06, rawStep));
+      const stepLng = step;
+
+      const byCell: Record<string, Provider> = {};
+      for (const p of all) {
+        const loc = p.location;
+        if (!loc || typeof loc.latitude !== 'number' || typeof loc.longitude !== 'number') continue;
+        const key = `${Math.floor(loc.latitude / step)}_${Math.floor(loc.longitude / stepLng)}`;
+        const prev = byCell[key];
+        if (!prev) {
+          byCell[key] = p;
+          continue;
+        }
+        // Keep the most relevant provider per cell.
+        if (scoreProvider(p) > scoreProvider(prev)) byCell[key] = p;
+      }
+      const reps = Object.values(byCell);
+      reps.sort((a, b) => scoreProvider(b) - scoreProvider(a));
+      return reps.slice(0, MAX_MARKERS);
+    };
+
+    const providersToShow = providers.length > MAX_MARKERS ? computeClusterRepresentatives(providers) : providers;
     const nextProviderIds: Record<string, true> = {};
 
     // Maintain latest providers by id for popup button click handlers.
@@ -264,7 +329,7 @@ function OSMMapViewWebInner(props: OSMMapViewProps) {
 
       markersByProviderIdRef.current[provider.id] = marker;
     });
-  }, [L, leafletReady, providers, userLocation, selectedProviderId, nearestProviderId]);
+  }, [L, leafletReady, providers, userLocation, selectedProviderId, nearestProviderId, leafletZoom]);
 
   const setRef = useCallback((r: unknown) => {
     containerRef.current = (r as HTMLDivElement | null) ?? null;

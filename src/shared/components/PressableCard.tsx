@@ -4,8 +4,7 @@
  */
 import React, { useRef } from 'react';
 import { Animated, Pressable, View, StyleSheet, type ViewStyle } from 'react-native';
-import { colors } from '../theme/colors';
-import { radii, shadows, spacing } from '../theme';
+import { radii, shadows, spacing, useTheme } from '../theme';
 import { springListItem, LIST_ITEM_PRESS_SCALE } from '../utils/animations';
 import { HIT_SLOP_DEFAULT } from '../constants/ux';
 
@@ -24,6 +23,7 @@ export const PressableCard = React.memo(function PressableCard({
   disabled,
   testID,
 }: PressableCardProps) {
+  const { colors } = useTheme();
   const scale = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -42,18 +42,26 @@ export const PressableCard = React.memo(function PressableCard({
       disabled={disabled}
       hitSlop={HIT_SLOP_DEFAULT}
     >
-      <Animated.View style={[styles.card, { transform: [{ scale }] }, style]}>{children}</Animated.View>
+      <Animated.View
+        style={[
+          styles.card,
+          { backgroundColor: colors.surface, borderColor: colors.border, transform: [{ scale }], opacity: disabled ? 0.6 : 1 },
+          style,
+        ]}
+      >
+        {children}
+      </Animated.View>
     </Pressable>
   );
 });
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: 18,
-    padding: 16,
-    marginVertical: 10,
+    borderRadius: radii.xl,
+    padding: spacing.lg,
+    marginVertical: 0,
     overflow: 'hidden',
     ...shadows.md,
+    borderWidth: StyleSheet.hairlineWidth,
   },
 });

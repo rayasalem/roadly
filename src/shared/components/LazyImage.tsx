@@ -3,7 +3,7 @@
  * Use in lists and map markers for smoother scrolling on mid-range devices.
  */
 import React, { memo, useState, useCallback } from 'react';
-import { View, Image, StyleSheet, ImageStyle, ViewStyle } from 'react-native';
+import { View, Image, StyleSheet, ImageStyle, ViewStyle, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 
@@ -50,13 +50,22 @@ function LazyImageInner({
           resizeMode={resizeMode}
           onLoad={onLoad}
           onError={onError}
+          {...(Platform.OS === 'android' ? { resizeMethod: 'resize' as const } : {})}
         />
       )}
     </View>
   );
 }
 
-export const LazyImage = memo(LazyImageInner);
+export const LazyImage = memo(LazyImageInner, (prev, next) => {
+  return (
+    prev.uri === next.uri &&
+    prev.size === next.size &&
+    prev.resizeMode === next.resizeMode &&
+    prev.style === next.style &&
+    prev.containerStyle === next.containerStyle
+  );
+});
 
 const styles = StyleSheet.create({
   container: {

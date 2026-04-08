@@ -15,7 +15,10 @@
       "**/*"
     ],
     "web": {
-      "bundler": "metro"
+      "bundler": "metro",
+      "lang": "en",
+      "description": "Roadly — mechanics, tow, car rental, and roadside help.",
+      "themeColor": "#16a34a"
     },
     "ios": {
       "supportsTablet": true,

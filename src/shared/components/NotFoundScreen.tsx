@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
 import { spacing, typography, radii } from '../theme';
 import { AppText } from './AppText';
+import { t } from '../i18n/t';
 
 /**
  * Generic 404 screen used as a fallback when navigation points to an unknown route.
@@ -13,7 +14,7 @@ export function NotFoundScreen() {
   // Avoid hard typing: this screen is injected into multiple role stacks.
   const navigation = useNavigation<any>();
 
-  const goHomeLabel = useMemo(() => 'Home', []);
+  const goHomeLabel = useMemo(() => t('notFound.goHome'), []);
 
   const onGoHome = () => {
     try {
@@ -21,6 +22,7 @@ export function NotFoundScreen() {
       const state = navigation?.getState?.();
       const routeNames: string[] = state?.routeNames ?? [];
       if (routeNames.includes('Map')) return navigation.navigate('Map');
+      if (routeNames.includes('InsuranceDashboard')) return navigation.navigate('InsuranceDashboard');
       if (routeNames.includes('ProviderDashboard')) return navigation.navigate('ProviderDashboard');
       if (routeNames.includes('AdminDashboard')) return navigation.navigate('AdminDashboard');
       if (routeNames.includes('Home')) return navigation.navigate('Home');
@@ -33,9 +35,9 @@ export function NotFoundScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Not Found</Text>
+      <Text style={styles.title}>{t('notFound.title')}</Text>
       <AppText variant="body" color={colors.textSecondary} center style={styles.subtitle}>
-        The page you requested does not exist.
+        {t('notFound.subtitle')}
       </AppText>
       <TouchableOpacity style={styles.button} activeOpacity={0.85} onPress={onGoHome}>
         <Text style={styles.buttonText}>{goHomeLabel}</Text>

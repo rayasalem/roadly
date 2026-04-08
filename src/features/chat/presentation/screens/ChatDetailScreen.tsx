@@ -75,7 +75,7 @@ export function ChatDetailScreen() {
     return (
       <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <AppHeader title={name} onBack={() => navigation.goBack()} />
-        <View style={styles.center}><ErrorWithRetry message="" onRetry={() => refetch()} /></View>
+        <View style={styles.center}><ErrorWithRetry compact message="" onRetry={() => refetch()} /></View>
       </SafeAreaView>
     );
   }

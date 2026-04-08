@@ -1,10 +1,11 @@
 /**
- * Native map card: MapView, polyline, markers, search bar with suggestions, filters, draggable service pin, floating buttons.
- * Memoized and stable callbacks for map performance on mid-range devices.
+ * Native map card: MapView, markers, search with suggestion list, filters, optional service pin, floating actions.
+ * Memoized for stable map marker props on mid-range devices.
  */
-import React, { useCallback, memo } from 'react';
+import React, { useCallback, memo, useMemo, useRef, useState, useEffect } from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet, Platform, ScrollView } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppText } from '../../../../shared/components/AppText';
 import { LoadingSpinner } from '../../../../shared/components/LoadingSpinner';
@@ -50,10 +51,18 @@ interface MapContainerNativeProps {
   onSelectPlace?: (suggestion: PlaceSuggestion) => void;
   /** Origin for distance calculation (e.g. user location); shown in marker callout when set. */
   origin?: { latitude: number; longitude: number } | null;
+  /** Extra bottom offset for floating map controls when a customer bottom sheet covers the map (UX only). */
+  sheetLiftPx?: number;
 }
+
+const SUGGESTIONS_MAX_HEIGHT = 176;
+const SEARCH_BAR_HEIGHT = 48;
 
 function MapContainerNativeInner(props: MapContainerNativeProps) {
   const { colors: themeColors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const [searchFocused, setSearchFocused] = useState(false);
+  const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const {
     mapRef,
     region,
@@ -78,8 +87,57 @@ function MapContainerNativeInner(props: MapContainerNativeProps) {
   } = props;
 
   const fullScreen = props.fullScreen === true;
-  const { effectiveCenter, onDragPin, onUseCurrentLocation, placeSuggestions = [], onSelectPlace, origin } = props;
+  const { effectiveCenter, onDragPin, onUseCurrentLocation, placeSuggestions = [], onSelectPlace, origin, sheetLiftPx = 0 } = props;
   const showServicePin = isCustomer && effectiveCenter && onDragPin;
+
+  /** Customer: header overlays map. Provider: map sits below header in SafeAreaView — only a small inset here. */
+  const headerUnderlay = fullScreen ? insets.top + 56 + spacing.xs : spacing.md;
+  const showSuggestionList =
+    isCustomer &&
+    Boolean(onSelectPlace) &&
+    placeSuggestions.length > 0 &&
+    searchFocused;
+  const hideFilterRow = isCustomer && searchFocused;
+  const hideCreateCta = isCustomer && searchFocused;
+  const suggestionsTop = headerUnderlay + SEARCH_BAR_HEIGHT + spacing.xs;
+  const filtersTop = useMemo(() => {
+    const belowSearch = headerUnderlay + SEARCH_BAR_HEIGHT + spacing.sm;
+    const listGap = showSuggestionList ? SUGGESTIONS_MAX_HEIGHT + spacing.sm : 0;
+    return belowSearch + listGap;
+  }, [headerUnderlay, showSuggestionList]);
+  const mapChromeBottom = spacing.md + 4;
+  const locationBtnSize = 44;
+  const createBtnLift = locationBtnSize + spacing.md;
+
+  useEffect(() => {
+    return () => {
+      if (blurTimerRef.current) clearTimeout(blurTimerRef.current);
+    };
+  }, []);
+
+  const handleSearchFocus = useCallback(() => {
+    if (blurTimerRef.current) {
+      clearTimeout(blurTimerRef.current);
+      blurTimerRef.current = null;
+    }
+    setSearchFocused(true);
+  }, []);
+
+  const handleSearchBlur = useCallback(() => {
+    blurTimerRef.current = setTimeout(() => setSearchFocused(false), 200);
+  }, []);
+
+  const handleSelectSuggestion = useCallback(
+    (s: PlaceSuggestion) => {
+      if (blurTimerRef.current) {
+        clearTimeout(blurTimerRef.current);
+        blurTimerRef.current = null;
+      }
+      setSearchFocused(false);
+      onSelectPlace?.(s);
+    },
+    [onSelectPlace],
+  );
 
   const getDistanceKm = useCallback((provider: Provider): number | null => {
     if (!origin || !provider?.location) return null;
@@ -103,9 +161,10 @@ function MapContainerNativeInner(props: MapContainerNativeProps) {
 
   return (
     <View style={[styles.mapCard, fullScreen && styles.mapCardFullScreen, { backgroundColor: themeColors.surface }, !fullScreen && shadows.lg]}>
+      <View style={styles.mapStack} collapsable={false}>
       <MapView
         ref={mapRef}
-        style={styles.map}
+        style={styles.mapFill}
         provider={PROVIDER_DEFAULT}
         initialRegion={region}
         showsUserLocation
@@ -123,7 +182,7 @@ function MapContainerNativeInner(props: MapContainerNativeProps) {
             tracksViewChanges={false}
           >
             <View style={markerStyles.servicePin}>
-              <MaterialCommunityIcons name="map-marker" size={36} color={colors.primary} />
+              <MaterialCommunityIcons name="map-marker" size={36} color={themeColors.primary} />
             </View>
           </Marker>
         )}
@@ -153,15 +212,21 @@ function MapContainerNativeInner(props: MapContainerNativeProps) {
               tracksViewChanges={false}
               anchor={{ x: 0.5, y: 0.5 }}
             >
-              <View style={markerStyles.cluster}>
-                <Text style={markerStyles.clusterText}>{item.count}</Text>
+              <View style={[markerStyles.cluster, { backgroundColor: themeColors.primary, borderColor: themeColors.surface }]}>
+                <Text style={[markerStyles.clusterText, { color: themeColors.primaryContrast }]}>{item.count}</Text>
               </View>
             </Marker>
           );
         })}
       </MapView>
 
-      <View style={[styles.searchWrap, { backgroundColor: Platform.OS === 'ios' ? 'rgba(255,255,255,0.92)' : themeColors.surface }, shadows.sm]}>
+      <View
+        style={[
+          styles.searchWrap,
+          { top: headerUnderlay, backgroundColor: Platform.OS === 'ios' ? 'rgba(255,255,255,0.92)' : themeColors.surface },
+          shadows.sm,
+        ]}
+      >
         <MaterialCommunityIcons name="magnify" size={20} color={themeColors.textSecondary} />
         <TextInput
           style={[styles.searchInput, { color: themeColors.text }]}
@@ -169,28 +234,105 @@ function MapContainerNativeInner(props: MapContainerNativeProps) {
           placeholderTextColor={themeColors.textMuted}
           value={searchQuery}
           onChangeText={onSearchChange}
+          onFocus={handleSearchFocus}
+          onBlur={handleSearchBlur}
+          returnKeyType="search"
         />
       </View>
 
-      <View style={[styles.filtersRow, { top: spacing.md + 48 + spacing.sm + 44 + spacing.sm + (placeSuggestions.length > 0 ? 180 + spacing.sm : 0) }]}>
-        {filterOptions.map((role) => (
-          <TouchableOpacity
-            key={role ?? 'all'}
-            style={[styles.filterChip, filterRole === role && styles.filterChipActive]}
-            onPress={() => onFilterChange(role)}
-            accessibilityRole="button"
+      {showSuggestionList ? (
+        <View
+          style={[
+            styles.suggestionsPanel,
+            {
+              top: suggestionsTop,
+              backgroundColor: themeColors.surface,
+              borderColor: themeColors.border,
+            },
+          ]}
+        >
+          <ScrollView
+            style={styles.suggestionsScroll}
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled
+            showsVerticalScrollIndicator={placeSuggestions.length > 4}
           >
-            <Text style={[styles.filterChipText, filterRole === role && styles.filterChipTextActive]}>{getFilterLabel(role)}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+            {placeSuggestions.map((s) => (
+              <TouchableOpacity
+                key={s.id}
+                style={[styles.suggestionRow, { borderBottomColor: themeColors.border }]}
+                onPress={() => handleSelectSuggestion(s)}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel={s.description}
+              >
+                <MaterialCommunityIcons name="map-marker-outline" size={20} color={themeColors.textSecondary} />
+                <View style={styles.suggestionTextCol}>
+                  <Text style={[styles.suggestionMain, { color: themeColors.text }]} numberOfLines={1}>
+                    {s.mainText}
+                  </Text>
+                  {s.secondaryText ? (
+                    <Text style={[styles.suggestionSecondary, { color: themeColors.textMuted }]} numberOfLines={1}>
+                      {s.secondaryText}
+                    </Text>
+                  ) : null}
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      ) : null}
 
-      <TouchableOpacity style={styles.createRequestButton} onPress={onCreateRequest} accessibilityRole="button" accessibilityLabel={t('map.createRequest')}>
-        <MaterialCommunityIcons name="plus" size={22} color={colors.primaryContrast} />
-        <Text style={styles.createRequestButtonText}>{t('map.createRequest')}</Text>
-      </TouchableOpacity>
+      {!hideFilterRow ? (
+        <View style={[styles.filtersRow, { top: filtersTop }]}>
+          {filterOptions.map((role) => {
+            const active = filterRole === role;
+            return (
+              <TouchableOpacity
+                key={role ?? 'all'}
+                style={[
+                  styles.filterChip,
+                  { backgroundColor: 'rgba(255,255,255,0.92)' },
+                  active && { backgroundColor: themeColors.primary },
+                ]}
+                onPress={() => onFilterChange(role)}
+                accessibilityRole="button"
+              >
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    { color: themeColors.text },
+                    active && { color: themeColors.primaryContrast },
+                  ]}
+                >
+                  {getFilterLabel(role)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      ) : null}
 
-      <TouchableOpacity style={styles.locationButton} onPress={onMyLocation} accessibilityRole="button" accessibilityLabel={t('map.myLocation')}>
+      {isCustomer && !hideCreateCta ? (
+        <TouchableOpacity
+          style={[styles.createRequestButton, { bottom: mapChromeBottom + createBtnLift, backgroundColor: themeColors.primary }]}
+          onPress={onCreateRequest}
+          accessibilityRole="button"
+          accessibilityLabel={t('map.createRequest')}
+          activeOpacity={0.88}
+        >
+          <MaterialCommunityIcons name="plus" size={22} color={themeColors.primaryContrast} />
+          <Text style={[styles.createRequestButtonText, { color: themeColors.primaryContrast }]}>{t('map.createRequest')}</Text>
+        </TouchableOpacity>
+      ) : null}
+
+      <TouchableOpacity
+        style={[styles.locationButton, { bottom: mapChromeBottom + sheetLiftPx, backgroundColor: themeColors.surface }]}
+        onPress={onMyLocation}
+        accessibilityRole="button"
+        accessibilityLabel={t('map.myLocation')}
+        activeOpacity={0.88}
+      >
         <MaterialCommunityIcons name="crosshairs-gps" size={22} color={themeColors.text} />
       </TouchableOpacity>
 
@@ -204,13 +346,32 @@ function MapContainerNativeInner(props: MapContainerNativeProps) {
       )}
 
       {isProvidersError && (
-        <View style={styles.retryBanner}>
+        <View
+          style={[
+            styles.retryBanner,
+            {
+              bottom:
+                sheetLiftPx +
+                (isCustomer
+                  ? hideCreateCta
+                    ? mapChromeBottom + 52
+                    : mapChromeBottom + createBtnLift + 46 + spacing.sm
+                  : mapChromeBottom + 52),
+            },
+          ]}
+        >
           <Text style={styles.retryText}>{t('error.network')}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={onRetry} accessibilityRole="button" accessibilityLabel={t('common.retry')}>
-            <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
+          <TouchableOpacity
+            style={[styles.retryButton, { backgroundColor: themeColors.primary }]}
+            onPress={onRetry}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.retry')}
+          >
+            <Text style={[styles.retryButtonText, { color: themeColors.primaryContrast }]}>{t('common.retry')}</Text>
           </TouchableOpacity>
         </View>
       )}
+      </View>
     </View>
   );
 }
@@ -218,6 +379,8 @@ function MapContainerNativeInner(props: MapContainerNativeProps) {
 export const MapContainerNative = memo(MapContainerNativeInner);
 
 const styles = StyleSheet.create({
+  mapStack: { flex: 1, position: 'relative' as const },
+  mapFill: { ...StyleSheet.absoluteFillObject },
   mapCard: { flex: 1, borderRadius: 32, overflow: 'visible' as const },
   mapCardFullScreen: { borderRadius: 0 },
   map: { flex: 1, overflow: 'visible' as const },
@@ -242,13 +405,24 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   searchWrap: {
+    position: 'absolute' as const,
+    left: spacing.md,
+    right: spacing.md,
+    zIndex: 22,
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: radii.lg,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+    minHeight: 48,
   },
-  searchInput: { flex: 1, marginLeft: spacing.sm, fontFamily: typography.fontFamily.regular, fontSize: typography.fontSize.callout, paddingVertical: Platform.OS === 'android' ? 4 : 0 },
+  searchInput: {
+    flex: 1,
+    marginStart: spacing.sm,
+    fontFamily: typography.fontFamily.regular,
+    fontSize: typography.fontSize.callout,
+    paddingVertical: Platform.OS === 'android' ? 4 : 0,
+  },
   useCurrentLocationBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -261,16 +435,19 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.medium,
     fontSize: typography.fontSize.caption,
   },
-  suggestionsWrap: {
-    position: 'absolute',
-    top: spacing.md + 48 + spacing.sm + 44 + spacing.sm,
+  suggestionsPanel: {
+    position: 'absolute' as const,
     left: spacing.md,
     right: spacing.md,
-    maxHeight: 180,
+    maxHeight: SUGGESTIONS_MAX_HEIGHT,
     borderRadius: radii.lg,
-    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden' as const,
+    zIndex: 21,
+    ...shadows.md,
+    ...(Platform.OS === 'android' ? { elevation: 12 } : {}),
   },
-  suggestionsScroll: { maxHeight: 180 },
+  suggestionsScroll: { maxHeight: SUGGESTIONS_MAX_HEIGHT },
   suggestionRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -279,15 +456,21 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  suggestionText: {
-    flex: 1,
-    fontFamily: typography.fontFamily.regular,
+  suggestionTextCol: { flex: 1, minWidth: 0 },
+  suggestionMain: {
+    fontFamily: typography.fontFamily.medium,
     fontSize: typography.fontSize.callout,
+  },
+  suggestionSecondary: {
+    fontFamily: typography.fontFamily.regular,
+    fontSize: typography.fontSize.caption,
+    marginTop: 2,
   },
   filtersRow: {
     position: 'absolute',
     left: spacing.md,
     right: spacing.md,
+    zIndex: 19,
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
@@ -305,7 +488,7 @@ const styles = StyleSheet.create({
   createRequestButton: {
     position: 'absolute',
     left: spacing.md,
-    bottom: spacing.lg,
+    zIndex: 17,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: spacing.sm,
@@ -313,17 +496,16 @@ const styles = StyleSheet.create({
     borderRadius: radii.full,
     backgroundColor: colors.primary,
     gap: spacing.xs,
-    ...shadows.sm,
+    ...shadows.md,
   },
   createRequestButtonText: { fontFamily: typography.fontFamily.semibold, fontSize: typography.fontSize.caption, color: colors.primaryContrast },
   locationButton: {
     position: 'absolute',
     right: spacing.lg,
-    bottom: spacing.lg,
+    zIndex: 17,
     width: 44,
     height: 44,
     borderRadius: radii.full,
-    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     ...shadows.sm,
@@ -333,9 +515,9 @@ const styles = StyleSheet.create({
   loadingOverlayText: { marginTop: spacing.xs },
   retryBanner: {
     position: 'absolute',
-    bottom: spacing.lg + 52,
     left: spacing.md,
     right: spacing.md,
+    zIndex: 28,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -355,9 +537,10 @@ const markerStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   cluster: {
-    minWidth: 36,
-    height: 36,
-    borderRadius: 18,
+    minWidth: 40,
+    height: 40,
+    borderRadius: 20,
+    paddingHorizontal: 4,
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',

@@ -35,6 +35,7 @@ import {
   type AdminUserStatus,
   type ServiceCategory,
 } from '../../hooks/useAdminUsers';
+import { useDebouncedValue } from '../../../../shared/hooks/useDebouncedValue';
 
 type Nav = NativeStackNavigationProp<AdminStackParamList, 'AdminUsers'>;
 const THEME = ROLE_THEMES.admin;
@@ -69,6 +70,7 @@ export function AdminUsersScreen() {
   const [draftStatus, setDraftStatus] = useState<AdminUserStatus>('active');
   const [draftServiceIds, setDraftServiceIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebouncedValue(searchQuery, 280);
   const [roleFilter, setRoleFilter] = useState<AdminUserRole | 'all'>('all');
 
   const {
@@ -81,11 +83,11 @@ export function AdminUsersScreen() {
 
   const filteredUsers = useMemo(() => {
     let list = users;
-    const q = searchQuery.trim().toLowerCase();
+    const q = debouncedSearch.trim().toLowerCase();
     if (q) list = list.filter((u) => u.name.toLowerCase().includes(q));
     if (roleFilter !== 'all') list = list.filter((u) => u.role === roleFilter);
     return list;
-  }, [users, searchQuery, roleFilter]);
+  }, [users, debouncedSearch, roleFilter]);
 
   const openEdit = useCallback((user: AdminUser) => {
     setEditingUser(user);

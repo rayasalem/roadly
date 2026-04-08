@@ -18,7 +18,7 @@ const MOCK_PREFIX = 'mock-access-';
 function tryMockUser(token: string): UserPayload | null {
   if (!isDev || !token.startsWith(MOCK_PREFIX)) return null;
   const role = token.slice(MOCK_PREFIX.length) as UserPayload['role'];
-  const validRoles: UserPayload['role'][] = ['user', 'mechanic', 'mechanic_tow', 'car_rental', 'admin'];
+  const validRoles: UserPayload['role'][] = ['user', 'mechanic', 'mechanic_tow', 'car_rental', 'insurance', 'admin'];
   if (!validRoles.includes(role)) return null;
   return {
     id: `mock-${role}`,

@@ -42,6 +42,17 @@ async function main() {
   const logout = await agent.post('/auth/logout');
   assert(logout.status === 204, `logout expected 204, got ${logout.status}`);
 
+  const loginWrongCreds = await agent
+    .post('/auth/login')
+    .send({ email: 'nobody@example.com', password: 'password1' });
+  assert(
+    [401, 500].includes(loginWrongCreds.status),
+    `login wrong creds expected 401 or 500, got ${loginWrongCreds.status}`,
+  );
+
+  const refreshBad = await agent.post('/auth/refresh').send({ refreshToken: 'invalid-token-xyz' });
+  assert([401, 500].includes(refreshBad.status), `refresh bad token expected 401/500, got ${refreshBad.status}`);
+
   const dashNoAuth = await agent.get('/dashboard/mechanic');
   assert(dashNoAuth.status === 401, `dashboard/mechanic no auth expected 401`);
 

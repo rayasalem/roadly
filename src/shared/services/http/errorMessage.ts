@@ -12,7 +12,7 @@ import { toHttpError } from './httpClient';
 export function getMessageFromHttpError(e: HttpError): string {
   switch (e.kind) {
     case 'Network':
-      return t('error.network');
+      return e.message && e.message.trim().length > 0 ? e.message : t('error.network');
     case 'Timeout':
       return t('error.timeout');
     case 'Server':

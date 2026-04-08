@@ -9,6 +9,8 @@ node_modules/
 
 # Tests
 coverage/
+cypress/screenshots/
+cypress/videos/
 
 # Expo
 .expo/
@@ -42,3 +44,6 @@ backups/
 deploy/nginx/ssl/*.pem
 deploy/nginx/ssl/*.key
 deploy/nginx/conf.d/https.conf
+
+# Local upload storage (do not commit user files)
+backend/uploads/

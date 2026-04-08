@@ -47,6 +47,7 @@ function serviceTypeLabel(st: string): string {
   if (st === 'mechanic') return t('map.filter.mechanic');
   if (st === 'tow') return t('map.filter.tow');
   if (st === 'rental') return t('map.filter.rental');
+  if (st === 'insurance') return t('map.filter.insurance');
   return st;
 }
 

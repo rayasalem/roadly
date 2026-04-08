@@ -29,6 +29,10 @@ const productionOrigins = env.CLIENT_URL.split(',').map((u) => u.trim()).filter(
 const baseDevOrigins = [
   'http://localhost:8081',
   'http://127.0.0.1:8081',
+  'http://localhost:8083',
+  'http://127.0.0.1:8083',
+  'http://localhost:8084',
+  'http://127.0.0.1:8084',
   'http://localhost:19006',
   'http://localhost:19000',
   'http://127.0.0.1:19000',
@@ -38,6 +42,14 @@ const baseDevOrigins = [
   'http://localhost:5173',
   'https://roadmapapp.vercel.app',
 ];
+
+/** Dev-only: allow Expo web / Metro from another machine on LAN (private IPv4 + port). */
+function isLanDevOrigin(origin: string): boolean {
+  if (!isDev) return false;
+  return /^http:\/\/(192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})(:\d+)?$/i.test(
+    origin.trim(),
+  );
+}
 const baseProdOrigins =
   productionOrigins.length > 0 ? productionOrigins : ['https://roadmapapp.vercel.app'];
 const allowedOrigins: string[] = Array.from(
@@ -46,7 +58,10 @@ const allowedOrigins: string[] = Array.from(
 
 function getCorsOrigin(req: express.Request): string {
   const origin = req.headers.origin;
-  if (typeof origin === 'string' && allowedOrigins.includes(origin)) return origin;
+  if (typeof origin === 'string') {
+    if (allowedOrigins.includes(origin)) return origin;
+    if (isLanDevOrigin(origin)) return origin;
+  }
   return allowedOrigins[0] ?? 'http://localhost:8081';
 }
 
@@ -75,8 +90,10 @@ app.use((req, res, next) => {
 app.use(
   cors({
     origin: (origin, cb) => {
-      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-      return cb(null, allowedOrigins[0]);
+      if (!origin) return cb(null, true);
+      if (allowedOrigins.includes(origin)) return cb(null, true);
+      if (isLanDevOrigin(origin)) return cb(null, true);
+      return cb(null, false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

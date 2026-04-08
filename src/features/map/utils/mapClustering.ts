@@ -3,7 +3,7 @@
  * Groups providers by grid cell and returns cluster points (center + count) or single providers.
  * Web: no clustering. Native: cluster only when count > CLUSTER_THRESHOLD_DEFAULT.
  */
-import type { Provider } from '../../../providers/domain/types';
+import type { Provider } from '../../providers/domain/types';
 
 /** Grid cell size (~1.5km at equator); adjust for desired cluster radius. */
 const GRID_SIZE = 0.015;

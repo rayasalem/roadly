@@ -4,8 +4,8 @@ import type { GeoLocationWithTimestamp } from '../../../shared/types/geo';
 /** Display status for map: available (normal), busy (orange), offline (hidden from map). */
 export type ProviderDisplayStatus = 'available' | 'busy' | 'on_the_way' | 'offline';
 
-/** Service type for filter and request (mechanic | tow | rental) */
-export type ProviderServiceType = 'mechanic' | 'tow' | 'rental';
+/** Service type for filter and request */
+export type ProviderServiceType = 'mechanic' | 'tow' | 'rental' | 'insurance';
 
 export interface Provider {
   id: string;

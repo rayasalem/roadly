@@ -15,6 +15,7 @@ export interface WebMapViewProps {
   /** Closest provider id — marker gets pulse animation */
   nearestProviderId?: string | null;
   onProviderPress: (provider: Provider) => void;
+  onRequestService?: (provider: Provider) => void;
 }
 
 export function WebMapView(props: WebMapViewProps) {
@@ -27,6 +28,7 @@ export function WebMapView(props: WebMapViewProps) {
         selectedProviderId={props.selectedProviderId}
         nearestProviderId={props.nearestProviderId}
         onProviderPress={props.onProviderPress}
+        onRequestService={props.onRequestService}
       />
     </View>
   );

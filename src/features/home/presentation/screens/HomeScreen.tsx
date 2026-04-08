@@ -22,11 +22,13 @@ import { safeNavigateToSettings } from '../../../../navigation/navigationRef';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { t } from '../../../../shared/i18n/t';
+import { trailingChevronForLocale } from '../../../../shared/i18n/rtlUtils';
+import { useLocaleStore } from '../../../../store/localeStore';
 import { colors } from '../../../../shared/theme/colors';
 import { spacing, typography, radii, shadows } from '../../../../shared/theme';
 import { ScreenWrapper } from '../../../../shared/components/ScreenWrapper';
 import { AppHeader } from '../../../../shared/components/AppHeader';
-import { BottomNavBar, type NavTabId } from '../../../../shared/components/BottomNavBar';
+import type { NavTabId } from '../../../../shared/navigation/navTabs';
 import { Button } from '../../../../shared/components/Button';
 import { UberStyleCard } from '../../../../shared/components/UberStyleCard';
 import { UberSectionTitle } from '../../../../shared/components/UberSectionTitle';
@@ -40,6 +42,9 @@ import type { ServiceRequest } from '../../../requests/domain/types';
 import { getRequestStatusTheme, isRequestInProgress } from '../../../requests/constants/requestStatusTheme';
 import { DEFAULT_MAP_CENTER, toRegion } from '../../../map/utils/mapHelpers';
 import { ACTIVE_OPACITY, HIT_SLOP_DEFAULT } from '../../../../shared/constants/ux';
+import { AmbientSurface } from '../../../../shared/components/dashboard';
+import { isMvpFeatureEnabled } from '../../../../shared/constants/mvp';
+import { MvpFeatureComingSoon } from '../../../../shared/components/MvpFeatureComingSoon';
 
 function requestStatusDisplay(status: string): { label: string; color: string } {
   const theme = getRequestStatusTheme(status);
@@ -49,6 +54,7 @@ function serviceTypeLabel(st: string): string {
   if (st === 'mechanic') return t('map.filter.mechanic');
   if (st === 'tow') return t('map.filter.tow');
   if (st === 'rental') return t('map.filter.rental');
+  if (st === 'insurance') return t('map.filter.insurance');
   return st;
 }
 
@@ -58,6 +64,10 @@ const MAP_HEIGHT = Math.round(Dimensions.get('window').height * 0.38);
 
 export function HomeScreen() {
   const navigation = useNavigation<Nav>();
+  const locale = useLocaleStore((s) => s.locale);
+  const trailingChevron = trailingChevronForLocale(locale);
+  const favoritesEnabled = isMvpFeatureEnabled('favorites');
+
   const fade = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(12)).current;
   const { coords, isLoading: isLocating, error: locationError, fetchLocation } = useUserLocation();
@@ -104,22 +114,31 @@ export function HomeScreen() {
 
   const handleTab = useCallback((tab: NavTabId) => {
     if (tab === 'Home') navigation.navigate('Map');
+    else if (tab === 'Requests') navigation.navigate('RequestHistory');
     else if (tab === 'Profile') navigation.navigate('Profile');
     else if (tab === 'Chat') navigation.navigate('Chat');
-    else if (tab === 'Notifications') navigation.navigate('Notifications');
-    else if (tab === 'Settings') safeNavigateToSettings(navigation);
   }, [navigation]);
 
   const handleViewProfile = useCallback(() => navigation.navigate('Profile'), [navigation]);
-  const onRequestProvider = useCallback((p: Provider) => {
-    const serviceType = p.role === 'car_rental' ? 'rental' : p.role === 'mechanic_tow' ? 'tow' : 'mechanic';
-    navigation.navigate('Request', { serviceType, providerId: p.id });
-  }, [navigation]);
+  const onRequestProvider = useCallback(
+    (p: Provider) => {
+      if (p.role === 'insurance') {
+        navigation.navigate('InsurancePlans');
+        return;
+      }
+      const serviceType =
+        p.role === 'car_rental' ? 'rental' : p.role === 'mechanic_tow' ? 'tow' : 'mechanic';
+      navigation.navigate('Request', { serviceType, providerId: p.id });
+    },
+    [navigation]
+  );
 
-  const [selectedServiceType, setSelectedServiceType] = useState<'mechanic' | 'tow' | 'rental' | null>(null);
+  const [selectedServiceType, setSelectedServiceType] = useState<'mechanic' | 'tow' | 'rental' | 'insurance' | null>(
+    null
+  );
 
   return (
-    <ScreenWrapper bottomNav={<BottomNavBar activeTab="Home" onSelect={handleTab} dark />}>
+    <ScreenWrapper responsiveNav bottomNavConfig={{ activeTab: 'Home', onSelect: handleTab, dark: true }}>
       <AppHeader
         title={t('home.startJourney')}
         centerLogo
@@ -128,7 +147,9 @@ export function HomeScreen() {
         rightIcon="settings"
         onProfile={() => safeNavigateToSettings(navigation)}
       />
-      <Animated.View style={[styles.content, { opacity: fade, transform: [{ translateY }] }]}>
+      <View style={styles.homeMain}>
+        <AmbientSurface />
+        <Animated.View style={[styles.content, { opacity: fade, transform: [{ translateY }] }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
@@ -141,7 +162,10 @@ export function HomeScreen() {
             <TouchableOpacity
               style={styles.primaryCta}
               activeOpacity={ACTIVE_OPACITY}
-              onPress={() => navigation.navigate('Request', { serviceType: selectedServiceType ?? 'mechanic' })}
+              onPress={() => {
+                if (selectedServiceType === 'insurance') navigation.navigate('InsurancePlans');
+                else navigation.navigate('Request', { serviceType: selectedServiceType ?? 'mechanic' });
+              }}
             >
               <MaterialCommunityIcons name="plus-circle" size={28} color="#FFF" />
               <Text style={styles.primaryCtaText}>{t('customerDashboard.newRequestCta')}</Text>
@@ -172,7 +196,7 @@ export function HomeScreen() {
                   onPress={() => navigation.navigate('Request', { requestId: req.id })}
                   activeOpacity={ACTIVE_OPACITY}
                 >
-                  <View style={[styles.requestRowIcon, { backgroundColor: colors.primaryLight }]}>
+                  <View style={[styles.requestRowIcon, { backgroundColor: colors.surface }]}>
                     <MaterialCommunityIcons name="wrench" size={22} color={colors.primary} />
                   </View>
                   <View style={styles.requestRowBody}>
@@ -194,7 +218,7 @@ export function HomeScreen() {
                         <Text style={styles.requestRowActionText}>{t('request.rateProvider')}</Text>
                       </TouchableOpacity>
                     )}
-                    <MaterialCommunityIcons name="chevron-right" size={22} color={colors.textMuted} />
+                    <MaterialCommunityIcons name={trailingChevron} size={22} color={colors.textMuted} />
                   </View>
                 </TouchableOpacity>
               ))
@@ -215,12 +239,14 @@ export function HomeScreen() {
                 {
                   label: t('home.serviceTypeLabel'),
                   value: selectedServiceType
-                    ? (selectedServiceType === 'mechanic'
-                        ? (t('services.mechanic') ?? 'Mechanic')
-                        : selectedServiceType === 'tow'
-                        ? (t('services.tow') ?? 'Tow')
-                        : (t('services.rental') ?? 'Rental'))
-                    : (t('map.filter.all') ?? 'All'),
+                    ? selectedServiceType === 'mechanic'
+                      ? t('home.services.mechanic.title')
+                      : selectedServiceType === 'tow'
+                        ? t('home.services.tow.title')
+                        : selectedServiceType === 'rental'
+                          ? t('home.services.rental.title')
+                          : t('map.filter.insurance')
+                    : t('map.filter.all'),
                   isOrigin: false,
                   onPress: () => navigation.navigate('Map'),
                   rightIcon: 'chevron-right',
@@ -317,13 +343,8 @@ export function HomeScreen() {
               <View style={[styles.serviceIconWrap, { backgroundColor: 'rgba(34,197,94,0.08)' }]}>
                 <MaterialCommunityIcons name="wrench" size={20} color={colors.primary} />
               </View>
-              <Text style={styles.serviceTitle}>
-                {t('services.mechanic') ?? 'Mechanic'}
-              </Text>
-              <Text style={styles.serviceSubtitle}>
-                {t('home.services.mechanic.subtitle') ??
-                  'Get a mechanic to your location quickly.'}
-              </Text>
+              <Text style={styles.serviceTitle}>{t('home.services.mechanic.title')}</Text>
+              <Text style={styles.serviceSubtitle}>{t('home.services.mechanic.subtitle')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.serviceCard, selectedServiceType === 'tow' && styles.serviceCardSelected]}
@@ -334,11 +355,8 @@ export function HomeScreen() {
               <View style={[styles.serviceIconWrap, { backgroundColor: 'rgba(34,197,94,0.08)' }]}>
                 <MaterialCommunityIcons name="tow-truck" size={20} color={colors.primary} />
               </View>
-              <Text style={styles.serviceTitle}>{t('services.tow') ?? 'Tow Truck'}</Text>
-              <Text style={styles.serviceSubtitle}>
-                {t('home.services.tow.subtitle') ??
-                  'Request a tow truck for breakdowns and accidents.'}
-              </Text>
+              <Text style={styles.serviceTitle}>{t('home.services.tow.title')}</Text>
+              <Text style={styles.serviceSubtitle}>{t('home.services.tow.subtitle')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.serviceCard, selectedServiceType === 'rental' && styles.serviceCardSelected]}
@@ -349,13 +367,27 @@ export function HomeScreen() {
               <View style={[styles.serviceIconWrap, { backgroundColor: 'rgba(34,197,94,0.08)' }]}>
                 <MaterialCommunityIcons name="car-estate" size={20} color={colors.primary} />
               </View>
-              <Text style={styles.serviceTitle}>{t('services.rental') ?? 'Car Rental'}</Text>
+              <Text style={styles.serviceTitle}>{t('home.services.rental.title')}</Text>
               <Text style={styles.serviceSubtitle}>
-                {t('home.services.rental.subtitle') ??
-                  'Rent a car near you for flexible trips.'}
+                {t('home.services.rental.subtitle')}
               </Text>
             </TouchableOpacity>
             </View>
+            <TouchableOpacity
+              style={[styles.insuranceWideCard, selectedServiceType === 'insurance' && styles.serviceCardSelected]}
+              activeOpacity={ACTIVE_OPACITY}
+              hitSlop={HIT_SLOP_DEFAULT}
+              onPress={() => setSelectedServiceType('insurance')}
+            >
+              <View style={[styles.serviceIconWrap, { backgroundColor: `${colors.mapInsurance}18` }]}>
+                <MaterialCommunityIcons name="shield-check" size={22} color={colors.mapInsurance} />
+              </View>
+              <View style={styles.insuranceWideTextCol}>
+                <Text style={styles.serviceTitle}>{t('insurance.plans.title')}</Text>
+                <Text style={styles.serviceSubtitle}>{t('insurance.plans.subtitle')}</Text>
+              </View>
+              <MaterialCommunityIcons name={trailingChevron} size={22} color={colors.textMuted} />
+            </TouchableOpacity>
           </View>
 
           {/* Section 3: Promo banner */}
@@ -370,7 +402,10 @@ export function HomeScreen() {
                 </Text>
                 <Button
                   title={t('home.promoCta') ?? 'إنشاء طلب الآن'}
-                  onPress={() => navigation.navigate('Request', { serviceType: selectedServiceType ?? 'mechanic' })}
+                  onPress={() => {
+                    if (selectedServiceType === 'insurance') navigation.navigate('InsurancePlans');
+                    else navigation.navigate('Request', { serviceType: selectedServiceType ?? 'mechanic' });
+                  }}
                   size="sm"
                   fullWidth={false}
                   style={styles.promoBtn}
@@ -398,7 +433,7 @@ export function HomeScreen() {
                 {t('home.viewOnMap') ?? 'View on map'}
               </Text>
               <MaterialCommunityIcons
-                name="chevron-right"
+                name={trailingChevron}
                 size={18}
                 color={colors.textSecondary}
               />
@@ -463,7 +498,21 @@ export function HomeScreen() {
                   <ProviderCard
                     provider={p}
                     distanceKm={distanceKm}
-                    onPress={(provider) => navigation.navigate('Request', { providerId: provider.id, serviceType: provider.role === 'car_rental' ? 'rental' : provider.role === 'mechanic_tow' ? 'tow' : 'mechanic' })}
+                    onPress={(provider) => {
+                      if (provider.role === 'insurance') {
+                        navigation.navigate('InsurancePlans');
+                        return;
+                      }
+                      navigation.navigate('Request', {
+                        providerId: provider.id,
+                        serviceType:
+                          provider.role === 'car_rental'
+                            ? 'rental'
+                            : provider.role === 'mechanic_tow'
+                              ? 'tow'
+                              : 'mechanic',
+                      });
+                    }}
                     onRequest={onRequestProvider}
                     requestLabel={t('home.requestService') ?? 'Request'}
                   />
@@ -473,18 +522,26 @@ export function HomeScreen() {
           )}
           </View>
 
-          {/* Favorites shortcut */}
+          {/* Favorites shortcut — no navigation when MVP-disabled (intentional coming soon). */}
           <View style={styles.section}>
-            <TouchableOpacity style={styles.favoritesCard} onPress={() => navigation.navigate('Favorites')} activeOpacity={ACTIVE_OPACITY}>
-              <View style={styles.favoritesIconWrap}>
-                <MaterialCommunityIcons name="heart" size={28} color={colors.error} />
-              </View>
-              <View style={styles.favoritesTextCol}>
-                <Text style={styles.favoritesTitle}>{t('customer.favorites')}</Text>
-                <Text style={styles.favoritesSubtitle}>{t('customer.favoritesEmptySubtitle')}</Text>
-              </View>
-              <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
-            </TouchableOpacity>
+            {favoritesEnabled ? (
+              <TouchableOpacity
+                style={styles.favoritesCard}
+                onPress={() => navigation.navigate('Favorites')}
+                activeOpacity={ACTIVE_OPACITY}
+              >
+                <View style={styles.favoritesIconWrap}>
+                  <MaterialCommunityIcons name="heart" size={28} color={colors.error} />
+                </View>
+                <View style={styles.favoritesTextCol}>
+                  <Text style={styles.favoritesTitle}>{t('customer.favorites')}</Text>
+                  <Text style={styles.favoritesSubtitle}>{t('customer.favoritesEmptySubtitle')}</Text>
+                </View>
+                <MaterialCommunityIcons name={trailingChevron} size={24} color={colors.textMuted} />
+              </TouchableOpacity>
+            ) : (
+              <MvpFeatureComingSoon variant="compact" iconName="heart-outline" testID="home-favorites-coming-soon" />
+            )}
           </View>
 
           {/* Offers (optional) */}
@@ -531,14 +588,26 @@ export function HomeScreen() {
               <MaterialCommunityIcons name="clipboard-text-outline" size={20} color={colors.primary} />
               <Text style={styles.quickActionText}>{t('home.myRequests') ?? 'My requests'}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.quickAction} activeOpacity={ACTIVE_OPACITY} onPress={() => navigation.navigate('Favorites')}>
-              <MaterialCommunityIcons name="heart-outline" size={20} color={colors.primary} />
-              <Text style={styles.quickActionText}>{t('customer.favorites')}</Text>
-            </TouchableOpacity>
+            {favoritesEnabled ? (
+              <TouchableOpacity
+                style={styles.quickAction}
+                activeOpacity={ACTIVE_OPACITY}
+                onPress={() => navigation.navigate('Favorites')}
+              >
+                <MaterialCommunityIcons name="heart-outline" size={20} color={colors.primary} />
+                <Text style={styles.quickActionText}>{t('customer.favorites')}</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={[styles.quickAction, styles.quickActionMvpDisabled]} pointerEvents="none" accessibilityElementsHidden>
+                <MaterialCommunityIcons name="lock-outline" size={20} color={colors.textMuted} />
+                <Text style={[styles.quickActionText, styles.quickActionMvpDisabledText]}>{t('mvp.comingSoon.badge')}</Text>
+              </View>
+            )}
             </View>
           </View>
         </ScrollView>
       </Animated.View>
+      </View>
     </ScreenWrapper>
   );
 }
@@ -548,6 +617,7 @@ const EXTRA_SCROLL_PADDING = spacing.lg;
 const SECTION_SPACING = spacing.lg;
 
 const styles = StyleSheet.create({
+  homeMain: { flex: 1, position: 'relative', overflow: 'hidden' },
   content: {
     flex: 1,
     backgroundColor: colors.uberBackground ?? colors.background,
@@ -870,6 +940,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: spacing.card,
   },
+  insuranceWideCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginTop: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    padding: spacing.md,
+    ...shadows.sm,
+  },
+  insuranceWideTextCol: { flex: 1, minWidth: 0 },
   serviceCard: {
     flex: 1,
     backgroundColor: colors.surface,
@@ -958,6 +1039,15 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.medium,
     fontSize: typography.presets.caption.fontSize,
     color: colors.text,
+  },
+  quickActionMvpDisabled: {
+    opacity: 0.55,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+  },
+  quickActionMvpDisabledText: {
+    color: colors.textMuted,
   },
   promoCard: {
     flexDirection: 'row',

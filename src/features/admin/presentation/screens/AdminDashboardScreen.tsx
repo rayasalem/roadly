@@ -19,7 +19,7 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 
 import { AppHeader } from '../../../../shared/components/AppHeader';
 import { BottomNavBar, type NavTabId } from '../../../../shared/components/BottomNavBar';
-import { ErrorWithRetry } from '../../../../shared/components/ErrorWithRetry';
+import { DashboardShell, DashboardSectionHeader } from '../../../../shared/components/dashboard';
 import { GlassCard } from '../../../../shared/components/GlassCard';
 import { LoadingSpinner } from '../../../../shared/components/LoadingSpinner';
 import { StatCard } from '../../../../shared/components/StatCard';
@@ -30,6 +30,8 @@ import { colors } from '../../../../shared/theme/colors';
 import { spacing, typography, radii, shadows } from '../../../../shared/theme';
 import { ROLE_THEMES } from '../../../../shared/theme/roleThemes';
 import { t } from '../../../../shared/i18n/t';
+import { trailingChevronForLocale } from '../../../../shared/i18n/rtlUtils';
+import { useLocaleStore } from '../../../../store/localeStore';
 import { useUIStore } from '../../../../store/uiStore';
 import { blurActiveElementForA11y } from '../../../../shared/utils/domA11y';
 import type { AdminStackParamList } from '../../../../navigation/AdminStack';
@@ -75,6 +77,8 @@ function rentalFilterLabel(f: AdminRentalFilter): string {
 }
 
 export function AdminDashboardScreen() {
+  const locale = useLocaleStore((s) => s.locale);
+  const trailingChevron = trailingChevronForLocale(locale);
   const navigation = useNavigation<Nav>();
   const toast = useUIStore((s) => s.toast);
   const sheetRef = useRef<BottomSheetModal>(null);
@@ -87,8 +91,7 @@ export function AdminDashboardScreen() {
       if (tab === 'Home') navigation.navigate('AdminDashboard');
       else if (tab === 'Profile') navigation.navigate('Profile');
       else if (tab === 'Chat') navigation.navigate('Chat');
-      else if (tab === 'Notifications') navigation.navigate('Notifications');
-      else if (tab === 'Settings') navigation.navigate('Settings');
+      else if (tab === 'Requests') navigation.navigate('AdminRequests');
     },
     [navigation],
   );
@@ -123,9 +126,6 @@ export function AdminDashboardScreen() {
     toast({ type: 'info', message: t('admin.edit') + ' – ' + t('common.notImplemented') });
   }, [closeSheet, toast]);
 
-  if (isLoading) return <LoadingSpinner />;
-  if (isError) return <ErrorWithRetry message={error?.message ?? ''} onRetry={() => refetch()} testID="admin-dashboard-retry" />;
-
   const tabs: { id: AdminProviderRole; label: string; icon: string }[] = [
     { id: 'mechanic', label: t('admin.section.mechanics'), icon: 'wrench' },
     { id: 'tow', label: t('admin.section.tow'), icon: 'tow-truck' },
@@ -135,7 +135,18 @@ export function AdminDashboardScreen() {
   const roleTheme = activeTab === 'mechanic' ? ROLE_THEMES.mechanic : activeTab === 'tow' ? ROLE_THEMES.tow : ROLE_THEMES.rental;
 
   return (
-    <View style={styles.root}>
+    <DashboardShell
+      isLoading={isLoading}
+      isError={isError}
+      errorMessage={error?.message ?? ''}
+      onRetry={() => refetch()}
+      loadingHint={t('common.loading')}
+      bottomSlot={
+        <View style={styles.bottomNavWrap}>
+          <BottomNavBar activeTab="Home" onSelect={handleTab} dark />
+        </View>
+      }
+    >
       <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
         <AppHeader title={t('admin.dashboard.title')} rightIcon="profile" onProfile={openProfile} />
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -173,7 +184,7 @@ export function AdminDashboardScreen() {
               <Text style={styles.manageUsersTitle}>{t('admin.manageUsers')}</Text>
               <Text style={styles.manageUsersSubtitle}>{t('admin.usersList')} • {t('admin.editServices')}</Text>
             </View>
-            <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+            <MaterialCommunityIcons name={trailingChevron} size={24} color={colors.textMuted} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -186,7 +197,7 @@ export function AdminDashboardScreen() {
               <Text style={styles.manageUsersTitle}>{t('admin.section.providerList')}</Text>
               <Text style={styles.manageUsersSubtitle}>{t('admin.section.mechanics')} • {t('admin.section.tow')} • {t('admin.section.rental')}</Text>
             </View>
-            <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+            <MaterialCommunityIcons name={trailingChevron} size={24} color={colors.textMuted} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -199,7 +210,7 @@ export function AdminDashboardScreen() {
               <Text style={styles.manageUsersTitle}>{t('admin.requests') ?? 'View requests'}</Text>
               <Text style={styles.manageUsersSubtitle}>{t('admin.viewAllRequests') ?? 'All service requests'}</Text>
             </View>
-            <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+            <MaterialCommunityIcons name={trailingChevron} size={24} color={colors.textMuted} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -212,7 +223,7 @@ export function AdminDashboardScreen() {
               <Text style={styles.manageUsersTitle}>{t('admin.reports')}</Text>
               <Text style={styles.manageUsersSubtitle}>{t('admin.reportsEmpty')}</Text>
             </View>
-            <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+            <MaterialCommunityIcons name={trailingChevron} size={24} color={colors.textMuted} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -225,7 +236,7 @@ export function AdminDashboardScreen() {
               <Text style={styles.manageUsersTitle}>{t('admin.systemSettings')}</Text>
               <Text style={styles.manageUsersSubtitle}>{t('admin.systemSettingsHint')}</Text>
             </View>
-            <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+            <MaterialCommunityIcons name={trailingChevron} size={24} color={colors.textMuted} />
           </TouchableOpacity>
 
           {/* Tabs */}
@@ -267,7 +278,7 @@ export function AdminDashboardScreen() {
                   <StatCard value={mechanicPanel.stats.avgRating} label={t('mechanic.stats.rating')} accentColor={roleTheme.primary} />
                 </View>
               </GlassCard>
-              <Text style={styles.sectionTitle}>{t('admin.requestsAssigned')}</Text>
+              <DashboardSectionHeader title={t('admin.requestsAssigned')} />
               <View style={styles.chipRow}>
                 {(['all', 'new', 'on_the_way', 'in_garage'] as const).map((f) => (
                   <TouchableOpacity
@@ -317,7 +328,7 @@ export function AdminDashboardScreen() {
                   <StatCard value={towPanel.stats.fleet} label={t('tow.stats.fleet')} accentColor={roleTheme.primary} />
                 </View>
               </GlassCard>
-              <Text style={styles.sectionTitle}>{t('admin.towingRequests')}</Text>
+              <DashboardSectionHeader title={t('admin.towingRequests')} />
               <View style={styles.chipRow}>
                 {(['all', 'active', 'queued'] as const).map((f) => (
                   <TouchableOpacity
@@ -367,7 +378,7 @@ export function AdminDashboardScreen() {
                   <StatCard value={rentalPanel.stats.rented} label={t('rental.stats.rented')} accentColor={roleTheme.primary} />
                 </View>
               </GlassCard>
-              <Text style={styles.sectionTitle}>{t('admin.fleetVehicles')}</Text>
+              <DashboardSectionHeader title={t('admin.fleetVehicles')} />
               <View style={styles.chipRow}>
                 {(['all', 'available', 'rented', 'maintenance'] as const).map((f) => (
                   <TouchableOpacity
@@ -414,7 +425,7 @@ export function AdminDashboardScreen() {
             </>
           )}
 
-          <Text style={styles.chartTitle}>Requests (last 7 days)</Text>
+          <DashboardSectionHeader title={t('admin.chart.requestsWeek')} style={styles.chartSection} />
           <GlassCard role="admin">
             <View style={styles.chartRow}>
               {chartData.map((val, i) => (
@@ -466,15 +477,11 @@ export function AdminDashboardScreen() {
         </View>
       </BottomSheetModal>
 
-      <View style={styles.bottomNavWrap}>
-        <BottomNavBar activeTab="Home" onSelect={handleTab} dark />
-      </View>
-    </View>
+    </DashboardShell>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
   safe: { flex: 1 },
   scroll: { paddingHorizontal: spacing.md, paddingTop: spacing.lg, paddingBottom: 120 },
   bottomNavWrap: {
@@ -524,7 +531,6 @@ const styles = StyleSheet.create({
   chipTextActive: { color: colors.primaryContrast },
   roleCard: { marginBottom: spacing.md },
   roleStatsRow: { flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: spacing.sm },
-  sectionTitle: { fontFamily: typography.fontFamily.semibold, fontSize: 18, lineHeight: 24, color: colors.text, marginBottom: spacing.md },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
   chip: {
     paddingHorizontal: spacing.md,
@@ -555,7 +561,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   addVehicleBtnText: { fontFamily: typography.fontFamily.semibold, fontSize: typography.presets.bodySmall.fontSize },
-  chartTitle: { fontFamily: typography.fontFamily.semibold, fontSize: typography.presets.titleSmall.fontSize, color: colors.text, marginTop: spacing.lg, marginBottom: spacing.md },
+  chartSection: { marginTop: spacing.lg },
   chartRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 100 },
   barWrap: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
   bar: { width: BAR_WIDTH, borderRadius: radii.xs, minHeight: 8 },

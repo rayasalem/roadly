@@ -56,7 +56,7 @@ export function MapSheetContent({
       )}
       {isError && providers.length === 0 && (
         <View style={styles.section}>
-          <ErrorWithRetry message={t('error.network')} onRetry={onRetry} isRetrying={isRefetching} />
+          <ErrorWithRetry compact message={t('error.network')} onRetry={onRetry} isRetrying={isRefetching} />
         </View>
       )}
       {showEmpty && (

@@ -9,6 +9,7 @@ import { colors } from '../../../shared/theme/colors';
 export function getMarkerColorByRole(provider: Provider): string {
   if (provider.role === 'mechanic_tow') return colors.mapTow;
   if (provider.role === 'car_rental') return colors.mapRental;
+  if (provider.role === 'insurance') return colors.mapInsurance;
   return colors.mapMechanic;
 }
 
@@ -24,13 +25,15 @@ export function getMarkerColorByStatus(provider: Provider, selected?: boolean): 
 export function getServiceTypeEmoji(provider: Provider): string {
   if (provider.role === 'mechanic_tow') return '🚛';
   if (provider.role === 'car_rental') return '🚗';
+  if (provider.role === 'insurance') return '🛡️';
   return '🔧';
 }
 
 /** MaterialCommunityIcons name for service type: mechanic, tow, car rental. */
-export function getServiceTypeIconName(provider: Provider): 'wrench' | 'tow-truck' | 'car-side' {
+export function getServiceTypeIconName(provider: Provider): 'wrench' | 'tow-truck' | 'car-side' | 'shield-check' {
   if (provider.role === 'mechanic_tow') return 'tow-truck';
   if (provider.role === 'car_rental') return 'car-side';
+  if (provider.role === 'insurance') return 'shield-check';
   return 'wrench';
 }
 
@@ -63,7 +66,14 @@ export function buildProviderPopupHtml(provider: Provider, requestButtonLabel: s
   const services = Array.isArray(provider.services) ? provider.services.slice(0, 5) : [];
   const servicesText = services.length ? services.map((s) => esc(String(s))).join(', ') : '—';
   const serviceEmoji = getServiceTypeEmoji(provider);
-  const serviceName = provider.role === 'mechanic_tow' ? 'Tow' : provider.role === 'car_rental' ? 'Rental' : 'Mechanic';
+  const serviceName =
+    provider.role === 'mechanic_tow'
+      ? 'ونش'
+      : provider.role === 'car_rental'
+        ? 'تأجير'
+        : provider.role === 'insurance'
+          ? 'تأمين'
+          : 'ميكانيكي';
   const avail = getAvailabilityLabel(provider);
   const photoUri = provider.photo ?? provider.avatarUri ?? null;
   const imgHtml = photoUri

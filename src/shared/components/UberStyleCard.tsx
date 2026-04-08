@@ -7,6 +7,8 @@ import { View, Text, TouchableOpacity, StyleSheet, type ViewStyle } from 'react-
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { spacing, typography, radii, shadows } from '../theme';
+import { useLocaleStore } from '../../store/localeStore';
+import { trailingChevronForLocale } from '../i18n/rtlUtils';
 
 export interface UberStyleRow {
   label: string;
@@ -26,6 +28,8 @@ export interface UberStyleCardProps {
 }
 
 export function UberStyleCard({ rows, onPress, style, showDividers = true }: UberStyleCardProps) {
+  const locale = useLocaleStore((s) => s.locale);
+  const trailingChevron = trailingChevronForLocale(locale);
   const dotSize = 12;
   const dotOffset = spacing.md + dotSize / 2;
 
@@ -39,7 +43,7 @@ export function UberStyleCard({ rows, onPress, style, showDividers = true }: Ube
       {rows.map((row, index) => (
         <React.Fragment key={index}>
           {index > 0 && showDividers ? (
-            <View style={[styles.divider, { marginLeft: dotOffset }]} />
+            <View style={[styles.divider, { marginStart: dotOffset }]} />
           ) : null}
           <TouchableOpacity
             style={styles.row}
@@ -88,7 +92,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    marginRight: spacing.md,
+    marginEnd: spacing.md,
   },
   col: {
     flex: 1,

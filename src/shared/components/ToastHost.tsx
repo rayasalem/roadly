@@ -7,12 +7,14 @@ import { colors } from '../theme/colors';
 import { typography, spacing, shadows } from '../theme';
 import { TOAST_ENTER_DURATION, TOAST_EXIT_DURATION } from '../utils/animations';
 
-function toastStyle(type: 'success' | 'error' | 'info'): { bg: string; text: string } {
+function toastStyle(type: 'success' | 'error' | 'info' | 'warning'): { bg: string; text: string } {
   switch (type) {
     case 'success':
       return { bg: colors.success, text: '#FFFFFF' };
     case 'error':
       return { bg: colors.error, text: '#FFFFFF' };
+    case 'warning':
+      return { bg: colors.warning, text: '#000000' };
     default:
       return { bg: colors.surface, text: colors.text };
   }

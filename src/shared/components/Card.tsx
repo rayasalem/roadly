@@ -73,9 +73,9 @@ export const Card = React.memo(function Card({
     styles.base,
     // Keep spacing responsibilities outside the Card for consistent layouts.
     { borderRadius: radiusVal, padding: paddingVal, marginVertical: 0 },
-    variant === 'elevated' && elevation !== 'none' && shadows[elevation],
-    variant === 'outlined' && styles.outlined,
-    style,
+    ...(variant === 'elevated' && elevation !== 'none' ? [shadows[elevation]] : []),
+    ...(variant === 'outlined' ? [styles.outlined] : []),
+    ...(style ? [style] : []),
   ];
 
   if (onPress) {

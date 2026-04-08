@@ -3,7 +3,7 @@
  * API calls live in data/placesApi; query is debounced (350ms) to reduce requests.
  */
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { fetchPlaceSuggestions, fetchPlaceCoordinates } from '../data/placesApi';
 import type { PlaceSuggestion } from '../data/placesApi';
 
@@ -37,7 +37,7 @@ export function usePlacesSearch() {
     enabled: debouncedQuery.trim().length >= 2,
     staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     retry: 2,
     retryDelay: 800,
   });

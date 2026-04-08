@@ -4,6 +4,7 @@ export const VALID_SERVICE_TYPES: readonly ServiceType[] = [
   'mechanic',
   'tow',
   'rental',
+  'insurance',
   'battery',
   'tire',
   'oil_change',

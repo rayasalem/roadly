@@ -1,25 +1,23 @@
 /**
- * Dark teal floating dock, Plus FAB, and 4 circular icons in a semi-circle arc.
- * Pixel-perfect: border-radius 25px+, soft shadows.
+ * Service-type arc, main FAB, and quick dock tabs. Themed to match app colors.
  */
-import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useCallback } from 'react';
+import { View, TouchableOpacity, StyleSheet, Platform, type LayoutChangeEvent } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../../../../shared/theme/colors';
-import { spacing, shadows, radii } from '../../../../shared/theme';
+import { useTheme, spacing, shadows } from '../../../../shared/theme';
 
-const DOCK_BG = '#1A313C';
 const FAB_SIZE = 56;
 const ICON_CIRCLE_SIZE = 44;
 const BORDER_RADIUS = 28;
 
-export type ArcIconId = 'mechanic' | 'tow' | 'rental' | 'all';
+export type ArcIconId = 'mechanic' | 'tow' | 'rental' | 'insurance' | 'all';
 
 const ARC_ICONS: { id: ArcIconId; icon: keyof typeof MaterialCommunityIcons.glyphMap }[] = [
   { id: 'mechanic', icon: 'wrench' },
   { id: 'tow', icon: 'tow-truck' },
   { id: 'rental', icon: 'car-side' },
+  { id: 'insurance', icon: 'shield-check' },
   { id: 'all', icon: 'circle-double' },
 ];
 
@@ -30,6 +28,8 @@ export interface MapDockWithFABProps {
   onDockTabPress?: (tab: 'home' | 'notifications' | 'bookmark' | 'settings') => void;
   /** When true, dock is in flow below content (no overlay). Icons stay above nav bar. */
   inFlow?: boolean;
+  /** Report full wrapper height (for ScrollView padding above the dock). */
+  onLayoutHeight?: (height: number) => void;
 }
 
 export function MapDockWithFAB({
@@ -38,13 +38,25 @@ export function MapDockWithFAB({
   onFABPress,
   onDockTabPress,
   inFlow = false,
+  onLayoutHeight,
 }: MapDockWithFABProps) {
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const bottomPad = Math.max(insets.bottom, spacing.md);
+  const dockBg = colors.uberNav ?? colors.navDark ?? colors.primary;
+  const onDockLayout = useCallback(
+    (e: LayoutChangeEvent) => {
+      const h = e.nativeEvent.layout.height;
+      if (h > 0) onLayoutHeight?.(h);
+    },
+    [onLayoutHeight],
+  );
 
   return (
-    <View style={[inFlow ? styles.wrapperInFlow : styles.wrapper, { paddingBottom: bottomPad, pointerEvents: 'box-none' }]}>
-      {/* 4 icons in semi-circle arc above FAB */}
+    <View
+      style={[inFlow ? styles.wrapperInFlow : styles.wrapper, { paddingBottom: bottomPad, pointerEvents: 'box-none' }]}
+      onLayout={onLayoutHeight ? onDockLayout : undefined}
+    >
       <View style={[styles.arcRow, { pointerEvents: 'box-none' }]}>
         {ARC_ICONS.map((item, index) => {
           const isActive = activeId === item.id;
@@ -54,10 +66,12 @@ export function MapDockWithFAB({
               key={item.id}
               style={[
                 styles.arcIcon,
+                { backgroundColor: colors.surface },
                 isMiddle && styles.arcIconRaised,
-                isActive && styles.arcIconActive,
+                isActive && { backgroundColor: colors.primary },
               ]}
               onPress={() => onArcIconPress(item.id)}
+              activeOpacity={0.82}
               accessibilityRole="button"
               accessibilityLabel={item.id}
             >
@@ -71,33 +85,38 @@ export function MapDockWithFAB({
         })}
       </View>
 
-      {/* Plus FAB */}
       <TouchableOpacity
-        style={styles.fab}
+        style={[styles.fab, { backgroundColor: colors.primary }]}
         onPress={onFABPress}
+        activeOpacity={0.9}
         accessibilityRole="button"
         accessibilityLabel="Main action"
       >
-        <MaterialCommunityIcons name="plus" size={28} color="#fff" />
+        <MaterialCommunityIcons name="plus" size={28} color={colors.primaryContrast} />
       </TouchableOpacity>
 
-      {/* Dark teal dock */}
-      <View style={styles.dock}>
-        {(onDockTabPress ? ['home', 'notifications', 'bookmark', 'settings'] : ['home', 'notifications', 'bookmark', 'settings']).map(
-          (tab, i) => {
-            const icon = tab === 'home' ? 'home' : tab === 'notifications' ? 'bell-outline' : tab === 'bookmark' ? 'bookmark-outline' : 'cog-outline';
-            return (
-              <TouchableOpacity
-                key={tab}
-                style={styles.dockTab}
-                onPress={() => onDockTabPress?.(tab as any)}
-                accessibilityRole="button"
-              >
-                <MaterialCommunityIcons name={icon as any} size={24} color={colors.primaryContrast} />
-              </TouchableOpacity>
-            );
-          }
-        )}
+      <View style={[styles.dock, { backgroundColor: dockBg }]}>
+        {['home', 'notifications', 'bookmark', 'settings'].map((tab) => {
+          const icon =
+            tab === 'home'
+              ? 'home'
+              : tab === 'notifications'
+                ? 'bell-outline'
+                : tab === 'bookmark'
+                  ? 'bookmark-outline'
+                  : 'cog-outline';
+          return (
+            <TouchableOpacity
+              key={tab}
+              style={styles.dockTab}
+              onPress={() => onDockTabPress?.(tab as any)}
+              activeOpacity={0.75}
+              accessibilityRole="button"
+            >
+              <MaterialCommunityIcons name={icon as any} size={24} color={colors.uberTextOnDark ?? colors.primaryContrast} />
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </View>
   );
@@ -110,25 +129,28 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     alignItems: 'center',
+    zIndex: 20,
+    ...(Platform.OS === 'android' ? { elevation: 16 } : {}),
   },
   wrapperInFlow: {
     width: '100%',
     alignItems: 'center',
     backgroundColor: 'transparent',
+    zIndex: 12,
+    ...(Platform.OS === 'android' ? { elevation: 14 } : {}),
   },
   arcRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'center',
-    gap: spacing.lg,
-    marginBottom: spacing.sm,
-    paddingHorizontal: spacing.lg,
+    gap: spacing.md,
+    marginBottom: spacing.xs,
+    paddingHorizontal: spacing.md,
   },
   arcIcon: {
     width: ICON_CIRCLE_SIZE,
     height: ICON_CIRCLE_SIZE,
     borderRadius: ICON_CIRCLE_SIZE / 2,
-    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     ...shadows.md,
@@ -136,14 +158,10 @@ const styles = StyleSheet.create({
   arcIconRaised: {
     marginBottom: -6,
   },
-  arcIconActive: {
-    backgroundColor: colors.primary,
-  },
   fab: {
     width: FAB_SIZE,
     height: FAB_SIZE,
     borderRadius: FAB_SIZE / 2,
-    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: -FAB_SIZE / 2,
@@ -154,7 +172,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    backgroundColor: DOCK_BG,
     paddingTop: spacing.md + FAB_SIZE / 2,
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,

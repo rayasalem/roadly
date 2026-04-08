@@ -2,7 +2,7 @@
  * Mechanic Job History — completed jobs from GET /requests/provider.
  * Shows date, service type, status, optional cost/rating when available.
  */
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, View, FlatList, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -46,9 +46,10 @@ export function MechanicJobHistoryScreen() {
     staleTime: 60 * 1000,
   });
 
-  const completed = (data?.items ?? []).filter(
-    (r: ServiceRequest) => r.status === 'completed'
-  ) as ServiceRequest[];
+  const completed = useMemo(
+    () => (data?.items ?? []).filter((r: ServiceRequest) => r.status === 'completed') as ServiceRequest[],
+    [data?.items],
+  );
 
   if (isLoading) return <LoadingSpinner />;
   if (isError) {
@@ -71,6 +72,11 @@ export function MechanicJobHistoryScreen() {
         data={completed}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        initialNumToRender={12}
+        maxToRenderPerBatch={8}
+        windowSize={5}
+        updateCellsBatchingPeriod={50}
+        removeClippedSubviews
         ListEmptyComponent={
           <View style={styles.empty}>
             <MaterialCommunityIcons name="clipboard-text-outline" size={48} color={colors.textMuted} />

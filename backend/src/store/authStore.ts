@@ -2,7 +2,7 @@ import { hashPassword } from '../services/password.js';
 import { prisma } from '../lib/prisma.js';
 import type { Role as PrismaRole } from '@prisma/client';
 
-export type Role = 'user' | 'mechanic' | 'mechanic_tow' | 'car_rental' | 'admin';
+export type Role = 'user' | 'mechanic' | 'mechanic_tow' | 'car_rental' | 'insurance' | 'admin';
 
 export interface UserPayload {
   id: string;

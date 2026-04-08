@@ -1,531 +1,10 @@
+import arTranslations from './locales/ar.json';
+
 export type Locale = 'en' | 'ar';
 
-export type StringKey =
-  | 'app.name'
-  | 'home.greeting'
-  | 'home.subtitle'
-  | 'home.servicesTitle'
-  | 'home.servicesSubtitle'
-  | 'home.services.mechanic.title'
-  | 'home.services.mechanic.subtitle'
-  | 'home.services.mechanic.meta'
-  | 'home.services.tow.title'
-  | 'home.services.tow.subtitle'
-  | 'home.services.tow.meta'
-  | 'home.services.rental.title'
-  | 'home.services.rental.subtitle'
-  | 'home.services.rental.meta'
-  | 'home.languageToggle'
-  | 'auth.login.title'
-  | 'auth.login.cta'
-  | 'auth.login.placeholder.email'
-  | 'auth.login.placeholder.password'
-  | 'common.notImplemented'
-  | 'common.comingSoon'
-  | 'common.loading'
-  | 'common.error'
-  | 'home.title'
-  | 'home.welcome'
-  | 'error.network'
-  | 'error.timeout'
-  | 'error.server'
-  | 'error.unknown'
-  | 'home.toastExample'
-  | 'home.action.toast'
-  | 'home.action.loader'
-  | 'home.action.openMap'
-  | 'common.ok'
-  | 'common.cancel'
-  | 'common.retry'
-  | 'common.ok'
-  | 'errors.unknown'
-  | 'auth.saved.title'
-  | 'auth.saved.lastLogin'
-  | 'auth.saved.lastRegister'
-  | 'auth.register.title'
-  | 'auth.register.cta'
-  | 'auth.register.placeholder.name'
-  | 'auth.welcome.subtitle'
-  | 'auth.login.subtitle'
-  | 'auth.register.subtitle'
-  | 'auth.login.forgot'
-  | 'auth.login.forgotComingSoon'
-  | 'auth.noAccount'
-  | 'auth.hasAccount'
-  | 'auth.error.required'
-  | 'auth.error.requiredAll'
-  | 'auth.error.generic'
-  | 'auth.logout'
-  | 'auth.login.success'
-  | 'auth.register.success'
-  | 'profile.title'
-  | 'profile.name'
-  | 'profile.email'
-  | 'profile.role'
-  | 'profile.myServices'
-  | 'profile.addService'
-  | 'profile.removeService'
-  | 'profile.rating'
-  | 'profile.status'
-  | 'request.title'
-  | 'request.subtitle'
-  | 'request.serviceType'
-  | 'request.createCta'
-  | 'request.invalidParams'
-  | 'request.currentTitle'
-  | 'request.none'
-  | 'request.creating'
-  | 'request.loading'
-  | 'request.status'
-  | 'request.historyTitle'
-  | 'request.noHistory'
-  | 'request.status.new'
-  | 'request.status.pending'
-  | 'request.status.accepted'
-  | 'request.status.rejected'
-  | 'request.status.inProgress'
-  | 'request.status.on_the_way'
-  | 'request.status.completed'
-  | 'request.status.cancelled'
-  | 'request.cancelRequest'
-  | 'request.markComplete'
-  | 'request.customer'
-  | 'request.eta'
-  | 'request.etaMinutes'
-  | 'request.trackBelow'
-  | 'request.sentTitle'
-  | 'request.types.mechanic'
-  | 'request.types.tow'
-  | 'request.types.rental'
-  | 'request.types.battery'
-  | 'request.types.tire'
-  | 'request.types.oil_change'
-  | 'request.location'
-  | 'request.preferredTime'
-  | 'request.preferredTimePlaceholder'
-  | 'request.nearestProvider'
-  | 'request.confirmRequest'
-  | 'request.requestNow'
-  | 'request.locationRequired'
-  | 'request.serviceTypeFilterPlaceholder'
-  | 'common.optional'
-  | 'request.apiUnavailable'
-  | 'request.confirmationTitle'
-  | 'request.serviceDescription'
-  | 'request.serviceDescriptionPlaceholder'
-  | 'request.suggestedProviders'
-  | 'services.battery'
-  | 'services.tire'
-  | 'services.oilChange'
-  | 'common.currency'
-  | 'request.submitRating'
-  | 'request.ratingSubmitted'
-  | 'request.filterAll'
-  | 'request.filterInProgress'
-  | 'request.filterCompleted'
-  | 'request.filterCancelled'
-  | 'request.trackOnMap'
-  | 'request.rateProvider'
-  | 'request.cancelRequest'
-  | 'customerDashboard.newRequestCta'
-  | 'customerDashboard.activeRequests'
-  | 'customerDashboard.viewAllRequests'
-  | 'customerDashboard.offersTitle'
-  | 'customerDashboard.offersSubtitle'
-  | 'map.title'
-  | 'map.incomingRequests'
-  | 'map.nearest'
-  | 'map.noProviders'
-  | 'map.availableProviders'
-  | 'map.cta.start'
-  | 'auth.getStarted'
-  | 'auth.tagline'
-  | 'splash.tagline1'
-  | 'splash.tagline2'
-  | 'splash.tagline3'
-  | 'splash.tagline4'
-  | 'onboarding.mechanic.title'
-  | 'onboarding.mechanic.subtitle'
-  | 'onboarding.tow.title'
-  | 'onboarding.tow.subtitle'
-  | 'onboarding.rental.title'
-  | 'onboarding.rental.subtitle'
-  | 'onboarding.cta.next'
-  | 'onboarding.cta.skip'
-  | 'onboarding.cta.getStarted'
-  | 'welcome.headline'
-  | 'welcome.subtitle'
-  | 'welcome.signUp'
-  | 'welcome.login'
-  | 'welcome.registerAsProvider'
-  | 'welcome.continueAsGuest'
-  | 'nav.home'
-  | 'nav.chat'
-  | 'chat.placeholder'
-  | 'nav.notifications'
-  | 'notifications.justNow'
-  | 'notifications.minAgo'
-  | 'notifications.hoursAgo'
-  | 'notifications.yesterday'
-  | 'notifications.empty'
-  | 'notifications.prefs.title'
-  | 'notifications.prefs.newRequests'
-  | 'notifications.prefs.statusUpdates'
-  | 'notifications.prefs.completionAndRating'
-  | 'notification.toast.requestAccepted'
-  | 'notification.toast.requestRejected'
-  | 'notification.toast.providerArrived'
-  | 'notification.toast.inProgress'
-  | 'notification.toast.serviceCompleted'
-  | 'notification.toast.newRequest'
-  | 'notification.toast.requestCompleted'
-  | 'notification.toast.requestRejectedProvider'
-  | 'nav.profile'
-  | 'nav.settings'
-  | 'settings.appearance'
-  | 'customer.liveTracking'
-  | 'customer.liveTrackingTitle'
-  | 'customer.liveTrackingSubtitle'
-  | 'customer.ratings'
-  | 'rating.overall'
-  | 'rating.speed'
-  | 'rating.quality'
-  | 'rating.professionalism'
-  | 'rating.commentOptional'
-  | 'rating.commentPlaceholder'
-  | 'rating.submit'
-  | 'rating.thanksTitle'
-  | 'rating.thanksSubtitle'
-  | 'rating.backToRequests'
-  | 'rating.rateRequest'
-  | 'rating.forProvider'
-  | 'rating.rateNowNotification'
-  | 'rating.receivedTitle'
-  | 'rating.noRatingsYet'
-  | 'rating.averageRating'
-  | 'common.sending'
-  | 'customer.ratingsEmpty'
-  | 'customer.ratingsEmptySubtitle'
-  | 'customer.payment'
-  | 'customer.addPaymentMethod'
-  | 'customer.paymentHint'
-  | 'customer.favorites'
-  | 'customer.favoritesEmpty'
-  | 'customer.favoritesEmptySubtitle'
-  | 'customer.helpSupport'
-  | 'customer.faq'
-  | 'customer.faqComingSoon'
-  | 'customer.contactUs'
-  | 'tow.requests'
-  | 'tow.jobHistory'
-  | 'tow.settings'
-  | 'rental.carList'
-  | 'rental.bookings'
-  | 'rental.history'
-  | 'rental.settings'
-  | 'admin.reports'
-  | 'admin.systemSettings'
-  | 'home.startJourney'
-  | 'home.heroTitle'
-  | 'home.pickupLabel'
-  | 'home.serviceTypeLabel'
-  | 'home.ctaSeePrices'
-  | 'home.pickupPlaceholder'
-  | 'home.destinationPlaceholder'
-  | 'home.nearestLocations'
-  | 'home.savedPlaces'
-  | 'home.nearbyRiders'
-  | 'auth.welcomeHeadline'
-  | 'auth.signIn'
-  | 'auth.createAccount'
-  | 'auth.welcomeBack'
-  | 'auth.loginToAccount'
-  | 'auth.createNewAccount'
-  | 'auth.rememberMe'
-  | 'auth.orContinueWith'
-  | 'auth.signUp'
-  | 'mechanic.dashboard.title'
-  | 'tow.dashboard.title'
-  | 'rental.dashboard.title'
-  | 'map.filter.all'
-  | 'map.filter.mechanic'
-  | 'map.filter.tow'
-  | 'map.filter.rental'
-  | 'map.legend.available'
-  | 'map.legend.busy'
-  | 'map.legend.offline'
-  | 'map.legend.you'
-  | 'map.legend.mechanic'
-  | 'map.legend.tow'
-  | 'map.legend.rental'
-  | 'map.searchPlaceholder'
-  | 'map.searchHerePlaceholder'
-  | 'map.useCurrentLocation'
-  | 'map.requestService'
-  | 'map.createRequest'
-  | 'map.onlyCustomersCanRequest'
-  | 'map.backToList'
-  | 'map.myLocation'
-  | 'map.away'
-  | 'map.tapForDetails'
-  | 'map.placeholderNoKey'
-  | 'map.placeholderLoadError'
-  | 'map.openMap'
-  | 'map.availability'
-  | 'map.status.available'
-  | 'map.status.busy'
-  | 'map.status.onTheWay'
-  | 'map.status.offline'
-  | 'map.viewProfile'
-  | 'map.ratingStars'
-  | 'map.locationDeniedTitle'
-  | 'map.locationDeniedMessage'
-  | 'map.locationEnableInstructions'
-  | 'map.noProvidersSubtitle'
-  | 'map.noRequestsYet'
-  | 'map.noRequestsSubtitle'
-  | 'map.openSettings'
-  | 'map.loadingProviders'
-  | 'map.showingCachedData'
-  | 'map.gettingLocation'
-  | 'map.voiceSearch'
-  | 'map.webNotSupported'
-  | 'map.webMapLoadFailed'
-  | 'map.nearbyProvidersSection'
-  | 'map.tapMarkerHint'
-  | 'map.mapLoading'
-  | 'providersPage.title'
-  | 'providersPage.viewAll'
-  | 'providersPage.filterAll'
-  | 'providersPage.filterAvailable'
-  | 'providersPage.filterBusy'
-  | 'providersPage.filterOffline'
-  | 'providerReg.title'
-  | 'providerReg.subtitle'
-  | 'providerReg.typeMechanic'
-  | 'providerReg.typeTow'
-  | 'providerReg.typeRental'
-  | 'providerReg.fullName'
-  | 'providerReg.phone'
-  | 'providerReg.email'
-  | 'providerReg.password'
-  | 'providerReg.photosOptional'
-  | 'providerReg.workshopAddress'
-  | 'providerReg.serviceTypes'
-  | 'providerReg.workingHours'
-  | 'providerReg.currentLocation'
-  | 'providerReg.vehicleTypes'
-  | 'providerReg.carTypes'
-  | 'providerReg.carsCount'
-  | 'providerReg.rentPerHour'
-  | 'providerReg.rentPerDay'
-  | 'providerReg.availability'
-  | 'providerReg.available'
-  | 'providerReg.unavailable'
-  | 'providerReg.statusSubOn'
-  | 'providerReg.statusSubOff'
-  | 'providerReg.requestMode'
-  | 'providerReg.autoAccept'
-  | 'providerReg.manualAccept'
-  | 'providerReg.currentRequests'
-  | 'providerReg.accept'
-  | 'providerReg.decline'
-  | 'providerReg.notifications'
-  | 'providerReg.notificationsHint'
-  | 'providerReg.submit'
-  | 'providerReg.phoneInvalid'
-  | 'providerReg.gpsButton'
-  | 'providerReg.workingHoursFrom'
-  | 'providerReg.workingHoursTo'
-  | 'providerReg.addPhoto'
-  | 'providerReg.serviceMaintenance'
-  | 'providerReg.serviceElectric'
-  | 'providerReg.serviceOilChange'
-  | 'providerReg.serviceTires'
-  | 'providerReg.serviceEngine'
-  | 'providerReg.serviceBrakes'
-  | 'providerReg.vehicleCar'
-  | 'providerReg.vehicleTruck'
-  | 'providerReg.vehicleSuv'
-  | 'providerReg.vehicleMotorcycle'
-  | 'providerReg.carTypeSedan'
-  | 'providerReg.carTypeSuv'
-  | 'providerReg.carTypeHatchback'
-  | 'providerDashboard.headerTitle'
-  | 'providerDashboard.notifications'
-  | 'providerDashboard.logout'
-  | 'providerDashboard.sidebar.dashboard'
-  | 'providerDashboard.sidebar.incoming'
-  | 'providerDashboard.sidebar.inProgress'
-  | 'providerDashboard.sidebar.history'
-  | 'providerDashboard.sidebar.map'
-  | 'providerDashboard.sidebar.statistics'
-  | 'providerDashboard.sidebar.profile'
-  | 'providerDashboard.sidebar.help'
-  | 'providerDashboard.sidebar.requests'
-  | 'providerDashboard.newRequests'
-  | 'providerDashboard.inProgress'
-  | 'providerDashboard.completed'
-  | 'providerDashboard.availability'
-  | 'providerDashboard.statsToday'
-  | 'providerDashboard.statsWeek'
-  | 'providerDashboard.statsMonth'
-  | 'providerDashboard.totalEarnings'
-  | 'providerDashboard.acceptRate'
-  | 'providerDashboard.declineRate'
-  | 'providerDashboard.viewOnMap'
-  | 'providerDashboard.mapSectionDesc'
-  | 'providerDashboard.rating'
-  | 'providerDashboard.helpTitle'
-  | 'providerDashboard.helpDesc'
-  | 'providerDashboard.noNewRequests'
-  | 'providerDashboard.noInProgress'
-  | 'providerDashboard.noCompleted'
-  | 'mechanic.stats.jobsToday'
-  | 'mechanic.stats.onTheWay'
-  | 'mechanic.stats.rating'
-  | 'mechanic.activeRequests'
-  | 'mechanic.accept'
-  | 'mechanic.decline'
-  | 'mechanic.filterAll'
-  | 'mechanic.filterNew'
-  | 'mechanic.filterOnTheWay'
-  | 'mechanic.filterInGarage'
-  | 'tow.stats.active'
-  | 'tow.stats.waiting'
-  | 'tow.stats.fleet'
-  | 'tow.todayJobs'
-  | 'tow.filterAll'
-  | 'tow.filterActive'
-  | 'tow.filterQueued'
-  | 'tow.requestStatus'
-  | 'tow.timeline.requested'
-  | 'tow.timeline.assigned'
-  | 'tow.timeline.onWay'
-  | 'tow.timeline.completed'
-  | 'rental.stats.total'
-  | 'rental.stats.available'
-  | 'rental.stats.rented'
-  | 'rental.fleetOverview'
-  | 'rental.upcomingBookings'
-  | 'rental.available'
-  | 'rental.rented'
-  | 'rental.maintenance'
-  | 'rental.reserved'
-  | 'rental.bookNow'
-  | 'rental.bookingStarted'
-  | 'admin.dashboard.title'
-  | 'admin.stats.users'
-  | 'admin.stats.providers'
-  | 'admin.stats.requests'
-  | 'admin.stats.revenue'
-  | 'admin.stats.activeProviders'
-  | 'admin.stats.activeRequests'
-  | 'admin.stats.completedServices'
-  | 'admin.section.mechanics'
-  | 'admin.section.tow'
-  | 'admin.section.rental'
-  | 'admin.section.providerList'
-  | 'admin.viewList'
-  | 'mechanic.whoRequestedMe'
-  | 'mechanic.myServices'
-  | 'mechanic.mySkills'
-  | 'tow.whoRequestedMe'
-  | 'tow.myServices'
-  | 'tow.mySkills'
-  | 'rental.whoRequestedMe'
-  | 'rental.myServices'
-  | 'rental.mySkills'
-  | 'admin.edit'
-  | 'admin.addVehicle'
-  | 'admin.updateStatus'
-  | 'admin.requests'
-  | 'admin.viewAllRequests'
-  | 'admin.requestsAssigned'
-  | 'admin.towingRequests'
-  | 'admin.fleetVehicles'
-  | 'admin.activeRequests'
-  | 'admin.manageUsers'
-  | 'admin.usersList'
-  | 'admin.editServices'
-  | 'admin.assignedServices'
-  | 'admin.save'
-  | 'admin.saved'
-  | 'admin.cancel'
-  | 'admin.block'
-  | 'admin.unblock'
-  | 'admin.userBlocked'
-  | 'admin.userUnblocked'
-  | 'admin.searchUsers'
-  | 'admin.filterAll'
-  | 'admin.verify'
-  | 'admin.verified'
-  | 'admin.userName'
-  | 'admin.userRole'
-  | 'admin.userStatus'
-  | 'admin.servicesMechanic'
-  | 'admin.servicesTow'
-  | 'admin.servicesRental'
-  | 'request.createdSuccess'
-  | 'request.statusUpdated'
-  | 'request.trackBelow'
-  | 'map.requestHint'
-  | 'map.call'
-  | 'map.chat'
-  | 'map.noPhone'
-  | 'profile.servicesSaved'
-  | 'mechanic.accepted'
-  | 'mechanic.declined'
-  | 'mechanic.complete'
-  | 'mechanic.completed'
-  | 'mechanic.navigate'
-  | 'mechanic.noJobs'
-  | 'mechanic.jobHistory'
-  | 'mechanic.noJobHistory'
-  | 'mechanic.viewRequestOnMap'
-  | 'tow.stats.newRequests'
-  | 'tow.stats.activeRequests'
-  | 'tow.stats.completedJobs'
-  | 'rental.stats.newRequests'
-  | 'rental.stats.activeRequests'
-  | 'rental.stats.completedJobs'
-  | 'tow.viewRequestOnMap'
-  | 'rental.viewRequestOnMap'
-  | 'tow.noJobs'
-  | 'tow.declined'
-  | 'tow.accepted'
-  | 'rental.noVehicles'
-  | 'rental.addCarTitle'
-  | 'rental.editCarTitle'
-  | 'rental.manageCarSubtitle'
-  | 'rental.carNamePlaceholder'
-  | 'rental.carModelPlaceholder'
-  | 'rental.yearPlaceholder'
-  | 'rental.pricePlaceholder'
-  | 'rental.descriptionPlaceholder'
-  | 'rental.photoUrlPlaceholder'
-  | 'rental.carImageLabel'
-  | 'rental.transmissionLabel'
-  | 'rental.transmissionAutomatic'
-  | 'rental.transmissionManual'
-  | 'rental.seatsLabel'
-  | 'rental.seatsPlaceholder'
-  | 'rental.deleteCarTitle'
-  | 'rental.deleteCarConfirm'
-  | 'rental.missingRequiredFields'
-  | 'rental.pricePerDay'
-  | 'rental.unnamedCar'
-  | 'rental.addCarHint'
-  | 'common.save'
-  | 'common.delete'
-  | 'common.missingFieldsTitle'
-  | 'home.requestHelpNow'
-  | 'request.confirmHint'
-  | 'request.sentTitle'
-  | 'map.confirmOnNextScreen'
-  | 'auth.emailInvalid';
+export type StringKey = string;
 
-export const STRINGS: Record<Locale, Record<StringKey, string>> = {
+export const STRINGS: Record<Locale, Record<string, string>> = {
   en: {
     'app.name': 'Roadly',
     'home.greeting': 'Welcome to Roadly',
@@ -549,6 +28,7 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'common.notImplemented': 'Not implemented yet.',
     'common.comingSoon': 'Coming soon.',
     'common.loading': 'Loading…',
+    'common.loadingList': 'Fetching your list…',
     'common.error': 'Something went wrong.',
     'home.title': 'Home',
     'home.welcome': 'Home',
@@ -556,6 +36,7 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'error.timeout': 'Request timed out.',
     'error.server': 'Server error. Try again later.',
     'error.unknown': 'Something went wrong.',
+    'error.screenTitle': "Couldn't load this content",
     'home.toastExample': 'Global toast is working.',
     'home.action.toast': 'Show toast',
     'home.action.loader': 'Show loader',
@@ -563,7 +44,7 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'common.ok': 'OK',
     'common.cancel': 'Cancel',
     'common.retry': 'Retry',
-    'common.ok': 'OK',
+    'common.back': 'Back',
     'errors.unknown': 'Something went wrong. Please try again.',
     'auth.saved.title': 'Your saved info',
     'auth.saved.lastLogin': 'Last sign-in',
@@ -626,6 +107,7 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'request.types.battery': 'Battery',
     'request.types.tire': 'Tire',
     'request.types.oil_change': 'Oil change',
+    'request.types.insurance': 'تأمين',
     'request.location': 'Location',
     'request.preferredTime': 'Preferred time',
     'request.preferredTimePlaceholder': 'e.g. ASAP or 2:00 PM',
@@ -636,6 +118,9 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'request.serviceTypeFilterPlaceholder': 'Filter service type…',
     'common.optional': 'optional',
     'request.apiUnavailable': 'Service temporarily unavailable. Using cached providers.',
+    'request.offlineQueued': 'Request saved offline. It will be sent automatically once internet is back.',
+    'request.offlineCannotUpdate': 'You are offline. Try again when connection is restored.',
+    'request.offlineQueuedHint': 'You are offline. The request will be queued and sent automatically when online.',
     'request.confirmationTitle': 'Request sent',
     'request.serviceDescription': 'Service description',
     'request.serviceDescriptionPlaceholder': 'e.g. flat tire, battery jump',
@@ -652,7 +137,6 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'request.filterCancelled': 'Cancelled',
     'request.trackOnMap': 'Track on map',
     'request.rateProvider': 'Rate',
-    'request.cancelRequest': 'Cancel request',
     'customerDashboard.newRequestCta': 'New service request',
     'customerDashboard.activeRequests': 'My requests',
     'customerDashboard.viewAllRequests': 'View all',
@@ -685,8 +169,10 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'welcome.subtitle': 'Fast, easy, and secure car services at your fingertips.',
     'welcome.signUp': 'Sign Up',
     'welcome.login': 'Login',
+    'welcome.registerAsProvider': 'Register as provider',
     'welcome.continueAsGuest': 'Continue as Guest',
     'nav.home': 'Home',
+    'nav.requests': 'Requests',
     'nav.chat': 'Chat',
     'chat.placeholder': 'Type a message…',
     'nav.notifications': 'Notifications',
@@ -695,6 +181,7 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'notifications.hoursAgo': 'hours ago',
     'notifications.yesterday': 'Yesterday',
     'notifications.empty': 'No notifications yet.',
+    'notifications.emptySubtitle': 'Order updates and messages will appear here.',
     'notifications.prefs.title': 'Notification types',
     'notifications.prefs.newRequests': 'New requests & updates',
     'notifications.prefs.statusUpdates': 'Status updates (accepted, rejected, on the way)',
@@ -735,13 +222,25 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'customer.payment': 'Payment',
     'customer.addPaymentMethod': 'Add payment method',
     'customer.paymentHint': 'Add a card to pay for services quickly.',
+    'customer.addPaymentComingSoon': 'Payments are not included in MVP yet.',
     'customer.favorites': 'Favorites',
     'customer.favoritesEmpty': 'No favorites yet',
     'customer.favoritesEmptySubtitle': 'Save providers from the map to request them faster.',
+    'customer.favoritesComingSoon': 'Favorites are not included in MVP yet.',
     'customer.helpSupport': 'Help & Support',
     'customer.faq': 'FAQ',
     'customer.faqComingSoon': 'FAQ coming soon.',
     'customer.contactUs': 'Contact us',
+    'mvp.notIncluded': 'Not included in MVP',
+    'mvp.paymentsNotIncluded': 'Payments are out of MVP scope for this release.',
+    'mvp.favoritesNotIncluded': 'Favorites are out of MVP scope for this release.',
+    'mvp.supportNotIncluded': 'Full support center is out of MVP scope for this release.',
+    'mvp.comingSoon.badge': 'Coming soon',
+    'mvp.comingSoon.title': 'This feature is in development',
+    'mvp.comingSoon.description': 'We are working on launching it soon.',
+    'mvp.comingSoon.mainActionPreview': 'Will be available here soon',
+    'mvp.comingSoon.notifyCta': 'Notify me when available',
+    'mvp.comingSoon.notifyThanks': 'Thanks! We will let you know when it is ready.',
     'tow.requests': 'Requests',
     'tow.jobHistory': 'Job history',
     'tow.settings': 'Settings',
@@ -769,6 +268,10 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'map.filter.mechanic': 'Mechanics',
     'map.filter.tow': 'Tow Trucks',
     'map.filter.rental': 'Car Rentals',
+    'map.filter.insurance': 'تأمين',
+    'map.filtersTitle': 'التصفية',
+    'map.providerSheetTitle': 'مزود الخدمة',
+    'a11y.closeProviderSheet': 'إغلاق تفاصيل مزود الخدمة',
     'map.legend.available': 'Available',
     'map.legend.busy': 'Busy',
     'map.legend.offline': 'Offline',
@@ -785,6 +288,8 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'map.backToList': 'Back to list',
     'map.myLocation': 'My location',
     'map.away': 'away',
+    'map.distanceMeters': 'م',
+    'map.distanceKm': 'كم',
     'map.tapForDetails': 'Tap to open card',
     'map.placeholderNoKey': 'Add EXPO_PUBLIC_GOOGLE_MAPS_KEY in .env to show the map',
     'map.placeholderLoadError': 'Map could not load. Check your key and connection.',
@@ -806,6 +311,7 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'map.voiceSearch': 'Voice search',
     'map.webNotSupported': 'Native map is available on mobile only. Use the in-app map on web.',
     'map.webMapLoadFailed': 'Map could not load (e.g. blocked by tracking prevention). Try disabling it for this site or use another browser.',
+    'map.offlineCannotRequest': 'You are offline. Cannot send request right now.',
     'map.nearbyProvidersSection': 'Nearby providers',
     'map.tapMarkerHint': 'Tap a marker on the map to see details.',
     'map.mapLoading': 'Loading map…',
@@ -931,6 +437,7 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'rental.bookNow': 'Book now',
     'rental.bookingStarted': 'Booking started. Confirm on next step.',
     'admin.dashboard.title': 'Admin dashboard',
+    'admin.chart.requestsWeek': 'Requests (last 7 days)',
     'admin.stats.users': 'Users',
     'admin.stats.providers': 'Providers',
     'admin.stats.requests': 'Requests',
@@ -984,7 +491,6 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'admin.servicesRental': 'Rental services',
     'request.createdSuccess': 'Request sent. A provider will be notified.',
     'request.statusUpdated': 'Status updated.',
-    'request.trackBelow': 'Track your request status below.',
     'map.requestHint': 'Tap Request service to confirm and get help.',
     'map.call': 'Call',
     'map.chat': 'Chat',
@@ -1039,544 +545,49 @@ export const STRINGS: Record<Locale, Record<StringKey, string>> = {
     'common.missingFieldsTitle': 'Missing information',
     'home.requestHelpNow': 'Request help now',
     'request.confirmHint': 'Tap the button below to send your request. A provider will be notified.',
-    'request.sentTitle': 'Request sent',
     'map.confirmOnNextScreen': 'Confirm and send your request on the next screen.',
     'auth.emailInvalid': 'Please enter a valid email address.',
+    'insurance.dashboard.title': 'Insurance dashboard',
+    'insurance.dashboard.subtitle': 'Manage insurance requests and plans.',
+    'insurance.dashboard.plansCta': 'View insurance plans',
+    'insurance.dashboard.requestsCta': 'Manage requests',
+    'insurance.dashboard.mapCta': 'Map',
+    'insurance.backToDashboard': 'Back to insurance dashboard',
+    'insurance.plans.title': 'Insurance plans',
+    'insurance.plans.subtitle': 'Compare coverage and choose what fits you.',
+    'insurance.plans.requestCta': 'Request insurance now',
+    'insurance.plan.perYear': 'JOD / year',
+    'insurance.plan.coverageLabel': 'Coverage',
+    'insurance.requests.title': 'Insurance requests',
+    'insurance.requests.empty': 'No insurance requests yet.',
+    'insurance.requests.subtitle': 'New customer requests will appear here.',
+    'notFound.title': 'Page not found',
+    'notFound.subtitle': 'The page you requested does not exist.',
+    'notFound.goHome': 'Home',
+    'providerReg.typeInsurance': 'Insurance',
+    'providerReg.insuranceOfficeTitle': 'Office details',
+    'auth.password.show': 'Show password',
+    'auth.password.hide': 'Hide password',
+    'auth.mockRolesTitle': 'Role testing (mock data)',
+    'settings.account.profile': 'Account details',
+    'settings.account.profileHint': 'View and edit information',
+    'settings.account.security': 'Security',
+    'settings.account.securityHint': 'Password and sessions',
+    'settings.language': 'Language',
+    'settings.languageValue': 'Arabic / English',
+    'settings.notifications': 'Notifications',
+    'settings.vehicle': 'My vehicle',
+    'settings.vehicleValue': 'Toyota Corolla 2020',
+    'settings.preferredService': 'Preferred service',
+    'settings.preferredServiceValue': 'Mechanic + Tow',
+    'settings.theme.light': 'Light',
+    'settings.theme.dark': 'Dark',
+    'settings.theme.system': 'System',
+    'settings.guestName': 'Roadly Guest',
+    'settings.guestEmail': 'guest@roadly.app',
+    'settings.guestRole': 'guest',
+    'settings.vehicleServiceSection': 'Vehicle & Service',
+    'settings.appSection': 'App',
   },
-  ar: {
-    'app.name': 'Roadly',
-    'home.greeting': 'أهلاً بك في Roadly',
-    'home.subtitle': 'اختر الخدمة للبدء الآن.',
-    'home.servicesTitle': 'الخدمات',
-    'home.servicesSubtitle': 'مساعدة فورية لسيارتك.',
-    'home.services.mechanic.title': 'ميكانيكي',
-    'home.services.mechanic.subtitle': 'أقرب ميكانيكي على الطريق.',
-    'home.services.mechanic.meta': '24 مزوداً قريباً',
-    'home.services.tow.title': 'ونش / مساعدة طريق',
-    'home.services.tow.subtitle': 'سيارات سحب ومساعدة على الطريق.',
-    'home.services.tow.meta': '8 سيارات ونش متاحة',
-    'home.services.rental.title': 'تأجير سيارات',
-    'home.services.rental.subtitle': 'ابحث عن مكاتب تأجير قريبة.',
-    'home.services.rental.meta': '12 سيارة متاحة اليوم',
-    'home.languageToggle': 'EN',
-    'auth.login.title': 'تسجيل الدخول',
-    'auth.login.cta': 'متابعة',
-    'auth.login.placeholder.email': 'email@example.com',
-    'auth.login.placeholder.password': 'كلمة المرور',
-    'common.notImplemented': 'غير متوفر حالياً.',
-    'common.comingSoon': 'قريباً.',
-    'common.loading': 'جاري التحميل…',
-    'common.error': 'حدث خطأ.',
-    'home.title': 'الرئيسية',
-    'home.welcome': 'الرئيسية',
-    'error.network': 'خطأ في الشبكة. يرجى التحقق من اتصال الإنترنت أو المحاولة مرة أخرى بعد قليل.',
-    'error.timeout': 'انتهت مهلة الطلب.',
-    'error.server': 'خطأ في الخادم. حاول لاحقاً.',
-    'error.unknown': 'حدث خطأ ما.',
-    'home.toastExample': 'نظام التنبيهات يعمل.',
-    'home.action.toast': 'إظهار تنبيه',
-    'home.action.loader': 'إظهار تحميل',
-    'home.action.openMap': 'الخريطة',
-    'common.ok': 'حسناً',
-    'common.cancel': 'إلغاء',
-    'common.retry': 'إعادة المحاولة',
-    'common.ok': 'موافق',
-    'errors.unknown': 'حدث خطأ. جرّب مرة أخرى.',
-    'auth.saved.title': 'معلوماتك المحفوظة',
-    'auth.saved.lastLogin': 'آخر تسجيل دخول',
-    'auth.saved.lastRegister': 'آخر تسجيل',
-    'auth.register.title': 'إنشاء حساب',
-    'auth.register.cta': 'تسجيل',
-    'auth.register.placeholder.name': 'الاسم الكامل',
-    'auth.welcome.subtitle': 'ابحث عن ميكانيكي وونش وتأجير سيارات قريب منك.',
-    'auth.login.subtitle': 'استخدم حسابك للمتابعة.',
-    'auth.register.subtitle': 'أنشئ حساباً للبدء.',
-    'auth.login.forgot': 'نسيت كلمة المرور؟',
-    'auth.login.forgotComingSoon': 'استعادة كلمة المرور قريباً.',
-    'auth.noAccount': 'ليس لديك حساب؟',
-    'auth.hasAccount': 'لديك حساب بالفعل؟',
-    'auth.error.required': 'يرجى إدخال البريد وكلمة المرور.',
-    'auth.error.requiredAll': 'يرجى تعبئة جميع الحقول.',
-    'auth.error.generic': 'حدث خطأ. يرجى المحاولة مرة أخرى.',
-    'auth.login.success': 'تم تسجيل الدخول بنجاح.',
-    'auth.register.success': 'تم إنشاء الحساب بنجاح.',
-    'auth.logout': 'تسجيل الخروج',
-    'profile.title': 'الملف الشخصي',
-    'profile.name': 'الاسم',
-    'profile.email': 'البريد الإلكتروني',
-    'profile.role': 'الدور',
-    'profile.myServices': 'خدماتي',
-    'profile.addService': 'إضافة خدمة',
-    'profile.removeService': 'إزالة',
-    'profile.rating': 'التقييم',
-    'profile.status': 'الحالة',
-    'request.title': 'طلب خدمة',
-    'request.subtitle': 'أكد طلبك وتتبع حالته.',
-    'request.serviceType': 'نوع الخدمة',
-    'request.createCta': 'إنشاء طلب',
-    'request.invalidParams': 'طلب غير صالح. نوع الخدمة مفقود أو غير صحيح.',
-    'request.currentTitle': 'الطلب الحالي',
-    'request.none': 'لا يوجد طلب نشط. أنشئ طلباً للحصول على المساعدة.',
-    'request.creating': 'جاري إنشاء الطلب…',
-    'request.loading': 'جاري تحميل حالة الطلب…',
-    'request.status': 'الحالة',
-    'request.historyTitle': 'طلباتي',
-    'request.noHistory': 'لا توجد طلبات بعد. أنشئ طلباً من الخريطة.',
-    'request.status.new': 'جديد',
-    'request.status.pending': 'قيد الانتظار',
-    'request.status.accepted': 'مقبول',
-    'request.status.rejected': 'مرفوض',
-    'request.status.inProgress': 'جاري التنفيذ',
-    'request.status.on_the_way': 'في الطريق',
-    'request.status.completed': 'مكتمل',
-    'request.status.cancelled': 'ملغي',
-    'request.cancelRequest': 'إلغاء الطلب',
-    'request.markComplete': 'تم التنفيذ',
-    'request.customer': 'العميل',
-    'request.eta': 'الوصول المتوقع',
-    'request.etaMinutes': 'د',
-    'request.trackBelow': 'تتبع طلبك أدناه.',
-    'request.sentTitle': 'تم إرسال الطلب.',
-    'request.types.mechanic': 'ميكانيكي',
-    'request.types.tow': 'ونش',
-    'request.types.rental': 'تأجير',
-    'request.types.battery': 'بطارية',
-    'request.types.tire': 'إطارات',
-    'request.types.oil_change': 'تغيير زيت',
-    'request.location': 'الموقع',
-    'request.preferredTime': 'الوقت المفضل',
-    'request.preferredTimePlaceholder': 'مثلاً: في أقرب وقت أو ٢:٠٠ م',
-    'request.nearestProvider': 'أقرب مزود',
-    'request.confirmRequest': 'تأكيد الطلب',
-    'request.requestNow': 'اطلب الآن',
-    'request.locationRequired': 'الموقع مطلوب لإنشاء الطلب.',
-    'request.serviceTypeFilterPlaceholder': 'تصفية نوع الخدمة…',
-    'common.optional': 'اختياري',
-    'request.apiUnavailable': 'الخدمة غير متاحة مؤقتاً. جارٍ استخدام قائمة مخزنة.',
-    'request.confirmationTitle': 'تم إرسال الطلب',
-    'request.serviceDescription': 'وصف الخدمة',
-    'request.serviceDescriptionPlaceholder': 'مثلاً: إطار مفلوق، شحن بطارية',
-    'request.suggestedProviders': 'مقترح المزودين (الأقرب أولاً)',
-    'services.battery': 'خدمة البطارية',
-    'services.tire': 'خدمة الإطارات',
-    'services.oilChange': 'تغيير الزيت',
-    'common.currency': 'USD',
-    'request.submitRating': 'إرسال التقييم',
-    'request.ratingSubmitted': 'شكراً لتقييمك!',
-    'request.filterAll': 'الكل',
-    'request.filterInProgress': 'جاري التنفيذ',
-    'request.filterCompleted': 'مكتمل',
-    'request.filterCancelled': 'ملغي',
-    'request.trackOnMap': 'تتبع على الخريطة',
-    'request.rateProvider': 'تقييم',
-    'request.cancelRequest': 'إلغاء الطلب',
-    'customerDashboard.newRequestCta': 'طلب خدمة جديد',
-    'customerDashboard.activeRequests': 'طلباتي',
-    'customerDashboard.viewAllRequests': 'عرض الكل',
-    'customerDashboard.offersTitle': 'العروض والخصومات',
-    'customerDashboard.offersSubtitle': 'اطّلع على العروض المتاحة لخدمتك القادمة.',
-    'map.title': 'الحصول على الاتجاه',
-    'map.incomingRequests': 'الطلبات الواردة',
-    'map.nearest': 'أقرب مزود',
-    'map.noProviders': 'لا يوجد مزودون قريبون بعد.',
-    'map.availableProviders': 'المزودون المتاحون',
-    'map.cta.start': 'ابدأ',
-    'auth.getStarted': 'ابدأ',
-    'auth.tagline': 'أجر سيارتك واكسب مالاً إضافياً.',
-    'splash.tagline1': 'أفضل صديق لسيارتك، في أي وقت وأي مكان!',
-    'splash.tagline2': 'سريع. موثوق. خدمات سيارات عند الطلب.',
-    'splash.tagline3': 'من السحب إلى الصيانة، نحن معك.',
-    'splash.tagline4': 'ضغطة واحدة. مساعدة حقيقية. كل مرة.',
-    'onboarding.mechanic.title': 'اعثر على ميكانيكيين مهرة فوراً، أينما كنت!',
-    'onboarding.mechanic.subtitle': 'مشكلة في السيارة؟ نُحضر الخبراء إلى بابك!',
-    'onboarding.tow.title': 'علقت؟ ونش على بُعد ضغطة واحدة!',
-    'onboarding.tow.subtitle': 'مساعدة طرق سريعة وآمنة وموثوقة.',
-    'onboarding.rental.title': 'تحتاج سيارة؟ استأجر بسهولة خلال دقائق!',
-    'onboarding.rental.subtitle': 'اختر سيارتك وانطلق فوراً.',
-    'onboarding.cta.next': 'التالي',
-    'onboarding.cta.skip': 'تخطي',
-    'onboarding.cta.getStarted': 'ابدأ الآن',
-    'welcome.headline': 'انضم إلى آلاف السائقين وأصحاب السيارات اليوم!',
-    'welcome.subtitle': 'خدمات سيارات سريعة وسهلة وآمنة بين يديك.',
-    'welcome.signUp': 'إنشاء حساب',
-    'welcome.login': 'تسجيل الدخول',
-    'welcome.registerAsProvider': 'تسجيل كمزود خدمة',
-    'welcome.continueAsGuest': 'متابعة كزائر',
-    'nav.home': 'الرئيسية',
-    'nav.chat': 'الدردشة',
-    'chat.placeholder': 'اكتب رسالة…',
-    'nav.notifications': 'الإشعارات',
-    'notifications.justNow': 'الآن',
-    'notifications.minAgo': 'دقيقة',
-    'notifications.hoursAgo': 'ساعات',
-    'notifications.yesterday': 'أمس',
-    'notifications.empty': 'لا توجد إشعارات بعد.',
-    'notifications.prefs.title': 'أنواع الإشعارات',
-    'notifications.prefs.newRequests': 'طلبات جديدة وتحديثات',
-    'notifications.prefs.statusUpdates': 'تحديثات الحالة (قبول، رفض، في الطريق)',
-    'notifications.prefs.completionAndRating': 'إتمام الخدمة والتقييم',
-    'notification.toast.requestAccepted': 'تم قبول طلبك',
-    'notification.toast.requestRejected': 'تم رفض طلبك',
-    'notification.toast.providerArrived': 'المزود وصل',
-    'notification.toast.inProgress': 'طلبك قيد التنفيذ',
-    'notification.toast.serviceCompleted': 'تم إتمام الخدمة — قيّم المزود',
-    'notification.toast.newRequest': 'طلب خدمة جديد',
-    'notification.toast.requestCompleted': 'الطلب مكتمل',
-    'notification.toast.requestRejectedProvider': 'تم رفض الطلب',
-    'nav.profile': 'الملف',
-    'nav.settings': 'الإعدادات',
-    'customer.liveTracking': 'التتبع المباشر',
-    'customer.liveTrackingTitle': 'تتبع مزود الخدمة',
-    'customer.liveTrackingSubtitle': 'اعرض وقت الوصول وافتح الخريطة لمتابعة الرحلة.',
-    'customer.ratings': 'التقييمات',
-    'customer.ratingsEmpty': 'لا توجد تقييمات بعد',
-    'customer.ratingsEmptySubtitle': 'قيّم الخدمات المكتملة من سجل الطلبات.',
-    'rating.overall': 'التقييم العام',
-    'rating.speed': 'سرعة الاستجابة / الخدمة',
-    'rating.quality': 'جودة الخدمة',
-    'rating.professionalism': 'سلوك المزود والاحترافية',
-    'rating.commentOptional': 'ملاحظة أو تعليق (اختياري)',
-    'rating.commentPlaceholder': 'أضف ملاحظة أو تعليقاً…',
-    'rating.submit': 'إرسال التقييم',
-    'rating.thanksTitle': 'شكراً لتقييمك',
-    'rating.thanksSubtitle': 'ملاحظاتك تساعدنا على التحسين.',
-    'rating.backToRequests': 'العودة لطلباتي',
-    'rating.rateRequest': 'تقييم هذا الطلب',
-    'rating.forProvider': 'المزود',
-    'rating.rateNowNotification': 'قيم طلبك الآن',
-    'rating.receivedTitle': 'التقييمات الواردة',
-    'rating.noRatingsYet': 'لا توجد تقييمات بعد',
-    'rating.averageRating': 'متوسط التقييم',
-    'common.sending': 'جاري الإرسال…',
-    'customer.payment': 'الدفع',
-    'customer.addPaymentMethod': 'إضافة طريقة دفع',
-    'customer.paymentHint': 'أضف بطاقة للدفع بسرعة.',
-    'customer.favorites': 'المفضلة',
-    'customer.favoritesEmpty': 'لا مفضلات بعد',
-    'customer.favoritesEmptySubtitle': 'احفظ المزودين من الخريطة لطلبهم بسرعة.',
-    'customer.helpSupport': 'المساعدة والدعم',
-    'customer.faq': 'الأسئلة الشائعة',
-    'customer.faqComingSoon': 'الأسئلة الشائعة قريباً.',
-    'customer.contactUs': 'تواصل معنا',
-    'tow.requests': 'الطلبات',
-    'tow.jobHistory': 'سجل المهام',
-    'tow.settings': 'الإعدادات',
-    'rental.carList': 'قائمة السيارات',
-    'rental.bookings': 'الحجوزات',
-    'rental.history': 'سجل التأجير',
-    'rental.settings': 'الإعدادات',
-    'admin.reports': 'التقارير',
-    'admin.systemSettings': 'إعدادات النظام',
-    'admin.reportsEmpty': 'صدّر واعرض تقارير الاستخدام من هنا.',
-    'admin.systemSettingsHint': 'ضبط الخيارات العامة والإشعارات.',
-    'rental.addCar': 'إضافة سيارة',
-    'rental.noBookings': 'لا توجد طلبات حجز بعد.',
-    'rental.noHistory': 'لا يوجد سجل تأجير بعد.',
-    'settings.appearance': 'المظهر',
-    'home.startJourney': 'ابدأ رحلتك',
-    'home.heroTitle': 'اذهب لأي مكان مع Roadly',
-    'home.pickupLabel': 'موقعك الآن',
-    'home.serviceTypeLabel': 'نوع الخدمة',
-    'home.ctaSeePrices': 'عرض الخريطة',
-    'home.pickupPlaceholder': 'اختر نقطة الانطلاق',
-    'home.destinationPlaceholder': 'اختر الوجهة',
-    'home.nearestLocations': 'أقرب المواقع',
-    'home.savedPlaces': 'الأماكن المحفوظة',
-    'home.nearbyRiders': 'القريبون منك',
-    'auth.welcomeHeadline': 'أفضل تطبيق لسيارتك',
-    'auth.signIn': 'تسجيل الدخول',
-    'auth.createAccount': 'إنشاء حساب',
-    'auth.welcomeBack': 'مرحباً بعودتك',
-    'auth.loginToAccount': 'سجّل الدخول إلى حسابك',
-    'auth.createNewAccount': 'أنشئ حسابك الجديد',
-    'auth.rememberMe': 'تذكرني',
-    'auth.orContinueWith': 'أو تابع باستخدام',
-    'auth.signUp': 'إنشاء حساب',
-    'mechanic.dashboard.title': 'لوحة تحكم الميكانيكي',
-    'tow.dashboard.title': 'لوحة تحكم الونش',
-    'rental.dashboard.title': 'لوحة تحكم التأجير',
-    'map.filter.all': 'الكل',
-    'map.filter.mechanic': 'ميكانيكيون',
-    'map.filter.tow': 'ونش',
-    'map.filter.rental': 'تأجير سيارات',
-    'map.legend.available': 'متاح',
-    'map.legend.busy': 'مشغول',
-    'map.legend.offline': 'غير متصل',
-    'map.legend.you': 'أنت',
-    'map.legend.mechanic': 'ميكانيكي',
-    'map.legend.tow': 'ونش',
-    'map.legend.rental': 'تأجير سيارات',
-    'map.searchPlaceholder': 'البحث عن منطقة أو عنوان',
-    'map.searchHerePlaceholder': 'البحث هنا أو أدخل العنوان والمنطقة',
-    'map.useCurrentLocation': 'استخدم موقعي الحالي',
-    'map.requestService': 'طلب خدمة',
-    'map.createRequest': 'إنشاء طلب',
-    'map.onlyCustomersCanRequest': 'يمكن للعملاء فقط طلب الخدمات',
-    'map.backToList': 'العودة للقائمة',
-    'map.myLocation': 'موقعي',
-    'map.away': 'بعيداً',
-    'map.tapForDetails': 'اضغط لفتح البطاقة',
-    'map.placeholderNoKey': 'أضف EXPO_PUBLIC_GOOGLE_MAPS_KEY في .env لعرض الخريطة',
-    'map.placeholderLoadError': 'تعذر تحميل الخريطة. تحقق من المفتاح والاتصال.',
-    'map.openMap': 'فتح الخريطة',
-    'map.availability': 'الحالة',
-    'map.status.available': 'متاح',
-    'map.status.busy': 'مشغول',
-    'map.status.onTheWay': 'في الطريق',
-    'map.status.offline': 'غير متصل',
-    'map.viewProfile': 'عرض الملف',
-    'map.ratingStars': 'نجوم',
-    'map.locationDeniedTitle': 'الوصول إلى الموقع مطلوب',
-    'map.locationDeniedMessage': 'لعرض مزودي الخدمة القريبين وموقعك على الخريطة، يرجى السماح بالوصول إلى الموقع.',
-    'map.locationEnableInstructions': 'افتح الإعدادات → Roadly → الموقع → اختر "أثناء استخدام التطبيق" أو "دائماً". ثم عد هنا واضغط إعادة المحاولة.',
-    'map.noProvidersSubtitle': 'حاول مرة أخرى بعد قليل أو غيّر الفلاتر لعرض المزيد.',
-    'map.noRequestsYet': 'لا توجد طلبات بعد.',
-    'map.noRequestsSubtitle': 'ستظهر طلبات الخدمة الجديدة هنا.',
-    'map.openSettings': 'فتح الإعدادات',
-    'map.loadingProviders': 'جاري تحميل المزودين…',
-    'map.showingCachedData': 'عرض مواقع مزودين من الذاكرة المؤقتة.',
-    'map.gettingLocation': 'جاري تحديد موقعك…',
-    'map.voiceSearch': 'بحث صوتي',
-    'map.webNotSupported': 'الخريطة الأصلية متاحة فقط على الموبايل. استخدم الخريطة داخل التطبيق على الويب.',
-    'map.webMapLoadFailed': 'لم تُحمَّل الخريطة (مثلاً بسبب منع التتبع). جرّب تعطيله لهذا الموقع أو استخدم متصفحاً آخر.',
-    'map.nearbyProvidersSection': 'مزودون قريبون',
-    'map.tapMarkerHint': 'اضغط على علامة على الخريطة لرؤية التفاصيل.',
-    'map.mapLoading': 'جاري تحميل الخريطة…',
-    'providersPage.title': 'كل المزودين',
-    'providersPage.viewAll': 'عرض كل المزودين',
-    'providersPage.filterAll': 'الكل',
-    'providersPage.filterAvailable': 'متاحون',
-    'providersPage.filterBusy': 'مشغولون',
-    'providersPage.filterOffline': 'غير متاحين',
-    'providerReg.title': 'تسجيل مزود خدمة',
-    'providerReg.subtitle': 'سجّل كميكانيكي أو ونش أو مؤجر سيارات',
-    'providerReg.typeMechanic': 'ميكانيكي',
-    'providerReg.typeTow': 'ونش',
-    'providerReg.typeRental': 'تأجير سيارات',
-    'providerReg.fullName': 'الاسم الكامل',
-    'providerReg.phone': 'رقم الهاتف',
-    'providerReg.email': 'البريد الإلكتروني',
-    'providerReg.password': 'كلمة المرور',
-    'providerReg.photosOptional': 'صور (اختياري)',
-    'providerReg.workshopAddress': 'عنوان الورشة / الموقع',
-    'providerReg.serviceTypes': 'نوع الخدمات',
-    'providerReg.workingHours': 'ساعات العمل',
-    'providerReg.currentLocation': 'موقع العمل الحالي (GPS)',
-    'providerReg.vehicleTypes': 'أنواع المركبات التي يمكن سحبها',
-    'providerReg.carTypes': 'أنواع السيارات المتاحة',
-    'providerReg.carsCount': 'عدد السيارات المتاحة',
-    'providerReg.rentPerHour': 'سعر الإيجار لكل ساعة',
-    'providerReg.rentPerDay': 'سعر الإيجار لكل يوم',
-    'providerReg.availability': 'التوافر',
-    'providerReg.available': 'متاح',
-    'providerReg.unavailable': 'غير متاح',
-    'providerReg.statusSubOn': 'أنت تستقبل الطلبات الآن',
-    'providerReg.statusSubOff': 'لن تصلك طلبات حتى تفعّل التوافر',
-    'providerReg.requestMode': 'استقبال الطلبات',
-    'providerReg.autoAccept': 'قبول تلقائي',
-    'providerReg.manualAccept': 'موافقة يدوية',
-    'providerReg.currentRequests': 'الطلبات الحالية',
-    'providerReg.accept': 'موافقة',
-    'providerReg.decline': 'رفض',
-    'providerReg.notifications': 'الإشعارات',
-    'providerReg.notificationsHint': 'ستصلك إشعارات عند وصول طلب جديد أو تحديث الحالة',
-    'providerReg.submit': 'تسجيل',
-    'providerReg.phoneInvalid': 'أدخل رقماً هاتفياً صحيحاً',
-    'providerReg.gpsButton': 'تحديد موقع (GPS)',
-    'providerReg.workingHoursFrom': 'من',
-    'providerReg.workingHoursTo': 'إلى',
-    'providerReg.addPhoto': 'إضافة صورة',
-    'providerReg.serviceMaintenance': 'صيانة',
-    'providerReg.serviceElectric': 'كهرباء',
-    'providerReg.serviceOilChange': 'تبديل زيت',
-    'providerReg.serviceTires': 'إطارات',
-    'providerReg.serviceEngine': 'محرك',
-    'providerReg.serviceBrakes': 'فرامل',
-    'providerReg.vehicleCar': 'سيارة',
-    'providerReg.vehicleTruck': 'شاحنة',
-    'providerReg.vehicleSuv': 'دفع رباعي',
-    'providerReg.vehicleMotorcycle': 'دراجة نارية',
-    'providerReg.carTypeSedan': 'سيدان',
-    'providerReg.carTypeSuv': 'دفع رباعي',
-    'providerReg.carTypeHatchback': 'هاتشباك',
-    'providerDashboard.headerTitle': 'لوحة تحكم المزود',
-    'providerDashboard.notifications': 'الإشعارات',
-    'providerDashboard.logout': 'تسجيل خروج',
-    'providerDashboard.sidebar.dashboard': 'الرئيسية',
-    'providerDashboard.sidebar.incoming': 'طلبات جديدة',
-    'providerDashboard.sidebar.inProgress': 'طلبات جارية',
-    'providerDashboard.sidebar.history': 'السجل',
-    'providerDashboard.sidebar.map': 'الخريطة',
-    'providerDashboard.sidebar.statistics': 'الإحصائيات',
-    'providerDashboard.sidebar.profile': 'الملف والإعدادات',
-    'providerDashboard.sidebar.help': 'المساعدة',
-    'providerDashboard.sidebar.requests': 'طلبات واردة',
-    'providerDashboard.newRequests': 'طلبات جديدة',
-    'providerDashboard.inProgress': 'جاري التنفيذ',
-    'providerDashboard.completed': 'مكتملة',
-    'providerDashboard.availability': 'التوافر',
-    'providerDashboard.statsToday': 'اليوم',
-    'providerDashboard.statsWeek': 'هذا الأسبوع',
-    'providerDashboard.statsMonth': 'هذا الشهر',
-    'providerDashboard.totalEarnings': 'إجمالي الأرباح',
-    'providerDashboard.acceptRate': 'معدل القبول',
-    'providerDashboard.declineRate': 'معدل الرفض',
-    'providerDashboard.viewOnMap': 'عرض على الخريطة',
-    'providerDashboard.mapSectionDesc': 'اعرض مواقع الطلبات والعملاء على الخريطة في الوقت الحقيقي.',
-    'providerDashboard.rating': 'التقييم',
-    'providerDashboard.helpTitle': 'المساعدة والدعم الفني',
-    'providerDashboard.helpDesc': 'تواصل مع الدعم للحصول على المساعدة الفنية.',
-    'providerDashboard.noNewRequests': 'لا توجد طلبات جديدة',
-    'providerDashboard.noInProgress': 'لا توجد طلبات قيد التنفيذ',
-    'providerDashboard.noCompleted': 'لا توجد طلبات مكتملة بعد',
-    'mechanic.stats.jobsToday': 'مهام اليوم',
-    'mechanic.stats.onTheWay': 'في الطريق',
-    'mechanic.stats.rating': 'التقييم',
-    'mechanic.stats.newRequests': 'طلبات جديدة',
-    'mechanic.stats.activeRequests': 'طلبات نشطة',
-    'mechanic.stats.completedJobs': 'طلبات مكتملة',
-    'mechanic.activeRequests': 'الطلبات النشطة',
-    'mechanic.accept': 'قبول',
-    'mechanic.decline': 'رفض',
-    'mechanic.filterAll': 'الكل',
-    'mechanic.filterNew': 'جديد',
-    'mechanic.filterOnTheWay': 'في الطريق',
-    'mechanic.filterInGarage': 'في الورشة',
-    'tow.stats.active': 'سحوبات نشطة',
-    'tow.stats.waiting': 'في الانتظار',
-    'tow.stats.fleet': 'حجم الأسطول',
-    'tow.todayJobs': 'مهام الونش اليوم',
-    'tow.filterAll': 'الكل',
-    'tow.filterActive': 'نشط',
-    'tow.filterQueued': 'قائمة الانتظار',
-    'tow.requestStatus': 'حالة الطلب',
-    'tow.timeline.requested': 'تم الطلب',
-    'tow.timeline.assigned': 'تم التعيين',
-    'tow.timeline.onWay': 'في الطريق',
-    'tow.timeline.completed': 'مكتمل',
-    'rental.stats.total': 'إجمالي السيارات',
-    'rental.stats.available': 'متاحة',
-    'rental.stats.rented': 'مؤجرة',
-    'rental.fleetOverview': 'نظرة على الأسطول',
-    'rental.upcomingBookings': 'الحجوزات القادمة',
-    'rental.available': 'متاحة',
-    'rental.rented': 'مؤجرة',
-    'rental.maintenance': 'صيانة',
-    'rental.reserved': 'محجوزة',
-    'rental.bookNow': 'احجز الآن',
-    'rental.bookingStarted': 'تم بدء الحجز. أكد في الخطوة التالية.',
-    'admin.dashboard.title': 'لوحة الأدمن',
-    'admin.stats.users': 'المستخدمون',
-    'admin.stats.providers': 'مقدمو الخدمة',
-    'admin.stats.requests': 'الطلبات',
-    'admin.stats.revenue': 'الإيرادات',
-    'admin.stats.activeProviders': 'مقدمو خدمة نشطون',
-    'admin.stats.activeRequests': 'طلبات نشطة',
-    'admin.stats.completedServices': 'مكتملة',
-    'admin.section.mechanics': 'الميكانيكيون',
-    'admin.section.tow': 'الونش',
-    'admin.section.rental': 'مؤجرو السيارات',
-    'admin.section.providerList': 'قائمة مقدمي الخدمة',
-    'admin.viewList': 'عرض القائمة',
-    'mechanic.whoRequestedMe': 'من طلبني',
-    'mechanic.myServices': 'خدماتي',
-    'mechanic.mySkills': 'مهاراتي',
-    'tow.whoRequestedMe': 'من طلبني',
-    'tow.myServices': 'خدماتي',
-    'tow.mySkills': 'مهاراتي',
-    'rental.whoRequestedMe': 'من طلبني',
-    'rental.myServices': 'خدماتي',
-    'rental.mySkills': 'مهاراتي',
-    'admin.edit': 'تعديل',
-    'admin.addVehicle': 'إضافة مركبة',
-    'admin.updateStatus': 'تحديث الحالة',
-    'admin.requests': 'الطلبات',
-    'admin.viewAllRequests': 'جميع طلبات الخدمة',
-    'admin.requestsAssigned': 'الطلبات المعينة',
-    'admin.towingRequests': 'طلبات السحب',
-    'admin.fleetVehicles': 'مركبات الأسطول',
-    'admin.activeRequests': 'الطلبات النشطة',
-    'admin.manageUsers': 'إدارة المستخدمين',
-    'admin.usersList': 'المستخدمون',
-    'admin.editServices': 'تعديل الخدمات',
-    'admin.assignedServices': 'الخدمات المعينة',
-    'admin.save': 'حفظ',
-    'admin.saved': 'تم الحفظ بنجاح.',
-    'admin.cancel': 'إلغاء',
-    'admin.block': 'حظر',
-    'admin.unblock': 'إلغاء الحظر',
-    'admin.userBlocked': 'تم حظر المستخدم.',
-    'admin.userUnblocked': 'تم إلغاء حظر المستخدم.',
-    'admin.searchUsers': 'البحث عن مستخدمين…',
-    'admin.filterAll': 'الكل',
-    'admin.verify': 'اعتماد',
-    'admin.verified': 'تم اعتماد المزود.',
-    'admin.userName': 'الاسم',
-    'admin.userRole': 'الدور',
-    'admin.userStatus': 'الحالة',
-    'admin.servicesMechanic': 'خدمات الميكانيكي',
-    'admin.servicesTow': 'خدمات الونش',
-    'admin.servicesRental': 'خدمات التأجير',
-    'request.createdSuccess': 'تم إرسال الطلب. سيتم إخطار أحد المزودين.',
-    'request.statusUpdated': 'تم تحديث الحالة.',
-    'request.trackBelow': 'تتبع حالة طلبك أدناه.',
-    'map.requestHint': 'اضغط "طلب خدمة" للتأكيد والحصول على المساعدة.',
-    'map.call': 'اتصال',
-    'map.chat': 'دردشة',
-    'map.noPhone': 'لا يوجد رقم هاتف.',
-    'profile.servicesSaved': 'تم تحديث الخدمات.',
-    'mechanic.accepted': 'تم قبول الطلب.',
-    'mechanic.declined': 'تم رفض الطلب.',
-    'mechanic.complete': 'إتمام',
-    'mechanic.completed': 'تم إتمام الخدمة.',
-    'mechanic.navigate': 'التنقل',
-    'mechanic.noJobs': 'لا توجد مهام بعد. ستظهر الطلبات هنا عندما يحتاج العملاء مساعدة.',
-    'mechanic.jobHistory': 'سجل المهام',
-    'mechanic.noJobHistory': 'لا توجد مهام مكتملة بعد.',
-    'mechanic.viewRequestOnMap': 'عرض الطلبات على الخريطة',
-    'tow.stats.newRequests': 'طلبات جديدة',
-    'tow.stats.activeRequests': 'طلبات نشطة',
-    'tow.stats.completedJobs': 'طلبات مكتملة',
-    'rental.stats.newRequests': 'طلبات جديدة',
-    'rental.stats.activeRequests': 'طلبات نشطة',
-    'rental.stats.completedJobs': 'طلبات مكتملة',
-    'tow.viewRequestOnMap': 'عرض على الخريطة',
-    'rental.viewRequestOnMap': 'عرض على الخريطة',
-    'mechanic.availability': 'الحالة',
-    'mechanic.unavailable': 'غير متاح',
-    'tow.noJobs': 'لا توجد مهام ونش بعد. ستظهر الطلبات هنا.',
-    'tow.declined': 'تم رفض الطلب.',
-    'tow.accepted': 'تم قبول الطلب.',
-    'rental.noVehicles': 'لا توجد مركبات بعد. أضف مركبات أو انتظر الحجوزات.',
-    'rental.addCarTitle': 'إضافة سيارة',
-    'rental.editCarTitle': 'تعديل السيارة',
-    'rental.manageCarSubtitle': 'أدخل البيانات كما سيراها العملاء في التطبيق.',
-    'rental.carNamePlaceholder': 'اسم السيارة (مثلاً تويوتا كورولا)',
-    'rental.carModelPlaceholder': 'الموديل / الفئة (مثلاً XLE)',
-    'rental.yearPlaceholder': 'سنة الصنع',
-    'rental.pricePlaceholder': 'السعر لليوم (مثلاً 150)',
-    'rental.descriptionPlaceholder': 'وصف مختصر (الحالة، الكيلومترات، إلخ)',
-    'rental.photoUrlPlaceholder': 'رابط صورة السيارة (مثلاً https://…)',
-    'rental.carImageLabel': 'صورة السيارة',
-    'rental.transmissionLabel': 'ناقل الحركة',
-    'rental.transmissionAutomatic': 'أوتوماتيك',
-    'rental.transmissionManual': 'يدوي',
-    'rental.seatsLabel': 'عدد المقاعد',
-    'rental.seatsPlaceholder': 'مثلاً 5',
-    'rental.deleteCarTitle': 'حذف السيارة',
-    'rental.deleteCarConfirm': 'هل أنت متأكد من إزالة هذه السيارة من أسطولك؟',
-    'rental.missingRequiredFields': 'يرجى تعبئة الاسم، الموديل، السنة، والسعر لليوم على الأقل.',
-    'rental.pricePerDay': 'لليوم',
-    'rental.unnamedCar': 'سيارة بدون اسم',
-    'rental.addCarHint': 'أضف سيارات لأسطولك ليقوم العملاء بطلبها وحجزها.',
-    'common.save': 'حفظ',
-    'common.delete': 'حذف',
-    'common.missingFieldsTitle': 'معلومات ناقصة',
-    'home.requestHelpNow': 'طلب مساعدة الآن',
-    'request.confirmHint': 'اضغط الزر أدناه لإرسال طلبك. سيتم إخطار أحد المزودين.',
-    'request.sentTitle': 'تم إرسال الطلب',
-    'map.confirmOnNextScreen': 'أكد وأرسل طلبك في الشاشة التالية.',
-    'auth.emailInvalid': 'يرجى إدخال بريد إلكتروني صحيح.',
-  },
-} as const;
-
+  ar: arTranslations as Record<string, string>,
+};

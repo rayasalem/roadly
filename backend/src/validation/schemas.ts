@@ -4,8 +4,8 @@
  */
 import { z } from 'zod';
 
-const roleEnum = z.enum(['user', 'mechanic', 'mechanic_tow', 'car_rental', 'admin']);
-const serviceTypeEnum = z.enum(['mechanic', 'tow', 'rental', 'battery', 'tire', 'oil_change']);
+const roleEnum = z.enum(['user', 'mechanic', 'mechanic_tow', 'car_rental', 'insurance', 'admin']);
+const serviceTypeEnum = z.enum(['mechanic', 'tow', 'rental', 'insurance', 'battery', 'tire', 'oil_change']);
 const requestStatusEnum = z.enum(['pending', 'accepted', 'on_the_way', 'completed', 'cancelled']);
 
 const coordSchema = z.object({
@@ -38,6 +38,8 @@ export const createRequestSchema = z.object({
   origin: coordSchema,
   destination: coordSchema.optional().nullable(),
   providerId: z.string().min(1).optional().nullable(),
+  description: z.string().max(2000).optional().nullable(),
+  customerEmail: z.string().email().max(320).optional().nullable(),
 });
 
 /** PATCH /requests/:id/status */

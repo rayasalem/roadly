@@ -46,6 +46,7 @@ export async function fetchPlaceSuggestions(query: string): Promise<PlaceSuggest
   try {
     const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&key=${PLACES_KEY}&types=establishment|geocode`;
     const res = await fetch(url);
+    if (!res.ok) return [];
     const data = (await res.json()) as {
       predictions?: Array<{
         place_id: string;
@@ -83,6 +84,7 @@ export async function fetchPlaceCoordinates(
   try {
     const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=geometry&key=${PLACES_KEY}`;
     const res = await fetch(url);
+    if (!res.ok) return null;
     const data = (await res.json()) as {
       result?: { geometry?: { location?: { lat: number; lng: number } } };
       status?: string;

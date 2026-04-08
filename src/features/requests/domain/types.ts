@@ -1,4 +1,11 @@
-export type ServiceType = 'mechanic' | 'tow' | 'rental' | 'battery' | 'tire' | 'oil_change';
+export type ServiceType =
+  | 'mechanic'
+  | 'tow'
+  | 'rental'
+  | 'insurance'
+  | 'battery'
+  | 'tire'
+  | 'oil_change';
 
 /**
  * Request lifecycle: new → pending → accepted | rejected;

@@ -38,7 +38,7 @@ const MarkerPin = memo(function MarkerPin({
   pinColor,
   selected,
 }: {
-  serviceIconName: 'wrench' | 'tow-truck' | 'car-side';
+  serviceIconName: 'wrench' | 'tow-truck' | 'car-side' | 'shield-check';
   pinColor: string;
   selected: boolean;
 }) {
@@ -98,7 +98,7 @@ export const ProviderMarker = memo(function ProviderMarker({
                 e?.stopPropagation?.();
                 onRequestService(provider);
               }}
-              activeOpacity={0.8}
+              activeOpacity={0.85}
               accessibilityRole="button"
               accessibilityLabel={t('map.requestService')}
             >
@@ -190,8 +190,9 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     paddingVertical: 10,
     paddingHorizontal: 14,
-    backgroundColor: colors.mapRental,
+    backgroundColor: colors.primary,
     borderRadius: 10,
+    ...shadows.sm,
   },
   requestButtonText: {
     fontFamily: typography.fontFamily.semibold,

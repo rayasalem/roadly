@@ -4,7 +4,7 @@
  */
 import { colors } from './colors';
 
-export type RoleThemeId = 'mechanic' | 'tow' | 'rental' | 'admin';
+export type RoleThemeId = 'mechanic' | 'tow' | 'rental' | 'insurance' | 'admin';
 
 export const ROLE_THEMES: Record<
   RoleThemeId,
@@ -27,6 +27,12 @@ export const ROLE_THEMES: Record<
     primaryLight: colors.greenLight,
     icon: 'car-estate',
     gradient: [colors.primary, colors.primaryDark],
+  },
+  insurance: {
+    primary: colors.mapInsurance,
+    primaryLight: colors.infoLight,
+    icon: 'shield-check',
+    gradient: [colors.mapInsurance, colors.primaryDark],
   },
   admin: {
     primary: colors.primaryDark,

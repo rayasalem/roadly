@@ -113,7 +113,13 @@ export function MapBottomCard({
         </>
       )}
       {isError && !nearest && (
-        <ErrorWithRetry testID="map-retry-providers" message={t('error.network')} onRetry={onRetry} isRetrying={isRefetching} />
+        <ErrorWithRetry
+          compact
+          testID="map-retry-providers"
+          message={t('error.network')}
+          onRetry={onRetry}
+          isRetrying={isRefetching}
+        />
       )}
       {showEmpty && !isLoading && (
         <>

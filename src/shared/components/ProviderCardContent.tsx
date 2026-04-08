@@ -19,6 +19,7 @@ function getRoleThemeId(role: Provider['role']): RoleThemeId {
   if (role === 'mechanic') return 'mechanic';
   if (role === 'mechanic_tow') return 'tow';
   if (role === 'car_rental') return 'rental';
+  if (role === 'insurance') return 'insurance';
   return 'mechanic';
 }
 
@@ -100,7 +101,9 @@ export function ProviderCardContent({
             ) : null}
             {distanceKm != null && (
               <Text style={styles.distance} numberOfLines={1}>
-                {distanceKm < 1 ? `${(distanceKm * 1000).toFixed(0)} m away` : `${distanceKm.toFixed(1)} km away`}
+                {distanceKm < 1
+                  ? `${(distanceKm * 1000).toFixed(0)} ${t('map.distanceMeters')}`
+                  : `${distanceKm.toFixed(1)} ${t('map.distanceKm')}`}
               </Text>
             )}
             <Text style={styles.availabilityLabel}>

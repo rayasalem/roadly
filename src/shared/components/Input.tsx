@@ -1,9 +1,7 @@
 /**
- * Design system text input.
- * Label, focus state (ring + optional shadow), error state (border + background tint), helper text.
- * Accessibility: label, live region for error, disabled state.
+ * Underline-style input with floating label, optional left icon, error text.
  */
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   TextInput,
   View,
@@ -12,21 +10,20 @@ import {
   TextInputProps,
   ViewStyle,
   Platform,
+  Animated,
 } from 'react-native';
-import { spacing, typography, radii, useTheme } from '../theme';
+import { spacing, typography, useTheme } from '../theme';
 
 export interface InputProps extends Omit<TextInputProps, 'style'> {
   label?: string;
   error?: string;
-  /** Helper text below input (hint); hidden when error is shown */
   hint?: string;
   containerStyle?: ViewStyle;
   leftAdornment?: React.ReactNode;
   rightAdornment?: React.ReactNode;
 }
 
-const FOCUS_RING_WIDTH = 2;
-const ERROR_RING_WIDTH = 2;
+const LABEL_FLOAT = 18;
 
 export const Input = React.memo(function Input({
   label,
@@ -37,64 +34,114 @@ export const Input = React.memo(function Input({
   rightAdornment,
   onFocus,
   onBlur,
+  onChangeText,
+  value,
+  defaultValue,
   ...rest
 }: InputProps) {
   const { colors } = useTheme();
   const [focused, setFocused] = useState(false);
+  const [internal, setInternal] = useState(defaultValue ?? '');
+  const anim = useRef(new Animated.Value(0)).current;
   const hasError = Boolean(error);
 
+  const filled = useMemo(() => {
+    const v = value !== undefined ? value : internal;
+    return typeof v === 'string' && v.length > 0;
+  }, [value, internal]);
+
+  const shouldFloat = focused || filled;
+
+  useEffect(() => {
+    Animated.timing(anim, {
+      toValue: shouldFloat ? 1 : 0,
+      duration: 160,
+      useNativeDriver: false,
+    }).start();
+  }, [shouldFloat, anim]);
+
+  const labelTop = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [28, 4],
+  });
+  const labelSize = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [typography.presets.body.fontSize, typography.presets.caption.fontSize],
+  });
+  const labelColor = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [colors.textMuted, hasError ? colors.error : colors.primary],
+  });
+
   const handleFocus = useCallback(
-    (e: any) => {
+    (e: Parameters<NonNullable<TextInputProps['onFocus']>>[0]) => {
       setFocused(true);
       onFocus?.(e);
     },
     [onFocus],
   );
+
   const handleBlur = useCallback(
-    (e: any) => {
+    (e: Parameters<NonNullable<TextInputProps['onBlur']>>[0]) => {
       setFocused(false);
       onBlur?.(e);
     },
     [onBlur],
   );
 
-  const wrapStyle = [
-    styles.inputWrap,
-    { backgroundColor: colors.surface, borderColor: colors.border },
-    hasError && [styles.inputWrapError, { borderColor: colors.error, backgroundColor: colors.errorLight }],
-    focused &&
-      !hasError && [
-        styles.inputWrapFocused,
-        { borderColor: colors.borderFocus },
-        Platform.OS === 'ios' && {
-          shadowColor: colors.primary,
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.15,
-          shadowRadius: 4,
-          elevation: 2,
-        },
-      ],
-  ];
+  const handleChangeText = useCallback(
+    (text: string) => {
+      if (value === undefined) setInternal(text);
+      onChangeText?.(text);
+    },
+    [onChangeText, value],
+  );
+
+  const borderColor = hasError ? colors.error : focused ? colors.borderFocus : colors.border;
 
   return (
     <View style={[styles.container, containerStyle]}>
       {label ? (
-        <Text style={[styles.label, { color: colors.text }]} accessibilityRole="text">
+        <Animated.Text
+          pointerEvents="none"
+          style={[
+            styles.floatingLabel,
+            {
+              top: labelTop,
+              fontSize: labelSize,
+              color: labelColor,
+            },
+          ]}
+          accessibilityRole="text"
+        >
           {label}
-        </Text>
+        </Animated.Text>
       ) : null}
-      <View style={wrapStyle}>
+      <View
+        style={[
+          styles.row,
+          {
+            borderBottomColor: borderColor,
+            borderBottomWidth: hasError ? 2 : 1.5,
+            minHeight: LABEL_FLOAT + 36,
+            paddingTop: label ? LABEL_FLOAT : 0,
+          },
+        ]}
+      >
         {leftAdornment ? <View style={styles.adornment}>{leftAdornment}</View> : null}
         <TextInput
           placeholderTextColor={colors.textMuted}
           style={[
             styles.input,
             { color: colors.text },
-            leftAdornment && styles.inputWithLeft,
-            rightAdornment && styles.inputWithRight,
+            leftAdornment ? styles.inputWithLeft : undefined,
+            rightAdornment ? styles.inputWithRight : undefined,
           ]}
           onFocus={handleFocus}
           onBlur={handleBlur}
+          onChangeText={handleChangeText}
+          value={value}
+          defaultValue={defaultValue}
           accessibilityLabel={label ?? rest.placeholder}
           accessibilityState={{ disabled: rest.editable === false }}
           accessibilityHint={hint ?? undefined}
@@ -125,43 +172,31 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: spacing.md,
   },
-  label: {
+  floatingLabel: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 1,
     fontFamily: typography.fontFamily.medium,
-    fontSize: typography.presets.caption.fontSize,
-    marginBottom: spacing.xs,
+    ...(Platform.OS === 'web' && { userSelect: 'none' }),
   },
-  inputWrap: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: radii.lg,
-    minHeight: 48,
-    ...(Platform.OS === 'web' && {
-      outlineStyle: 'none',
-    }),
-  },
-  inputWrapFocused: {
-    borderWidth: FOCUS_RING_WIDTH,
-    ...(Platform.OS === 'web'
-      ? {
-          boxShadow: '0px 0px 6px rgba(34,197,94,0.4)',
-        }
-      : {}),
-  },
-  inputWrapError: {
-    borderWidth: ERROR_RING_WIDTH,
+    justifyContent: 'center',
+    ...(Platform.OS === 'web' ? ({ outlineWidth: 0 } as ViewStyle) : {}),
   },
   input: {
     flex: 1,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: 0,
     paddingVertical: spacing.sm,
     fontFamily: typography.fontFamily.regular,
     fontSize: typography.presets.body.fontSize,
   },
-  inputWithLeft: { paddingLeft: spacing.xs },
-  inputWithRight: { paddingRight: spacing.xs },
+  inputWithLeft: { marginLeft: spacing.xs },
+  inputWithRight: { marginRight: spacing.xs },
   adornment: {
-    paddingHorizontal: spacing.sm,
+    paddingRight: spacing.sm,
   },
   error: {
     fontFamily: typography.fontFamily.regular,

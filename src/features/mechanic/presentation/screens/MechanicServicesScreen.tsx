@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     padding: spacing.md,
     borderRadius: radii.lg,
-    backgroundColor: THEME.cardBackground ?? colors.surface,
+    backgroundColor: colors.surface,
   },
   label: {
     fontFamily: typography.fontFamily.semibold,

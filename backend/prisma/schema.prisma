@@ -15,6 +15,7 @@ enum Role {
   mechanic
   mechanic_tow
   car_rental
+  insurance
   admin
 }
 
@@ -22,6 +23,7 @@ enum ServiceType {
   mechanic
   tow
   rental
+  insurance
   battery
   tire
   oil_change

@@ -70,7 +70,8 @@ export function ProfileScreen() {
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const role = user?.role ?? null;
-  const isProvider = role === ROLES.MECHANIC || role === ROLES.MECHANIC_TOW || role === ROLES.CAR_RENTAL;
+  const isProvider =
+    role === ROLES.MECHANIC || role === ROLES.MECHANIC_TOW || role === ROLES.CAR_RENTAL || role === ROLES.INSURANCE;
 
   const {
     isProvider: hookIsProvider,
@@ -87,7 +88,16 @@ export function ProfileScreen() {
     isRefetching: profileRefetching,
   } = useProviderProfile(role, user?.name ?? '');
 
-  const themeId = role === ROLES.MECHANIC ? 'mechanic' : role === ROLES.MECHANIC_TOW ? 'tow' : role === ROLES.CAR_RENTAL ? 'rental' : 'admin';
+  const themeId =
+    role === ROLES.MECHANIC
+      ? 'mechanic'
+      : role === ROLES.MECHANIC_TOW
+        ? 'tow'
+        : role === ROLES.CAR_RENTAL
+          ? 'rental'
+          : role === ROLES.INSURANCE
+            ? 'insurance'
+            : 'admin';
   const theme = ROLE_THEMES[themeId];
 
   useEffect(() => {
@@ -126,18 +136,27 @@ export function ProfileScreen() {
   }, [availabilityMutation, profile?.isAvailable]);
 
   const handleTab = (tab: NavTabId) => {
+    const nav = navigation as any;
     if (tab === 'Profile') return;
     if (tab === 'Home') {
-      if (role === ROLES.ADMIN) (navigation as any).navigate('AdminDashboard');
-      else if (role === ROLES.MECHANIC) (navigation as any).navigate('MechanicDashboard');
-      else if (role === ROLES.MECHANIC_TOW) (navigation as any).navigate('TowDashboard');
-      else if (role === ROLES.CAR_RENTAL) (navigation as any).navigate('RentalDashboard');
-      else (navigation as any).navigate('Map');
+      if (role === ROLES.ADMIN) nav.navigate('AdminDashboard');
+      else if (role === ROLES.MECHANIC) nav.navigate('MechanicDashboard');
+      else if (role === ROLES.MECHANIC_TOW) nav.navigate('TowDashboard');
+      else if (role === ROLES.CAR_RENTAL) nav.navigate('RentalDashboard');
+      else if (role === ROLES.INSURANCE) nav.navigate('InsuranceDashboard');
+      else nav.navigate('Map');
       return;
     }
-    if (tab === 'Chat') (navigation as any).navigate('Chat');
-    if (tab === 'Notifications') (navigation as any).navigate('Notifications');
-    if (tab === 'Settings') safeNavigateToSettings(navigation);
+    if (tab === 'Requests') {
+      if (role === ROLES.USER) nav.navigate('RequestHistory');
+      else if (role === ROLES.MECHANIC) nav.navigate('MechanicJobHistory');
+      else if (role === ROLES.MECHANIC_TOW) nav.navigate('TowJobHistory');
+      else if (role === ROLES.CAR_RENTAL) nav.navigate('RentalBookings');
+      else if (role === ROLES.INSURANCE) nav.navigate('InsuranceRequests');
+      else if (role === ROLES.ADMIN) nav.navigate('AdminRequests');
+      return;
+    }
+    if (tab === 'Chat') nav.navigate('Chat');
   };
 
   if (!user) {
@@ -292,7 +311,7 @@ export function ProfileScreen() {
   }
 
   return (
-    <ScreenWrapper bottomNav={user?.role === ROLES.USER ? <BottomNavBar activeTab="Profile" onSelect={handleTab} /> : (user?.role === ROLES.ADMIN || user?.role === ROLES.MECHANIC || user?.role === ROLES.MECHANIC_TOW || user?.role === ROLES.CAR_RENTAL ? <BottomNavBar activeTab="Profile" onSelect={handleTab} dark /> : undefined)}>
+    <ScreenWrapper bottomNav={user?.role === ROLES.USER ? <BottomNavBar activeTab="Profile" onSelect={handleTab} /> : (user?.role === ROLES.ADMIN || user?.role === ROLES.MECHANIC || user?.role === ROLES.MECHANIC_TOW || user?.role === ROLES.CAR_RENTAL || user?.role === ROLES.INSURANCE ? <BottomNavBar activeTab="Profile" onSelect={handleTab} dark /> : undefined)}>
       <AppHeader title={t('profile.title')} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} onProfile={() => safeNavigateToSettings(navigation)} />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.containerScroll} showsVerticalScrollIndicator>
         {user && (

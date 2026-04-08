@@ -19,6 +19,8 @@ import type { RootStackParamList } from '../../../../navigation/RootNavigator';
 import { AppText } from '../../../../shared/components/AppText';
 import { Button } from '../../../../shared/components/Button';
 import { t } from '../../../../shared/i18n/t';
+import { backChevronForLocale } from '../../../../shared/i18n/rtlUtils';
+import { useLocaleStore } from '../../../../store/localeStore';
 import { colors } from '../../../../shared/theme/colors';
 import { spacing, typography, radii } from '../../../../shared/theme';
 import { useUIStore } from '../../../../store/uiStore';
@@ -31,6 +33,8 @@ import { getMockLoginUser } from '../../../../mock/mockUsers';
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 export function LoginScreen({ navigation }: Props) {
+  const locale = useLocaleStore((s) => s.locale);
+  const backIcon = backChevronForLocale(locale);
   const toast = useUIStore((s) => s.toast);
   const showLoader = useUIStore((s) => s.showLoader);
   const hideLoader = useUIStore((s) => s.hideLoader);
@@ -118,9 +122,9 @@ export function LoginScreen({ navigation }: Props) {
           style={styles.backBtn}
           onPress={() => navigation.goBack()}
           accessibilityRole="button"
-          accessibilityLabel="Back"
+          accessibilityLabel={t('common.back')}
         >
-          <MaterialCommunityIcons name="chevron-left" size={28} color={colors.primary} />
+          <MaterialCommunityIcons name={backIcon} size={28} color={colors.primary} />
         </TouchableOpacity>
         <View style={styles.carIconWrap}>
           <MaterialCommunityIcons name="car-side" size={32} color={colors.primary} />
@@ -177,7 +181,7 @@ export function LoginScreen({ navigation }: Props) {
                 <TouchableOpacity
                   onPress={() => setShowPassword((p) => !p)}
                   style={styles.eyeBtn}
-                  accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                  accessibilityLabel={showPassword ? t('auth.password.hide') : t('auth.password.show')}
                 >
                   <MaterialCommunityIcons
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
@@ -193,7 +197,7 @@ export function LoginScreen({ navigation }: Props) {
                   <MaterialCommunityIcons name={rememberMe ? 'checkbox-marked' : 'checkbox-marked-outline'} size={22} color={colors.primary} />
                   <AppText variant="callout" style={styles.rememberText}>{t('auth.rememberMe')}</AppText>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => toast({ type: 'info', message: t('auth.login.forgotComingSoon') ?? 'Password reset coming soon.' })} accessibilityRole="button">
+                <TouchableOpacity onPress={() => toast({ type: 'info', message: t('auth.login.forgotComingSoon') })} accessibilityRole="button">
                   <AppText variant="callout" style={styles.forgotLink}>{t('auth.login.forgot')}</AppText>
                 </TouchableOpacity>
               </View>
@@ -222,7 +226,7 @@ export function LoginScreen({ navigation }: Props) {
 
             {APP_ENV === 'development' && (
               <View style={styles.mockSection}>
-                <AppText variant="title3" style={styles.mockTitle}>تجربة الأدوار (بيانات تجريبية)</AppText>
+                <AppText variant="title3" style={styles.mockTitle}>{t('auth.mockRolesTitle')}</AppText>
                 <View style={styles.mockRow}>
                   {[ROLES.USER, ROLES.MECHANIC, ROLES.MECHANIC_TOW, ROLES.CAR_RENTAL, ROLES.ADMIN].map(
                     (role) => (

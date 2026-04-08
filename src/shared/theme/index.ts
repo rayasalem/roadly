@@ -1,11 +1,11 @@
 import { colors } from './colors';
-import { radii } from './radii';
+import { radii, borderRadius } from './radii';
 import { shadows } from './shadows';
 import { spacing } from './spacing';
 import { fontFamilyPoppins } from './typography';
 import { typographyPresets } from './typographyPresets';
 
-export { spacing };
+export { spacing, borderRadius };
 
 /** Font family — Poppins (default). Use getFontFamilyForLocale(locale) or useTypography() for Arabic (Tajawal). */
 export const fontFamily = fontFamilyPoppins;

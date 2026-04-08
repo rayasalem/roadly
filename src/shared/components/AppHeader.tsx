@@ -7,6 +7,8 @@ import { View, Text, StyleSheet, TouchableOpacity, type ViewStyle } from 'react-
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme, spacing, typography } from '../theme';
 import { t } from '../i18n/t';
+import { useLocaleStore } from '../../store/localeStore';
+import { backChevronForLocale } from '../i18n/rtlUtils';
 
 type AppHeaderProps = {
   title: string;
@@ -18,7 +20,7 @@ type AppHeaderProps = {
   onProfile?: () => void;
   /** Called when right icon is pressed (e.g. calendar). If not set, calendar icon has no action. */
   onRightPress?: () => void;
-  rightIcon?: 'profile' | 'calendar' | 'settings' | 'none';
+  rightIcon?: 'profile' | 'calendar' | 'settings' | 'bell' | 'none';
   style?: ViewStyle;
 };
 
@@ -32,6 +34,8 @@ export function AppHeader({
   rightIcon = 'profile',
   style,
 }: AppHeaderProps) {
+  const locale = useLocaleStore((s) => s.locale);
+  const backIcon = backChevronForLocale(locale);
   const { colors } = useTheme();
   const fg = dark ? '#FFFFFF' : colors.text;
   const bg = dark ? '#000000' : undefined;
@@ -52,7 +56,7 @@ export function AppHeader({
       <View style={styles.side}>
         {typeof onBack === 'function' ? (
           <TouchableOpacity onPress={onBack} style={styles.iconBtn} accessibilityRole="button">
-            <MaterialCommunityIcons name="chevron-left" size={28} color={fg} />
+            <MaterialCommunityIcons name={backIcon} size={28} color={fg} />
           </TouchableOpacity>
         ) : (
           <View style={styles.placeholder} />
@@ -86,6 +90,15 @@ export function AppHeader({
             disabled={typeof onProfile !== 'function'}
           >
             <MaterialCommunityIcons name="cog-outline" size={24} color={fg} />
+          </TouchableOpacity>
+        ) : rightIcon === 'bell' ? (
+          <TouchableOpacity
+            onPress={typeof onRightPress === 'function' ? onRightPress : undefined}
+            style={styles.iconBtn}
+            accessibilityRole="button"
+            disabled={typeof onRightPress !== 'function'}
+          >
+            <MaterialCommunityIcons name="bell-outline" size={24} color={fg} />
           </TouchableOpacity>
         ) : (
           <View style={styles.placeholder} />
@@ -136,7 +149,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   logoIcon: {
-    marginRight: spacing.xs,
+    marginEnd: spacing.xs,
   },
   logoTitle: {
     flex: 0,

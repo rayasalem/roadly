@@ -1,7 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { colors } from '../shared/theme/colors';
-import { t } from '../shared/i18n/t';
 import { HomeScreen } from '../features/home/presentation/screens/HomeScreen';
 import { MapScreen } from '../features/map/presentation/screens/MapScreen';
 import { RequestScreen } from '../features/requests/presentation/screens/RequestScreen';
@@ -19,12 +18,20 @@ import { FavoritesScreen } from '../features/favorites/presentation/screens/Favo
 import { HelpSupportScreen } from '../features/help/presentation/screens/HelpSupportScreen';
 import { AllProvidersScreen } from '../features/providers/presentation/screens/AllProvidersScreen';
 import { NotFoundScreen } from '../shared/components/NotFoundScreen';
+import { InsurancePlansScreen } from '../features/insurance/presentation/screens/InsurancePlansScreen';
 
 export type CustomerStackParamList = {
   Home: undefined;
   Map: undefined;
+  InsurancePlans: undefined;
   AllProviders: undefined;
-  Request: { serviceType?: import('../features/requests/domain/types').ServiceType; providerId?: string | null; requestId?: string };
+  Request: {
+    serviceType?: import('../features/requests/domain/types').ServiceType;
+    providerId?: string | null;
+    requestId?: string;
+    /** وصف أولي (مثلاً اسم خطة التأمين) */
+    description?: string;
+  };
   RequestHistory: undefined;
   LiveTracking: { requestId?: string };
   Profile: undefined;
@@ -53,6 +60,7 @@ const screenOptions = {
 export const CustomerStack = () => (
   <Stack.Navigator screenOptions={screenOptions} initialRouteName="Map">
     <Stack.Screen name="Map" component={MapScreen} initialParams={undefined} />
+    <Stack.Screen name="InsurancePlans" component={InsurancePlansScreen} />
     <Stack.Screen name="Home" component={HomeScreen} />
     <Stack.Screen name="Request" component={RequestScreen} />
     <Stack.Screen name="RequestHistory" component={RequestHistoryScreen} />

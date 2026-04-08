@@ -6,6 +6,10 @@ import React, { memo } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { LoadingSpinner } from './LoadingSpinner';
 import { ErrorWithRetry } from './ErrorWithRetry';
+import { AmbientSurface } from './dashboard/AmbientSurface';
+import { AppText } from './AppText';
+import { ListScreenListSkeleton } from './ListScreenListSkeleton';
+import { useTheme, spacing } from '../theme';
 
 export interface ListScreenLayoutProps {
   /** Header (e.g. AppHeader). */
@@ -28,6 +32,14 @@ export interface ListScreenLayoutProps {
   bottomNav?: React.ReactNode;
   /** Optional wrapper style. */
   style?: ViewStyle;
+  /** Map-style soft background behind list body */
+  showAmbientBackground?: boolean;
+  /** Hint under loading spinner */
+  loadingHint?: string;
+  /** Spinner vs list-shaped skeleton (same data flow; presentation only). */
+  loadingVariant?: 'spinner' | 'skeleton';
+  /** Number of skeleton rows when loadingVariant is skeleton */
+  skeletonRows?: number;
 }
 
 function ListScreenLayoutInner({
@@ -41,14 +53,35 @@ function ListScreenLayoutInner({
   children,
   bottomNav,
   style,
+  showAmbientBackground = false,
+  loadingHint,
+  loadingVariant = 'spinner',
+  skeletonRows = 6,
 }: ListScreenLayoutProps) {
+  const { colors } = useTheme();
   return (
     <>
       {header}
-      <View style={[styles.body, style]}>
-        {isLoading && (
+      <View style={[styles.body, style, showAmbientBackground && styles.bodyRelative]}>
+        {showAmbientBackground ? <AmbientSurface /> : null}
+        {isLoading && loadingVariant === 'spinner' && (
           <View style={styles.centered}>
             <LoadingSpinner />
+            {loadingHint ? (
+              <AppText variant="callout" color={colors.textSecondary} center style={styles.loadingHint}>
+                {loadingHint}
+              </AppText>
+            ) : null}
+          </View>
+        )}
+        {isLoading && loadingVariant === 'skeleton' && (
+          <View style={styles.skeletonWrap}>
+            <ListScreenListSkeleton rows={skeletonRows} />
+            {loadingHint ? (
+              <AppText variant="callout" color={colors.textSecondary} center style={styles.loadingHintSkeleton}>
+                {loadingHint}
+              </AppText>
+            ) : null}
           </View>
         )}
         {!isLoading && isError && (
@@ -66,5 +99,9 @@ export const ListScreenLayout = memo(ListScreenLayoutInner);
 
 const styles = StyleSheet.create({
   body: { flex: 1 },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  bodyRelative: { position: 'relative', overflow: 'hidden' },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.lg },
+  loadingHint: { marginTop: spacing.md },
+  skeletonWrap: { flex: 1 },
+  loadingHintSkeleton: { marginTop: spacing.sm, paddingHorizontal: spacing.lg },
 });

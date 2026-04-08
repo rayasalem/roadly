@@ -1,15 +1,12 @@
 /**
- * API layer for provider endpoints. No UI — used by repositories/hooks.
- * Backend implements GET /providers/nearby with geo + filters + pagination.
- * On network/CORS/parse errors, use getFallbackNearbyProviders() so the map never breaks.
- * Uses mock data with all provider states: available, busy, on_the_way, offline.
+ * API layer for provider endpoints. Backend: GET /providers/nearby, GET /providers/:id.
+ * On invalid or empty responses, returns an empty list (no mock fallback).
  */
 import type { Provider, NearbyProvidersParams, NearbyProvidersResult } from '../domain/types';
 import { api } from '../../../shared/services/http/api';
 import { ENDPOINTS } from '../../../shared/constants/apiEndpoints';
 import { getErrorMessage } from '../../../shared/services/http/errorMessage';
 import { ROLES } from '../../../shared/constants/roles';
-import { MOCK_PROVIDERS_ALL } from '../../../mock/mockProviders';
 
 function buildNearbyQuery(params: NearbyProvidersParams): string {
   const q = new URLSearchParams();
@@ -23,50 +20,25 @@ function buildNearbyQuery(params: NearbyProvidersParams): string {
   return q.toString();
 }
 
-/** Map mock providers to Provider type (with displayStatus for map UI). */
-function mockToProvider(m: import('../../../mock/mockProviders').MockProvider): Provider {
-  const loc = m.location as { latitude: number; longitude: number; lastUpdated?: string };
-  return {
-    id: m.id,
-    name: m.name,
-    role: m.role,
-    phone: m.phone ?? undefined,
-    isAvailable: m.isAvailable ?? true,
-    location: {
-      latitude: loc?.latitude ?? 32.22,
-      longitude: loc?.longitude ?? 35.26,
-      lastUpdated: (loc as { lastUpdated?: string })?.lastUpdated ?? new Date().toISOString(),
-    },
-    rating: m.rating,
-    displayStatus: m.displayStatus,
-    serviceType: m.role === ROLES.MECHANIC ? 'mechanic' : m.role === ROLES.MECHANIC_TOW ? 'tow' : 'rental',
-    hasTowCapability: m.role === ROLES.MECHANIC_TOW ? true : undefined,
-    availableCars: m.role === ROLES.CAR_RENTAL ? 5 : undefined,
-  };
-}
+const emptyNearby = (limit: number): NearbyProvidersResult => ({
+  items: [],
+  total: 0,
+  page: 1,
+  limit,
+});
 
-/**
- * Returns fallback providers from mock data (available, busy, on_the_way, offline), optionally filtered by role.
- */
-export function getFallbackNearbyProviders(role?: NearbyProvidersParams['role']): Provider[] {
-  const list = MOCK_PROVIDERS_ALL.map(mockToProvider);
-  if (!role) return list;
-  return list.filter((p) => p.role === role);
-}
-
-export async function fetchNearbyProviders(
-  params: NearbyProvidersParams,
-): Promise<NearbyProvidersResult> {
+export async function fetchNearbyProviders(params: NearbyProvidersParams): Promise<NearbyProvidersResult> {
   const query = buildNearbyQuery(params);
   const url = `${ENDPOINTS.providersNearby}?${query}`;
+  const limit = params.limit ?? 20;
   try {
     const res = await api.get<NearbyProvidersResult>(url);
-    if (!res || typeof res !== 'object') {
-      return { items: getFallbackNearbyProviders(params.role), total: 0, page: 1, limit: params.limit ?? 20 };
+    if (!res || typeof res !== 'object' || res.data == null) {
+      return emptyNearby(limit);
     }
     const data = res.data;
-    if (data == null || typeof data !== 'object' || !Array.isArray((data as { items?: unknown }).items)) {
-      return { items: getFallbackNearbyProviders(params.role), total: 0, page: 1, limit: params.limit ?? 20 };
+    if (typeof data !== 'object' || !Array.isArray((data as { items?: unknown }).items)) {
+      return emptyNearby(limit);
     }
     const rawItems = data.items as unknown[];
     const now = new Date().toISOString();
@@ -112,20 +84,9 @@ export async function fetchNearbyProviders(
       items,
       total: data.total ?? items.length,
       page: data.page ?? 1,
-      limit: data.limit ?? params.limit ?? 20,
+      limit: data.limit ?? limit,
     };
   } catch (error: unknown) {
-    // عند فشل الشبكة أو الـ CORS، أعد قائمة مزودين تجريبية بدل رمي خطأ
-    // حتى لا تبقى الخريطة فارغة في بيئة التطوير.
-    const fallback = getFallbackNearbyProviders(params.role);
-    if (fallback.length > 0) {
-      return {
-        items: fallback,
-        total: fallback.length,
-        page: 1,
-        limit: params.limit ?? 20,
-      };
-    }
     throw new Error(getErrorMessage(error));
   }
 }

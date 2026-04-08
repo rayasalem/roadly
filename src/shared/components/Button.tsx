@@ -30,7 +30,7 @@ const PRIMARY_HEIGHT = 48;
 
 function getBtnVariantStyles(colors: ReturnType<typeof useTheme>['colors']) {
   const secondaryStyle = {
-    backgroundColor: colors.surface,
+    backgroundColor: 'transparent' as const,
     borderWidth: BORDER_WIDTH,
     borderColor: colors.primary,
   };
@@ -111,10 +111,22 @@ export const Button = React.memo(function Button({
     ]).start();
   };
 
+  const elevationStyle =
+    isDisabled || effectiveVariant === 'ghost'
+      ? shadows.none
+      : effectiveVariant === 'outline' || effectiveVariant === 'secondary'
+        ? shadows.sm
+        : effectiveVariant === 'primary' || effectiveVariant === 'uber' || effectiveVariant === 'danger'
+          ? size === 'sm'
+            ? shadows.md
+            : shadows.lg
+          : shadows.md;
+
   const btnStyle = [
     styles.btn,
     btnVariantStyles[effectiveVariant],
     sizeStyle,
+    elevationStyle,
     isDisabled && styles.disabled,
   ];
   const textStyle = [
@@ -165,11 +177,10 @@ const styles = StyleSheet.create({
   btn: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radii.lg,
+    borderRadius: radii.md,
     minHeight: PRIMARY_HEIGHT,
     paddingVertical: 14,
     paddingHorizontal: 20,
-    ...shadows.md,
   },
   sm: {
     paddingVertical: spacing.sm,
@@ -187,7 +198,7 @@ const styles = StyleSheet.create({
     minHeight: PRIMARY_HEIGHT,
   },
   fullWidth: { width: '100%' },
-  disabled: { opacity: 0.6 },
+  disabled: { opacity: 0.4 },
   pressed: { opacity: 0.85 },
   hoverWeb: {
     opacity: 0.94,

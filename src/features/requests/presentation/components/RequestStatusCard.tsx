@@ -103,7 +103,7 @@ export function RequestStatusCard({
         <AppText variant="title3" style={[styles.cardTitle, { color: themeColors.text }]}>
           {t('request.currentTitle')}
         </AppText>
-        <ErrorWithRetry message={t('error.network')} onRetry={onRetry} />
+        <ErrorWithRetry compact message={t('error.network')} onRetry={onRetry} />
       </View>
     );
   }

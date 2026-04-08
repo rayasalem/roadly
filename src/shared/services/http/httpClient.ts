@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
+import { API_BASE_URL } from '../../constants/env';
 import type { HttpError } from './types';
 
 export type TokenProvider = {
@@ -37,6 +38,24 @@ export interface ApiErrorBody {
   error?: string;
 }
 
+function buildNetworkHttpMessage(code: string | undefined, axiosMessage: string | undefined): string {
+  const unreachable =
+    code === 'ERR_NETWORK' ||
+    code === 'ECONNREFUSED' ||
+    (typeof axiosMessage === 'string' && axiosMessage.toLowerCase().includes('network error'));
+  const base = `Could not reach the API at ${API_BASE_URL}.`;
+  if (!unreachable) {
+    return `${base} Check your connection and try again.`;
+  }
+  const hint =
+    'Often caused by localhost/127.0.0.1 on a physical device (the phone cannot see your PC as "localhost"). The app should auto-use the same LAN IP as Metro; if not, set EXPO_PUBLIC_DEV_API_HOST to your PC IPv4. Android emulator: host machine is 10.0.2.2; iOS Simulator: use 127.0.0.1.';
+  const devNote =
+    typeof __DEV__ !== 'undefined' && __DEV__
+      ? ' Enable EXPO_PUBLIC_DEBUG_HTTP=1 to print how API_BASE_URL was resolved.'
+      : '';
+  return `${base} ${hint}${devNote}`;
+}
+
 /** Converts unknown (e.g. Axios error) to normalized HttpError. Exported for errorMessage helper. */
 export function toHttpError(err: unknown): HttpError {
   if (err instanceof AxiosError) {
@@ -49,7 +68,21 @@ export function toHttpError(err: unknown): HttpError {
     }
 
     if (!response || typeof response !== 'object') {
-      return { kind: 'Network', message: 'Network error. Check your connection.', requestId };
+      const code = err.code;
+      const isUnreachable =
+        code === 'ERR_NETWORK' ||
+        code === 'ECONNREFUSED' ||
+        (typeof err.message === 'string' && err.message.toLowerCase().includes('network error'));
+      const message = buildNetworkHttpMessage(code, typeof err.message === 'string' ? err.message : undefined);
+      if (typeof __DEV__ !== 'undefined' && __DEV__ && isUnreachable) {
+        console.warn('[HTTP]', message, { code, axiosCode: err.code });
+      }
+      return {
+        kind: 'Network',
+        message,
+        requestId,
+        details: { axiosCode: code },
+      };
     }
 
     const data = response.data;

@@ -1,62 +1,61 @@
 # MechNow — Test coverage report
 
-**Last verified:** automated run (repo root + `backend/`) — all commands exited **0**.
+**Last verified:** repo root Jest + `backend/` scripts — all **exit 0**.
 
 ## Commands
 
 | Scope | Command | Result |
 |--------|---------|--------|
-| **App (Jest)** | `npm test` | 7 suites, **21** tests — **PASS** |
-| **App coverage** | `npm run test:coverage` | Same tests — **PASS** (summary below) |
-| **Backend** | `cd backend && npm test` | `test:validation` + `test:integration` + `test:unit` — **PASS** |
-| **Backend API alias** | `cd backend && npm run test:api` | Same as `test:integration` |
+| **App (Jest)** | `npm test` | **20** suites, **66** tests — **PASS** |
+| **App coverage** | `npm run test:coverage` | **PASS** — aggregate **~46%** statements / **~50%** lines (full tree) |
+| **Backend unit** | `npm run test:unit` | Joi (`backend`) — **PASS** |
+| **Backend integration** | `npm run test:integration` | `healthAndAuth.test.ts` **+** `routesApi.test.ts` — **PASS** |
+| **Backend API** | `npm run test:api` | Same as integration — **PASS** |
 
-## Frontend (Jest) — suites
+Root scripts `test:unit`, `test:integration`, `test:api` delegate to `npm --prefix backend run …`.
 
-| File | Notes |
+## Frontend — suites
+
+| Area | Files |
 |------|--------|
-| `__tests__/shared/Button.test.tsx` | Button / loading |
-| `__tests__/features/home/HomeScreen.test.tsx` | Header (`app.name`), nearby section, map preview press |
-| `__tests__/features/map/MapScreen.web.test.tsx` | Search placeholder `map.searchHerePlaceholder`, filters |
-| `__tests__/features/mechanic/MechanicDashboardScreen.test.tsx` | Dashboard title (duplicate-safe), filters |
-| `__tests__/features/admin/AdminDashboardScreen.test.tsx` | Admin screen smoke |
-| `__tests__/features/location/haversine.test.ts` | Haversine math |
-| `__tests__/features/map/mapClustering.test.ts` | Clustering helpers |
+| **Shared services** ✅ | `__tests__/shared/services/*.test.ts` — `httpClient`, `errorMessage`, `httpEvents`, `tokenStore`, `refreshAccessToken`, `sessionStorage`, `secureTokenStorage`, `secureTokenStorage.web`, `savedAuthStorage`, `notificationCleanup`, `queryClient`, `httpTypes`, `api` |
+| **UI / features** | `Button`, `HomeScreen`, `MapScreen.web`, `MechanicDashboardScreen`, `AdminDashboardScreen`, `haversine`, `mapClustering` |
 
-**Config:** Root Jest ignores `backend/` (`testPathIgnorePatterns`) so backend `tsx` scripts are not executed by the app test runner.
+**Config:** Jest ignores `backend/` (`testPathIgnorePatterns`).
 
-## Jest coverage snapshot (`npm run test:coverage`)
+## Coverage highlights (`npm run test:coverage`)
 
-Aggregates for the instrumented tree (not the whole monorepo):
+| Metric (aggregate) | ~Value |
+|--------------------|--------|
+| Statements | **~46%** |
+| Branches | **~37%** |
+| Functions | **~37%** |
+| Lines | **~50%** |
 
-| Metric | Value |
+| Module | Notes |
 |--------|--------|
-| **Statements** | ~36.4% |
-| **Branches** | ~27.9% |
-| **Functions** | ~28.8% |
-| **Lines** | ~39.1% |
-
-**100% lines (examples):** `src/features/location/data/haversine.ts`, `src/mock/mockProviders.ts`, `src/mock/mockLocations.ts`, parts of `WebMapView.tsx` / `MapLegend.tsx` as exercised by tests.
-
-**Low / not covered by unit tests:** navigation ref, HTTP client stack, auth token refresh, many data-layer APIs — intended for integration/E2E or future tests.
+| ✅ **100%** lines | `refreshAccessToken.ts`, `errorMessage.ts`, `httpEvents.ts`, `tokenStore.ts`, `notificationCleanup.ts`, `queryClient.ts`, `haversine.ts`, … |
+| ⚠️ Partial | `httpClient.ts` (interceptors / retry paths), `api.ts` (side-effect client), `sessionStorage.ts` (edge clears), `secureTokenStorage.ts` (native branches) |
+| ❌ Low | `authApi.ts`, `navigationRef`, HTTP stack not otherwise covered |
 
 ## Backend tests
 
 | Script | Role |
 |--------|------|
-| `test:validation` | Zod/schema checks (`src/test/validation/schemas.test.ts`) |
-| `test:integration` | Supertest: `GET /health`, `POST /auth/login` validation (`src/test/integration/healthAndAuth.test.ts`) |
-| `test:unit` | Joi schemas (`src/test/validation/joiSchemas.test.ts`) |
+| `test:validation` | Zod (`schemas.test.ts`) |
+| `test:integration` | Supertest: **`healthAndAuth.test.ts`** (`/health`, login validation) + **`routesApi.test.ts`** (auth/register/refresh/login smoke, **mock Bearer** routes: admin, chat, dashboard, notifications, providers, requests, vehicles, uploads) |
+| `test:unit` | Joi (`joiSchemas.test.ts`) |
+| `test:api` | Alias → `test:integration` |
 
-No live Supabase/Redis/payment calls in these scripts; they target the local app instance used in the integration file.
+**Note:** `routesApi.test.ts` allows **200 or 500** on some Prisma-backed routes when `DATABASE_URL` is missing or DB is down; **401/403/400** cases are always asserted. Use a configured DB for strict **200** on all success paths.
 
-## Fixes applied in this verification cycle (summary)
+## Fixes / additions in this cycle
 
-- **HomeScreen tests:** Assertions aligned with `AppHeader` (`centerLogo` → visible title is `app.name`) and copy keys (`home.nearbyServicesTitle`, map preview subtitle for press).
-- **MapScreen.web tests:** Placeholder key `map.searchHerePlaceholder`; `usePlacesSearch` mock includes `suggestions: []` (and optional chaining in `MapSearchBar` for robustness).
-- **MechanicDashboard test:** Duplicate title text handled via `getAllByText`.
-- **Navigation mock:** `canGoBack` provided where screens call it.
+- Root **`package.json`**: `test:unit`, `test:integration`, `test:api` → backend.
+- Backend **`test:integration`**: runs **`routesApi.test.ts`** after health/auth.
+- **Frontend:** unit tests for all files under `src/shared/services/` (see table above).
+- **`MapSearchBar`:** defensive `suggestions ?? []` (from earlier cycle).
 
 ---
 
-*Regenerate this section after meaningful test changes: run the commands above and paste new counts/coverage.*
+*Re-run `npm test`, `npm run test:coverage`, and `cd backend && npm test` after large changes.*

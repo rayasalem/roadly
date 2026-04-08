@@ -24,7 +24,6 @@ import { spacing, typography } from '../../../../shared/theme';
 import { t } from '../../../../shared/i18n/t';
 import type { AdminStackParamList } from '../../../../navigation/AdminStack';
 import { getRequestStatusTheme } from '../../../requests/constants/requestStatusTheme';
-import { safeNavigateToSettings } from '../../../../navigation/navigationRef';
 import { fetchAdminRequests } from '../../data/adminRequestsApi';
 import type { AdminRequestApiItem } from '../../data/adminRequestsApi';
 
@@ -78,8 +77,7 @@ export function AdminRequestsScreen() {
       if (tab === 'Home') navigation.navigate('AdminDashboard');
       else if (tab === 'Profile') navigation.navigate('Profile');
       else if (tab === 'Chat') navigation.navigate('Chat');
-      else if (tab === 'Notifications') navigation.navigate('Notifications');
-      else if (tab === 'Settings') safeNavigateToSettings(navigation);
+      else if (tab === 'Requests') return;
     },
     [navigation],
   );
@@ -156,7 +154,7 @@ export function AdminRequestsScreen() {
           }
         />
         <View style={styles.bottomNav}>
-          <BottomNavBar activeTab="Home" onSelect={handleTab} dark />
+          <BottomNavBar activeTab="Requests" onSelect={handleTab} dark />
         </View>
       </SafeAreaView>
     </View>

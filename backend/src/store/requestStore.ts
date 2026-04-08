@@ -5,7 +5,14 @@ import type {
   RequestStatus as PrismaRequestStatus,
 } from '@prisma/client';
 
-export type ServiceType = 'mechanic' | 'tow' | 'rental' | 'battery' | 'tire' | 'oil_change';
+export type ServiceType =
+  | 'mechanic'
+  | 'tow'
+  | 'rental'
+  | 'insurance'
+  | 'battery'
+  | 'tire'
+  | 'oil_change';
 export type RequestStatus =
   | 'pending'
   | 'accepted'

@@ -174,7 +174,7 @@ router.get('/requests', requireAdmin, asyncHandler(async (req, res) => {
   const status = query.status as RequestStatus | undefined;
   const serviceType = query.serviceType as ServiceType | undefined;
   const validStatuses: RequestStatus[] = ['pending', 'accepted', 'on_the_way', 'completed', 'cancelled'];
-  const validTypes: ServiceType[] = ['mechanic', 'tow', 'rental', 'battery', 'tire', 'oil_change'];
+  const validTypes: ServiceType[] = ['mechanic', 'tow', 'rental', 'insurance', 'battery', 'tire', 'oil_change'];
   const result = await listAllRequestsForAdmin({
     page,
     limit,

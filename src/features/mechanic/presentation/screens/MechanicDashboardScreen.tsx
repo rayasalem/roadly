@@ -11,15 +11,18 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 
 import { AppText } from '../../../../shared/components/AppText';
 import { AppHeader } from '../../../../shared/components/AppHeader';
-import { ErrorWithRetry } from '../../../../shared/components/ErrorWithRetry';
 import { GlassCard } from '../../../../shared/components/GlassCard';
 import { StatusBadge } from '../../../../shared/components/StatusBadge';
 import { useUIStore } from '../../../../store/uiStore';
-import { LoadingSpinner } from '../../../../shared/components/LoadingSpinner';
 import { PressableCard } from '../../../../shared/components/PressableCard';
 import { StatCard } from '../../../../shared/components/StatCard';
 import { Button } from '../../../../shared/components/Button';
 import { BottomNavBar, type NavTabId } from '../../../../shared/components/BottomNavBar';
+import {
+  DashboardShell,
+  DashboardEmptyState,
+  DashboardSectionHeader,
+} from '../../../../shared/components/dashboard';
 import { colors } from '../../../../shared/theme/colors';
 import { spacing, typography, radii, shadows } from '../../../../shared/theme';
 import { ROLE_THEMES } from '../../../../shared/theme/roleThemes';
@@ -37,6 +40,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ROLES } from '../../../../shared/constants/roles';
 import { useAuthStore } from '../../../../store/authStore';
 import { openExternalMap } from '../../../../shared/utils/navigation';
+import { blurActiveElementForA11y } from '../../../../shared/utils/domA11y';
 
 type Nav = NativeStackNavigationProp<MechanicStackParamList, 'MechanicDashboard'>;
 const THEME = ROLE_THEMES.mechanic;
@@ -88,7 +92,7 @@ const MechanicJobCard = memo(function MechanicJobCard({
       <View style={styles.actionRow}>
         <Button title={t('mechanic.decline')} onPress={onDecline} variant="outline" size="sm" />
         <View style={styles.actionSpacer} />
-        <Button title={t('home.action.navigate') ?? 'Navigate'} onPress={onNavigate} variant="ghost" size="sm" />
+        <Button title={t('home.action.navigate') ?? 'Navigate'} onPress={() => onNavigate?.()} variant="ghost" size="sm" />
         <View style={styles.actionSpacer} />
         <Button title={t('mechanic.accept')} onPress={onAccept} variant="accent" size="sm" />
       </View>
@@ -148,10 +152,8 @@ export function MechanicDashboardScreen() {
         navigation.navigate('Profile');
       } else if (tab === 'Chat') {
         (navigation as any).navigate('Chat');
-      } else if (tab === 'Notifications') {
-        (navigation as any).navigate('Notifications');
-      } else if (tab === 'Settings') {
-        (navigation as any).navigate('Settings');
+      } else if (tab === 'Requests') {
+        navigation.navigate('MechanicJobHistory');
       }
     },
     [navigation],
@@ -222,11 +224,19 @@ export function MechanicDashboardScreen() {
     [completeJob, toast],
   );
 
-  if (isLoading) return <LoadingSpinner />;
-  if (isError) return <ErrorWithRetry message={error?.message ?? ''} onRetry={() => refetch()} testID="mechanic-dashboard-retry" />;
-
   return (
-    <View style={styles.root}>
+    <DashboardShell
+      isLoading={isLoading}
+      isError={isError}
+      errorMessage={error?.message ?? ''}
+      onRetry={() => refetch()}
+      loadingHint={t('common.loading')}
+      bottomSlot={
+        <View style={styles.bottomNavWrap}>
+          <BottomNavBar activeTab="Home" onSelect={handleTab} dark />
+        </View>
+      }
+    >
       <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
         <AppHeader
           title={t('mechanic.dashboard.title')}
@@ -382,7 +392,7 @@ export function MechanicDashboardScreen() {
                 ))}
               </View>
 
-              <AppText variant="title3" style={styles.sectionTitle}>{t('mechanic.requestsList') ?? 'Requests'}</AppText>
+              <DashboardSectionHeader title={t('mechanic.requestsList') ?? 'Requests'} />
             </>
           }
           renderItem={({ item: job }) => (
@@ -395,10 +405,14 @@ export function MechanicDashboardScreen() {
             />
           )}
           ListEmptyComponent={
-            <View style={styles.emptyWrap}>
-              <MaterialCommunityIcons name="wrench-outline" size={48} color={colors.textMuted} />
-              <AppText variant="body" color={colors.textMuted} style={styles.emptyText}>{t('mechanic.noJobs')}</AppText>
-            </View>
+            <DashboardEmptyState
+              icon="wrench-outline"
+              title={t('mechanic.noJobs')}
+              subtitle={t('map.tapMarkerHint')}
+              ctaTitle={t('mechanic.viewRequestOnMap')}
+              onCtaPress={() => navigation.navigate('Map')}
+              testID="mechanic-dashboard-empty"
+            />
           }
         />
       </SafeAreaView>
@@ -461,15 +475,11 @@ export function MechanicDashboardScreen() {
         </View>
       </BottomSheetModal>
 
-      <View style={styles.bottomNavWrap}>
-        <BottomNavBar activeTab="Home" onSelect={handleTab} dark />
-      </View>
-    </View>
+    </DashboardShell>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
   safe: { flex: 1 },
   scroll: { paddingHorizontal: spacing.md, paddingBottom: 100 },
   heroCard: {
@@ -644,16 +654,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 80,
-  },
-  emptyWrap: {
-    alignItems: 'center',
-    paddingVertical: spacing.lg,
-  },
-  emptyText: {
-    fontFamily: typography.fontFamily.regular,
-    fontSize: typography.presets.bodySmall.fontSize,
-    color: colors.textMuted,
-    marginTop: spacing.md,
   },
   actionCardTitle: {
     fontFamily: typography.fontFamily.semibold,

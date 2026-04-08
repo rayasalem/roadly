@@ -28,11 +28,19 @@ export interface ProviderProfile {
 const MECHANIC_SERVICES_POOL = ['Tire repair', 'Engine diagnostic', 'Oil change', 'Battery service', 'AC repair', 'Brake service'];
 const TOW_SERVICES_POOL = ['Tow to garage', 'Roadside assistance', 'Long-distance tow', 'Motorcycle tow', 'Heavy vehicle'];
 const RENTAL_SERVICES_POOL = ['Daily rental', 'Weekly rental', 'Luxury vehicles', 'Economy cars', 'SUV rental'];
+const INSURANCE_SERVICES_POOL = [
+  'تأمين شامل',
+  'تأمين ضد الغير',
+  'تأمين حوادث',
+  'تأمين شاحنات',
+  'تأمين دراجات',
+];
 
 function getServicesPool(role: Role): string[] {
   if (role === ROLES.MECHANIC) return [...MECHANIC_SERVICES_POOL];
   if (role === ROLES.MECHANIC_TOW) return [...TOW_SERVICES_POOL];
   if (role === ROLES.CAR_RENTAL) return [...RENTAL_SERVICES_POOL];
+  if (role === ROLES.INSURANCE) return [...INSURANCE_SERVICES_POOL];
   return [];
 }
 
@@ -40,7 +48,8 @@ const QUERY_KEY = ['provider', 'me'] as const;
 const STALE_TIME_MS = 2 * 60 * 1000;
 
 export function useProviderProfile(role: Role | 'guest' | null, displayName: string) {
-  const isProvider = role === ROLES.MECHANIC || role === ROLES.MECHANIC_TOW || role === ROLES.CAR_RENTAL;
+  const isProvider =
+    role === ROLES.MECHANIC || role === ROLES.MECHANIC_TOW || role === ROLES.CAR_RENTAL || role === ROLES.INSURANCE;
 
   const queryClient = useQueryClient();
   const {
@@ -88,7 +97,10 @@ export function useProviderProfile(role: Role | 'guest' | null, displayName: str
 
   const services = useMemo(() => (data ? localServices : []), [data, localServices]);
 
-  const servicesPool = useMemo(() => (role ? getServicesPool(role) : []), [role]);
+  const servicesPool = useMemo(
+    () => (role && role !== 'guest' ? getServicesPool(role) : []),
+    [role],
+  );
 
   const addService = useCallback((serviceName: string) => {
     setLocalServices((prev) => (prev.includes(serviceName) ? prev : [...prev, serviceName]));

@@ -17,6 +17,8 @@ import { QueryErrorFallback } from './QueryErrorFallback';
 import { UnauthorizedHandler } from './UnauthorizedHandler';
 import { AuthBootstrap } from './AuthBootstrap';
 import { GlobalRuntimeProtection } from './GlobalRuntimeProtection';
+import { NetworkStatusBinder } from './NetworkStatusBinder';
+import { OfflineQueueProcessor } from './OfflineQueueProcessor';
 
 export function AppProviders() {
   const queryClient = useMemo(() => createQueryClient(), []);
@@ -35,6 +37,8 @@ export function AppProviders() {
                 onReady={flushPendingNavigateToLogin}
               >
                 <LocaleRTLSync />
+                <NetworkStatusBinder />
+                <OfflineQueueProcessor />
                 <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
                 <HttpEventsBinder />
                 <QueryErrorFallback />

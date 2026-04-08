@@ -22,7 +22,7 @@ export const fontFamilyTajawal = {
 export type FontFamilySet = typeof fontFamilyPoppins;
 
 export function getFontFamilyForLocale(locale: Locale): FontFamilySet {
-  return locale === 'ar' ? fontFamilyTajawal : fontFamilyPoppins;
+  return (locale === 'ar' ? fontFamilyTajawal : fontFamilyPoppins) as FontFamilySet;
 }
 
 export function useTypography() {

@@ -1,8 +1,15 @@
 import { prisma } from '../lib/prisma.js';
 import type { Prisma, Role as PrismaRole, ServiceType as PrismaServiceType } from '@prisma/client';
 
-export type Role = 'mechanic' | 'mechanic_tow' | 'car_rental';
-export type ServiceType = 'mechanic' | 'tow' | 'rental' | 'battery' | 'tire' | 'oil_change';
+export type Role = 'mechanic' | 'mechanic_tow' | 'car_rental' | 'insurance';
+export type ServiceType =
+  | 'mechanic'
+  | 'tow'
+  | 'rental'
+  | 'insurance'
+  | 'battery'
+  | 'tire'
+  | 'oil_change';
 
 export interface ProviderLocation {
   latitude: number;
@@ -30,6 +37,7 @@ export interface Provider {
 function roleToServiceType(role: Role): ServiceType {
   if (role === 'mechanic_tow') return 'tow';
   if (role === 'car_rental') return 'rental';
+  if (role === 'insurance') return 'insurance';
   return 'mechanic';
 }
 
@@ -225,6 +233,7 @@ export const ALL_SERVICE_TYPES: ServiceType[] = [
   'mechanic',
   'tow',
   'rental',
+  'insurance',
   'battery',
   'tire',
   'oil_change',

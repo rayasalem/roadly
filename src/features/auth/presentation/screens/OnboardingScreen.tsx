@@ -11,6 +11,8 @@ import type { RootStackParamList } from '../../../../navigation/RootNavigator';
 import { colors } from '../../../../shared/theme/colors';
 import { spacing, typography } from '../../../../shared/theme';
 import { t } from '../../../../shared/i18n/t';
+import { arrowForwardForLocale } from '../../../../shared/i18n/rtlUtils';
+import { useLocaleStore } from '../../../../store/localeStore';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Onboarding'>;
 
@@ -23,6 +25,8 @@ const SLIDES = [
 ];
 
 export function OnboardingScreen({ navigation }: Props) {
+  const locale = useLocaleStore((s) => s.locale);
+  const arrowForward = arrowForwardForLocale(locale);
   const [index, setIndex] = useState(0);
   const scrollX = useRef(new Animated.Value(0)).current;
 
@@ -70,7 +74,7 @@ export function OnboardingScreen({ navigation }: Props) {
             <Text style={styles.nextBtnText}>
               {index < SLIDES.length - 1 ? t('onboarding.cta.next') : t('onboarding.cta.getStarted')}
             </Text>
-            <MaterialCommunityIcons name="arrow-right" size={22} color={colors.primaryContrast} />
+            <MaterialCommunityIcons name={arrowForward} size={22} color={colors.primaryContrast} />
           </TouchableOpacity>
         </View>
       </SafeAreaView>

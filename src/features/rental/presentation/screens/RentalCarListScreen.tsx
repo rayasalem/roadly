@@ -165,6 +165,7 @@ export function RentalCarListScreen() {
             source={{ uri: carImageUri(item) }}
             style={styles.carImage}
             resizeMode="cover"
+            {...(Platform.OS === 'android' ? { resizeMethod: 'resize' as const } : {})}
           />
           <View style={styles.cardBody}>
             <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
@@ -229,6 +230,7 @@ export function RentalCarListScreen() {
           initialNumToRender={8}
           maxToRenderPerBatch={6}
           windowSize={5}
+          updateCellsBatchingPeriod={50}
           removeClippedSubviews
           ListEmptyComponent={
             <View style={styles.emptyWrap}>

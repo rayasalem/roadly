@@ -7,21 +7,28 @@ export const ROLES = {
   MECHANIC: 'mechanic',
   MECHANIC_TOW: 'mechanic_tow',
   CAR_RENTAL: 'car_rental',
+  INSURANCE: 'insurance',
   ADMIN: 'admin',
 } as const;
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];
 
 export const ROLE_LABELS: Record<Role, string> = {
-  [ROLES.USER]: 'Customer',
-  [ROLES.MECHANIC]: 'Mechanic',
-  [ROLES.MECHANIC_TOW]: 'Tow Truck',
-  [ROLES.CAR_RENTAL]: 'Car Rental',
-  [ROLES.ADMIN]: 'Admin',
+  [ROLES.USER]: 'عميل',
+  [ROLES.MECHANIC]: 'ميكانيكي',
+  [ROLES.MECHANIC_TOW]: 'ونش',
+  [ROLES.CAR_RENTAL]: 'تأجير سيارات',
+  [ROLES.INSURANCE]: 'تأمين',
+  [ROLES.ADMIN]: 'إدارة',
 };
 
 /** Provider roles (can be shown on map / in lists) */
-export const PROVIDER_ROLES: Role[] = [ROLES.MECHANIC, ROLES.MECHANIC_TOW, ROLES.CAR_RENTAL];
+export const PROVIDER_ROLES: Role[] = [
+  ROLES.MECHANIC,
+  ROLES.MECHANIC_TOW,
+  ROLES.CAR_RENTAL,
+  ROLES.INSURANCE,
+];
 
 export function isProviderRole(role: Role): boolean {
   return PROVIDER_ROLES.includes(role);
@@ -36,7 +43,9 @@ export function canRequestServices(role: Role): boolean {
 }
 
 export function hasLiveLocationTracking(role: Role): boolean {
-  return ([ROLES.MECHANIC, ROLES.MECHANIC_TOW, ROLES.CAR_RENTAL] as readonly Role[]).includes(role);
+  return (
+    [ROLES.MECHANIC, ROLES.MECHANIC_TOW, ROLES.CAR_RENTAL, ROLES.INSURANCE] as readonly Role[]
+  ).includes(role);
 }
 
 export function hasTowCapability(role: Role): boolean {

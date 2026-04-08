@@ -9,6 +9,9 @@ import { AppText } from '../../../../shared/components/AppText';
 import { Button } from '../../../../shared/components/Button';
 import { useTheme, spacing, typography, radii, shadows } from '../../../../shared/theme';
 import { t } from '../../../../shared/i18n/t';
+import { useLocaleStore } from '../../../../store/localeStore';
+import { trailingChevronForLocale } from '../../../../shared/i18n/rtlUtils';
+import { useDebouncedValue } from '../../../../shared/hooks/useDebouncedValue';
 import type { ServiceType } from '../../domain/types';
 import type { Provider } from '../../../providers/domain/types';
 
@@ -16,6 +19,7 @@ export const SERVICE_TYPE_OPTIONS: { value: ServiceType; labelKey: string }[] = 
   { value: 'mechanic', labelKey: 'request.types.mechanic' },
   { value: 'tow', labelKey: 'request.types.tow' },
   { value: 'rental', labelKey: 'request.types.rental' },
+  { value: 'insurance', labelKey: 'request.types.insurance' },
   { value: 'battery', labelKey: 'request.types.battery' },
   { value: 'tire', labelKey: 'request.types.tire' },
   { value: 'oil_change', labelKey: 'request.types.oil_change' },
@@ -46,6 +50,7 @@ export interface QuickRequestFormProps {
   providerOfflineMessage?: string | null;
   /** When true, show inline error under location (e.g. location not yet available). */
   locationRequiredError?: boolean;
+  isOffline?: boolean;
 }
 
 export function QuickRequestForm({
@@ -65,17 +70,21 @@ export function QuickRequestForm({
   createError,
   providerOfflineMessage,
   locationRequiredError = false,
+  isOffline = false,
 }: QuickRequestFormProps) {
   const { colors } = useTheme();
+  const locale = useLocaleStore((s) => s.locale);
+  const trailingChevron = trailingChevronForLocale(locale);
   const etaMinutes = distanceKm != null ? estimateEtaMinutes(distanceKm) : null;
   const [serviceFilter, setServiceFilter] = React.useState('');
+  const debouncedServiceFilter = useDebouncedValue(serviceFilter, 200);
   const filteredServiceOptions = React.useMemo(() => {
-    const q = serviceFilter.trim().toLowerCase();
+    const q = debouncedServiceFilter.trim().toLowerCase();
     if (!q) return SERVICE_TYPE_OPTIONS;
     return SERVICE_TYPE_OPTIONS.filter(
       (opt) => t(opt.labelKey).toLowerCase().includes(q) || opt.value.toLowerCase().includes(q)
     );
-  }, [serviceFilter]);
+  }, [debouncedServiceFilter]);
 
   return (
     <View style={styles.root}>
@@ -136,7 +145,7 @@ export function QuickRequestForm({
           <AppText variant="body" numberOfLines={1} style={[styles.locationText, { color: colors.text }]}>
             {locationLabel}
           </AppText>
-          <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
+          <MaterialCommunityIcons name={trailingChevron} size={20} color={colors.textMuted} />
         </TouchableOpacity>
         {locationRequiredError && (
           <AppText variant="caption" style={[styles.inlineError, { color: colors.error }]}>
@@ -171,7 +180,7 @@ export function QuickRequestForm({
           </View>
         )}
 
-        {serviceDescription.trim()
+        {serviceType !== 'insurance' && serviceDescription.trim()
           ? suggestedProviders.length > 0 && (
               <View
                 style={[styles.suggestedWrap, { backgroundColor: colors.background, borderColor: colors.border }]}
@@ -207,12 +216,17 @@ export function QuickRequestForm({
       </View>
 
       <View style={[styles.footer, { backgroundColor: colors.background }]}>
+        {isOffline ? (
+          <AppText variant="caption" style={[styles.offlineHint, { color: colors.warning }]}>
+            {t('request.offlineQueuedHint')}
+          </AppText>
+        ) : null}
         <Button
           testID="request-confirm"
           variant="uber"
           title={t('request.requestNow')}
           onPress={onCreateRequest}
-          disabled={isCreating}
+          disabled={isCreating || locationRequiredError}
           loading={isCreating}
           fullWidth
           size="lg"
@@ -321,4 +335,5 @@ const styles = StyleSheet.create({
   },
   errorText: { marginTop: spacing.sm },
   confirmBtn: { marginTop: spacing.lg },
+  offlineHint: { marginBottom: spacing.sm },
 });

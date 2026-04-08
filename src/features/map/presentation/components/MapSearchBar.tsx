@@ -5,14 +5,15 @@ import { AppText } from '../../../../shared/components/AppText';
 import { useTheme, spacing, typography, radii, shadows } from '../../../../shared/theme';
 import { ACTIVE_OPACITY } from '../../../../shared/constants/ux';
 import { t } from '../../../../shared/i18n/t';
+import type { PlaceSuggestion } from '../../data/placesApi';
 
 interface MapSearchBarProps {
   query: string;
   onQueryChange: (t: string) => void;
   onFocus?: () => void;
   onVoicePress?: () => void;
-  suggestions: Array<{ id: string; description: string; latitude: number; longitude: number }>;
-  onSelectSuggestion: (p: { id: string; description: string; latitude: number; longitude: number }) => void;
+  suggestions: PlaceSuggestion[];
+  onSelectSuggestion: (p: PlaceSuggestion) => void;
   showSuggestions: boolean;
 }
 
@@ -53,7 +54,8 @@ const styles = StyleSheet.create({
   searchWrap: { flexDirection: 'row', alignItems: 'center', borderRadius: radii.xl, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   input: { flex: 1, marginLeft: spacing.sm, fontFamily: typography.fontFamily.regular, fontSize: typography.fontSize.callout },
   micButton: { padding: spacing.xs, marginLeft: spacing.xs },
-  suggestionsBox: { position: 'absolute', top: '100%', left: spacing.xs, right: spacing.xs, marginTop: spacing.xs, borderRadius: radii.lg, maxHeight: 220, zIndex: 10 },
+  // Z-index: above search + filters to prevent overlap while typing.
+  suggestionsBox: { position: 'absolute', top: '100%', left: spacing.xs, right: spacing.xs, marginTop: spacing.xs, borderRadius: radii.lg, maxHeight: 220, zIndex: 30 },
   suggestionRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm, paddingHorizontal: spacing.md, gap: spacing.sm },
   suggestionText: { flex: 1 },
 });

@@ -1,8 +1,8 @@
 /**
  * Customer screen: list all providers with filter by status (all / available / busy / unavailable).
  */
-import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useMemo, useState, useCallback, memo } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, type ListRenderItem } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../../../shared/theme';
 import { AppHeader } from '../../../../shared/components/AppHeader';
@@ -19,7 +19,6 @@ import { providerRoleToServiceType } from '../../../map/utils/providerToServiceT
 import type { Provider, ProviderDisplayStatus } from '../../domain/types';
 import type { CustomerStackParamList } from '../../../../navigation/CustomerStack';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { MOCK_PROVIDERS } from '../../../map/utils/mapHelpers';
 import { colors as themeColors } from '../../../../shared/theme/colors';
 
 type FilterTab = 'all' | 'available' | 'busy' | 'offline';
@@ -51,6 +50,52 @@ function statusLabelKey(status: ProviderDisplayStatus | 'unknown'): string {
 
 type Nav = NativeStackNavigationProp<CustomerStackParamList, 'AllProviders'>;
 
+const ProviderListRow = memo(function ProviderListRow({
+  item: p,
+  onProviderPress,
+  onRequestPress,
+}: {
+  item: Provider;
+  onProviderPress: (p: Provider) => void;
+  onRequestPress: (p: Provider) => void;
+}) {
+  const { colors } = useTheme();
+  const themeId = p.role === 'mechanic_tow' ? 'tow' : p.role === 'car_rental' ? 'rental' : 'mechanic';
+  const theme = ROLE_THEMES[themeId];
+  const status = getProviderStatus(p);
+  const statusColor =
+    status === 'available' || status === 'on_the_way'
+      ? themeColors.success
+      : status === 'busy'
+        ? themeColors.warning
+        : themeColors.textMuted;
+  return (
+    <TouchableOpacity
+      style={[styles.row, { backgroundColor: colors.surface }]}
+      onPress={() => onProviderPress(p)}
+      activeOpacity={0.8}
+    >
+      <ProviderAvatar
+        photoUri={p.photo ?? (p as { avatarUri?: string }).avatarUri ?? null}
+        size={48}
+        themeColor={theme?.primary ?? colors.primary}
+      />
+      <View style={styles.rowCenter}>
+        <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
+          {p.name}
+        </Text>
+        <Text style={[styles.meta, { color: statusColor }]}>{t(statusLabelKey(status))}</Text>
+      </View>
+      <Button
+        title={t('map.requestService')}
+        onPress={() => onRequestPress(p)}
+        size="sm"
+        style={styles.requestBtn}
+      />
+    </TouchableOpacity>
+  );
+});
+
 const TABS: { key: FilterTab; labelKey: string }[] = [
   { key: 'all', labelKey: 'providersPage.filterAll' },
   { key: 'available', labelKey: 'providersPage.filterAvailable' },
@@ -77,57 +122,32 @@ export function AllProvidersScreen() {
     [center.latitude, center.longitude]
   );
   const { data, isLoading, isError, refetch } = useNearbyProviders(params, true, false);
-  const allProviders = (data?.items ?? (isError ? MOCK_PROVIDERS : [])) as Provider[];
+  const allProviders = (data?.items ?? []) as Provider[];
   const filtered = useMemo(() => filterByTab(allProviders, filterTab), [allProviders, filterTab]);
 
-  const handleProviderPress = (p: Provider) => {
-    navigation.navigate('ProviderProfile', { providerId: p.id });
-  };
+  const handleProviderPress = useCallback(
+    (p: Provider) => {
+      navigation.navigate('ProviderProfile', { providerId: p.id });
+    },
+    [navigation],
+  );
 
-  const handleRequestService = (p: Provider) => {
-    const serviceType = providerRoleToServiceType(p.role);
-    if (serviceType) navigation.navigate('Request', { serviceType, providerId: p.id });
-  };
+  const handleRequestService = useCallback(
+    (p: Provider) => {
+      const serviceType = providerRoleToServiceType(p.role);
+      if (serviceType) navigation.navigate('Request', { serviceType, providerId: p.id });
+    },
+    [navigation],
+  );
 
-  const renderItem = ({ item: p }: { item: Provider }) => {
-    const themeId = p.role === 'mechanic_tow' ? 'tow' : p.role === 'car_rental' ? 'rental' : 'mechanic';
-    const theme = ROLE_THEMES[themeId];
-    const status = getProviderStatus(p);
-    const statusColor =
-      status === 'available' || status === 'on_the_way'
-        ? themeColors.success
-        : status === 'busy'
-          ? themeColors.warning
-          : themeColors.textMuted;
-    return (
-      <TouchableOpacity
-        style={[styles.row, { backgroundColor: colors.surface }]}
-        onPress={() => handleProviderPress(p)}
-        activeOpacity={0.8}
-      >
-        <ProviderAvatar
-          photoUri={p.photo ?? (p as { avatarUri?: string }).avatarUri ?? null}
-          size={48}
-          themeColor={theme?.primary ?? colors.primary}
-        />
-        <View style={styles.rowCenter}>
-          <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
-            {p.name}
-          </Text>
-          <Text style={[styles.meta, { color: statusColor }]}>{t(statusLabelKey(status))}</Text>
-        </View>
-        <Button
-          title={t('map.requestService')}
-          onPress={(e) => {
-            e?.stopPropagation?.();
-            handleRequestService(p);
-          }}
-          size="sm"
-          style={styles.requestBtn}
-        />
-      </TouchableOpacity>
-    );
-  };
+  const keyExtractor = useCallback((p: Provider) => p.id, []);
+
+  const renderItem = useCallback<ListRenderItem<Provider>>(
+    ({ item }) => (
+      <ProviderListRow item={item} onProviderPress={handleProviderPress} onRequestPress={handleRequestService} />
+    ),
+    [handleProviderPress, handleRequestService],
+  );
 
   return (
     <ScreenWrapper>
@@ -155,10 +175,15 @@ export function AllProvidersScreen() {
       ) : (
         <FlatList
           data={filtered}
-          keyExtractor={(p) => p.id}
+          keyExtractor={keyExtractor}
           renderItem={renderItem}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator
+          initialNumToRender={12}
+          maxToRenderPerBatch={8}
+          windowSize={5}
+          updateCellsBatchingPeriod={50}
+          removeClippedSubviews
         />
       )}
     </ScreenWrapper>

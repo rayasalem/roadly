@@ -18,6 +18,7 @@ import { ChatDetailScreen } from '../features/chat/presentation/screens/ChatDeta
 import { NotFoundScreen } from '../shared/components/NotFoundScreen';
 
 export type RentalStackParamList = {
+  ProviderDashboard: undefined;
   RentalDashboard: undefined;
   RentalServices: undefined;
   RentalSkills: undefined;

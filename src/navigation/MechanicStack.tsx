@@ -16,12 +16,14 @@ import { ChatDetailScreen } from '../features/chat/presentation/screens/ChatDeta
 import { NotFoundScreen } from '../shared/components/NotFoundScreen';
 
 export type MechanicStackParamList = {
+  ProviderDashboard: undefined;
   MechanicDashboard: undefined;
   MechanicServices: undefined;
   MechanicSkills: undefined;
   MechanicJobHistory: undefined;
   Map: undefined;
   Profile: undefined;
+  ProviderProfile: { providerId: string };
   Chat: undefined;
   ChatDetail: { conversationId: string; name: string };
   Settings: undefined;

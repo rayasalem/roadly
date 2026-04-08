@@ -12,11 +12,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { AppHeader } from '../../../../shared/components/AppHeader';
 import { AppText } from '../../../../shared/components/AppText';
-import { ErrorWithRetry } from '../../../../shared/components/ErrorWithRetry';
+import {
+  DashboardShell,
+  DashboardEmptyState,
+  DashboardSectionHeader,
+} from '../../../../shared/components/dashboard';
 import { GlassCard } from '../../../../shared/components/GlassCard';
 import { StatusBadge } from '../../../../shared/components/StatusBadge';
 import { RequestTimeline, type TimelineStep } from '../../../../shared/components/RequestTimeline';
-import { LoadingSpinner } from '../../../../shared/components/LoadingSpinner';
 import { PressableCard } from '../../../../shared/components/PressableCard';
 import { StatCard } from '../../../../shared/components/StatCard';
 import { Button } from '../../../../shared/components/Button';
@@ -33,6 +36,7 @@ import { updateProviderAvailability } from '../../../profile/data/providerProfil
 import { useUIStore } from '../../../../store/uiStore';
 import { useAuthStore } from '../../../../store/authStore';
 import { openExternalMap } from '../../../../shared/utils/navigation';
+import { blurActiveElementForA11y } from '../../../../shared/utils/domA11y';
 
 type Nav = NativeStackNavigationProp<TowStackParamList, 'TowDashboard'>;
 const THEME = ROLE_THEMES.tow;
@@ -126,10 +130,8 @@ export function TowDashboardScreen() {
         navigation.navigate('Profile');
       } else if (tab === 'Chat') {
         (navigation as any).navigate('Chat');
-      } else if (tab === 'Notifications') {
-        (navigation as any).navigate('Notifications');
-      } else if (tab === 'Settings') {
-        (navigation as any).navigate('Settings');
+      } else if (tab === 'Requests') {
+        (navigation as any).navigate('TowJobHistory');
       }
     },
     [navigation],
@@ -181,11 +183,19 @@ export function TowDashboardScreen() {
 
   const actionLoading = isAccepting || isRejecting;
 
-  if (isLoading) return <LoadingSpinner />;
-  if (isError) return <ErrorWithRetry message={error?.message ?? ''} onRetry={() => refetch()} testID="tow-dashboard-retry" />;
-
   return (
-    <View style={styles.root}>
+    <DashboardShell
+      isLoading={isLoading}
+      isError={isError}
+      errorMessage={error?.message ?? ''}
+      onRetry={() => refetch()}
+      loadingHint={t('common.loading')}
+      bottomSlot={
+        <View style={styles.bottomNavWrap}>
+          <BottomNavBar activeTab="Home" onSelect={handleTab} dark />
+        </View>
+      }
+    >
       <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
         <AppHeader title={t('tow.dashboard.title')} rightIcon="profile" onProfile={openProfile} />
         <FlatList
@@ -281,7 +291,7 @@ export function TowDashboardScreen() {
                 </View>
               </GlassCard>
 
-          <Text style={styles.sectionTitle}>{t('tow.whoRequestedMe')}</Text>
+          <DashboardSectionHeader title={t('tow.whoRequestedMe')} />
           <GlassCard role="tow">
             {requesters.map((r) => (
               <View key={r.id} style={styles.requesterRow}>
@@ -325,7 +335,7 @@ export function TowDashboardScreen() {
             ))}
           </View>
 
-          <Text style={styles.sectionTitle}>{t('tow.requestsList') ?? 'Requests'}</Text>
+          <DashboardSectionHeader title={t('tow.requestsList') ?? 'Requests'} />
             </>
           }
           renderItem={({ item: job }) => (
@@ -337,10 +347,14 @@ export function TowDashboardScreen() {
             />
           )}
           ListEmptyComponent={
-            <View style={styles.emptyWrap}>
-              <MaterialCommunityIcons name="tow-truck" size={48} color={colors.textMuted} />
-              <Text style={styles.emptyText}>{t('tow.noJobs')}</Text>
-            </View>
+            <DashboardEmptyState
+              icon="tow-truck"
+              title={t('tow.noJobs')}
+              subtitle={t('map.tapMarkerHint')}
+              ctaTitle={t('tow.viewRequestOnMap')}
+              onCtaPress={() => navigation.navigate('Map')}
+              testID="tow-dashboard-empty"
+            />
           }
         />
       </SafeAreaView>
@@ -380,15 +394,11 @@ export function TowDashboardScreen() {
         </View>
       </BottomSheetModal>
 
-      <View style={styles.bottomNavWrap}>
-        <BottomNavBar activeTab="Home" onSelect={handleTab} dark />
-      </View>
-    </View>
+    </DashboardShell>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
   safe: { flex: 1 },
   scroll: { paddingHorizontal: spacing.md, paddingBottom: 100 },
   heroCard: {
@@ -501,13 +511,6 @@ const styles = StyleSheet.create({
   filterChipActive: { backgroundColor: THEME.primary },
   filterText: { fontFamily: typography.fontFamily.medium, fontSize: typography.presets.caption.fontSize, color: colors.text },
   filterTextActive: { color: colors.primaryContrast },
-  sectionTitle: {
-    fontFamily: typography.fontFamily.semibold,
-    fontSize: 18,
-    lineHeight: 24,
-    color: colors.text,
-    marginBottom: spacing.md,
-  },
   requesterRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -544,6 +547,19 @@ const styles = StyleSheet.create({
   jobMain: { flex: 1, minWidth: 0 },
   jobTitle: { fontFamily: typography.fontFamily.semibold, fontSize: typography.presets.body.fontSize, color: colors.text },
   jobMeta: { fontFamily: typography.fontFamily.regular, fontSize: typography.presets.caption.fontSize, color: colors.textSecondary, marginTop: spacing.xs },
+  badge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: radii.full,
+    alignSelf: 'center',
+  },
+  badgeActive: { backgroundColor: colors.successLight },
+  badgeQueued: { backgroundColor: colors.warningLight },
+  badgeText: {
+    fontFamily: typography.fontFamily.medium,
+    fontSize: typography.presets.caption.fontSize,
+    color: colors.text,
+  },
   mapLink: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.sm, gap: spacing.xs },
   mapLinkText: { fontFamily: typography.fontFamily.medium, fontSize: typography.presets.bodySmall.fontSize, color: THEME.primary },
   fabWrap: { position: 'absolute', right: spacing.xl, bottom: spacing.xl },
@@ -553,8 +569,6 @@ const styles = StyleSheet.create({
   sheetMeta: { fontFamily: typography.fontFamily.regular, fontSize: typography.presets.bodySmall.fontSize, color: colors.textSecondary, marginBottom: spacing.md },
   timelineTitle: { fontFamily: typography.fontFamily.semibold, fontSize: typography.presets.caption.fontSize, color: colors.text, marginTop: spacing.md, marginBottom: spacing.xs },
   sheetMapBtn: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.md, gap: spacing.sm },
-  emptyWrap: { alignItems: 'center', paddingVertical: spacing.lg },
-  emptyText: { fontFamily: typography.fontFamily.regular, fontSize: typography.presets.bodySmall.fontSize, color: colors.textMuted, marginTop: spacing.md },
   bottomNavWrap: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,

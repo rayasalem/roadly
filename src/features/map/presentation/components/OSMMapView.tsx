@@ -27,6 +27,8 @@ export interface OSMMapViewProps {
   /** When set, this marker gets a pulse animation (closest provider). */
   nearestProviderId?: string | null;
   onProviderPress: (provider: Provider) => void;
+  /** Web Leaflet popup CTA; ignored on native stub. */
+  onRequestService?: (provider: Provider) => void;
 }
 
 function OSMMapViewInner({
@@ -115,7 +117,8 @@ function OSMMapViewInner({
     const map = mapRef.current as { removeLayer?: (l: unknown) => void } | null;
     const L = (window as unknown as { L?: { marker: (latlng: [number, number], o?: object) => { addTo: (m: unknown) => unknown; bindPopup: (html: string, o?: object) => unknown; on: (e: string, fn: () => void) => unknown; remove?: () => void }; circleMarker: (latlng: [number, number], o?: object) => { addTo: (m: unknown) => unknown; remove?: () => void }; divIcon?: (o: object) => unknown } }).L;
     if (!map || !L) return;
-    markersRef.current.forEach((m: { remove?: () => void }) => {
+    markersRef.current.forEach((raw) => {
+      const m = raw as { remove?: () => void };
       if (typeof m?.remove === 'function') m.remove();
     });
     markersRef.current = [];
@@ -155,7 +158,10 @@ function OSMMapViewInner({
           : undefined,
       });
       const popupHtml = buildProviderPopupHtml(provider, t('map.requestService'));
-      const m = marker.addTo(map);
+      const m = marker.addTo(map) as {
+        bindPopup: (html: string, o?: { maxWidth?: number }) => void;
+        on: (e: string, fn: () => void) => void;
+      };
       m.bindPopup(popupHtml, { maxWidth: 320 });
       m.on('popupopen', () => {
         const btn = document.querySelector(`[data-provider-id="${provider.id}"]`);
@@ -214,6 +220,7 @@ function arePropsEqual(prev: OSMMapViewProps, next: OSMMapViewProps): boolean {
       (prev.userLocation.latitude !== next.userLocation.latitude || prev.userLocation.longitude !== next.userLocation.longitude)) return false;
   if (prev.selectedProviderId !== next.selectedProviderId) return false;
   if (prev.nearestProviderId !== next.nearestProviderId) return false;
+  if (prev.onRequestService !== next.onRequestService) return false;
   const prevIds = prev.providers.map((p) => p.id).join(',');
   const nextIds = next.providers.map((p) => p.id).join(',');
   return prevIds === nextIds;

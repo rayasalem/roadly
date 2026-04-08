@@ -3,7 +3,7 @@
  * Persists preference; use useTheme() for resolved colors in components.
  */
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { persist, createJSONStorage, type PersistStorage } from 'zustand/middleware';
 
 export type ColorSchemePreference = 'light' | 'dark' | 'system';
 
@@ -33,7 +33,9 @@ export const useThemeStore = create<ThemeState>()(
     }),
     {
       name: 'mechnow-theme',
-      storage: createJSONStorage<ThemeState>(() => getStorage() ?? { getItem: () => null, setItem: () => {}, removeItem: () => {} }),
+      storage: createJSONStorage(() => getStorage() ?? { getItem: () => null, setItem: () => {}, removeItem: () => {} }) as unknown as PersistStorage<{
+        colorSchemePreference: ColorSchemePreference;
+      }>,
       partialize: (s) => ({ colorSchemePreference: s.colorSchemePreference }),
     }
   )

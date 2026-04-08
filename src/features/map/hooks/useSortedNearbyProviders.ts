@@ -1,7 +1,7 @@
 /**
  * Hook موحد: موقع المستخدم + جلب المزودين القريبين + ترتيب الأقرب (Haversine).
  * يعيد فقط المزودين الذين سجّلوا موقعهم (lat, lng).
- * عند فشل API يستخدم قائمة fallback حتى لا تتوقف الخريطة.
+ * عند فشل API تُعرض قائمة فارغة ويُبلغ الـ hook عبر isProvidersError.
  */
 import { useMemo } from 'react';
 import type { Provider } from '../../providers/domain/types';
@@ -36,7 +36,7 @@ export function useSortedNearbyProviders(options: UseSortedNearbyProvidersOption
   const { role = null, enabled = true } = options;
   const { coords, isLoading: locationLoading, error: locationError, fetchLocation } = useUserLocation();
 
-  /** Always pass params (use default center when coords null) so we get API or mock providers. */
+  /** Always pass params (default center when coords null) so nearby query can run. */
   const nearbyParams = useMemo(
     () => {
       const lat = coords?.latitude ?? DEFAULT_CENTER.latitude;
@@ -94,7 +94,7 @@ export function useSortedNearbyProviders(options: UseSortedNearbyProvidersOption
     isLoading,
     isRefetching,
     error,
-    /** true when useNearbyProviders failed (API error/401); then sortedProviders are from fallback */
+    /** true when useNearbyProviders failed (network/API error) */
     isProvidersError,
     /** @deprecated use isProvidersError */
     usedFallback: isProvidersError,

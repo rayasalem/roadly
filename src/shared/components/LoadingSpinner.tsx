@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
-import { colors } from '../theme/colors';
 import { typography } from '../theme';
+import { colors } from '../theme/colors';
 import { t } from '../i18n/t';
 
 interface LoadingSpinnerProps {
@@ -31,6 +31,5 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontFamily: typography.fontFamily.regular,
     fontSize: typography.fontSize.callout,
-    color: colors.textSecondary,
   },
 });

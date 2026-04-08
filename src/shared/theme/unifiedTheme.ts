@@ -113,7 +113,8 @@ export type UnifiedTheme = typeof baseTheme & { colors: ColorPalette; colorSchem
  */
 export function useTheme(): UnifiedTheme {
   const preference = useThemeStore((s) => s.colorSchemePreference);
-  const system = useRNColorScheme();
+  const systemScheme = useRNColorScheme();
+  const system = systemScheme === 'light' || systemScheme === 'dark' ? systemScheme : null;
   const colorScheme = useMemo(
     () => resolveColorScheme(preference, system),
     [preference, system]

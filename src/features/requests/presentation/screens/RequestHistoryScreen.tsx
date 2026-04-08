@@ -11,11 +11,15 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScreenWrapper } from '../../../../shared/components/ScreenWrapper';
 import { AppHeader } from '../../../../shared/components/AppHeader';
 import { AppText } from '../../../../shared/components/AppText';
-import { BottomNavBar, type NavTabId } from '../../../../shared/components/BottomNavBar';
+import type { NavTabId } from '../../../../shared/navigation/navTabs';
 import { ListScreenLayout } from '../../../../shared/components/ListScreenLayout';
 import { colors } from '../../../../shared/theme/colors';
 import { spacing, typography, radii, shadows } from '../../../../shared/theme';
 import { t } from '../../../../shared/i18n/t';
+import { trailingChevronForLocale } from '../../../../shared/i18n/rtlUtils';
+import { useLocaleStore } from '../../../../store/localeStore';
+import type { StringKey } from '../../../../shared/i18n/strings';
+import { DashboardEmptyState } from '../../../../shared/components/dashboard';
 import { useRequestHistory } from '../../hooks/useRequestHistory';
 import type { ServiceRequest } from '../../domain/types';
 import { getRequestStatusTheme, isRequestInProgress } from '../../constants/requestStatusTheme';
@@ -29,6 +33,7 @@ function serviceTypeLabel(st: string): string {
   if (st === 'mechanic') return t('map.filter.mechanic');
   if (st === 'tow') return t('map.filter.tow');
   if (st === 'rental') return t('map.filter.rental');
+  if (st === 'insurance') return t('map.filter.insurance');
   return st;
 }
 
@@ -43,6 +48,8 @@ const RequestCard = memo(function RequestCard({
   onTrack: (requestId: string) => void;
   onRate: (requestId: string, providerName?: string | null) => void;
 }) {
+  const locale = useLocaleStore((s) => s.locale);
+  const trailingChevron = trailingChevronForLocale(locale);
   const dateStr = item.createdAt ? new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
   const theme = getRequestStatusTheme(item.status);
   const inProgress = isRequestInProgress(item.status);
@@ -79,7 +86,7 @@ const RequestCard = memo(function RequestCard({
             )}
           </View>
         </View>
-        <MaterialCommunityIcons name="chevron-right" size={22} color={colors.textMuted} />
+        <MaterialCommunityIcons name={trailingChevron} size={22} color={colors.textMuted} />
       </View>
     </TouchableOpacity>
   );
@@ -107,10 +114,9 @@ export function RequestHistoryScreen() {
 
   const handleTab = useCallback((tab: NavTabId) => {
     if (tab === 'Home') navigation.navigate('Map');
+    else if (tab === 'Requests') return;
     else if (tab === 'Profile') navigation.navigate('Profile');
     else if (tab === 'Chat') navigation.navigate('Chat');
-    else if (tab === 'Notifications') navigation.navigate('Notifications');
-    else if (tab === 'Settings') safeNavigateToSettings(navigation);
   }, [navigation]);
 
   const openRequest = useCallback((requestId: string) => {
@@ -144,12 +150,15 @@ export function RequestHistoryScreen() {
     </>
   );
   const emptyState = (
-    <View style={styles.empty}>
-      <MaterialCommunityIcons name="clipboard-text-outline" size={56} color={colors.textMuted} />
-      <AppText variant="body" color={colors.textSecondary} center style={styles.emptyText}>
-        {t('request.noHistory') ?? 'No requests yet. Create one from the map.'}
-      </AppText>
-    </View>
+    <DashboardEmptyState
+      icon="clipboard-text-outline"
+      title={t('request.noHistory')}
+      subtitle={t('map.requestHint')}
+      ctaTitle={t('customerDashboard.newRequestCta')}
+      onCtaPress={() => navigation.navigate('Request', { serviceType: 'mechanic' })}
+      secondaryCtaTitle={t('home.viewOnMap')}
+      onSecondaryCtaPress={() => navigation.navigate('Map')}
+    />
   );
   const renderItem = useCallback(
     ({ item }: { item: ServiceRequest }) => (
@@ -168,12 +177,13 @@ export function RequestHistoryScreen() {
       initialNumToRender={10}
       maxToRenderPerBatch={10}
       windowSize={5}
+      updateCellsBatchingPeriod={50}
       removeClippedSubviews
     />
   );
 
   return (
-    <ScreenWrapper bottomNav={<BottomNavBar activeTab="Profile" onSelect={handleTab} />}>
+    <ScreenWrapper responsiveNav bottomNavConfig={{ activeTab: 'Requests', onSelect: handleTab }}>
       <ListScreenLayout
         header={header}
         isLoading={isLoading}
@@ -182,6 +192,10 @@ export function RequestHistoryScreen() {
         errorMessage={t('error.network')}
         isEmpty={requests.length === 0}
         emptyState={emptyState}
+        showAmbientBackground
+        loadingVariant="skeleton"
+        skeletonRows={7}
+        loadingHint={t('common.loadingList')}
       >
         {listContent}
       </ListScreenLayout>
@@ -243,6 +257,4 @@ const styles = StyleSheet.create({
   cardActions: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.sm },
   cardActionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   cardActionText: { fontFamily: typography.fontFamily.medium, fontSize: 13, color: colors.primary },
-  empty: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.md },
-  emptyText: { marginTop: spacing.md },
 });

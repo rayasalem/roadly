@@ -18,6 +18,8 @@ import type { RootStackParamList } from '../../../../navigation/RootNavigator';
 import { AppText } from '../../../../shared/components/AppText';
 import { Button } from '../../../../shared/components/Button';
 import { t } from '../../../../shared/i18n/t';
+import { useLocaleStore } from '../../../../store/localeStore';
+import { backChevronForLocale } from '../../../../shared/i18n/rtlUtils';
 import { colors } from '../../../../shared/theme/colors';
 import { spacing, typography, radii } from '../../../../shared/theme';
 import { useUIStore } from '../../../../store/uiStore';
@@ -41,6 +43,8 @@ export function RegisterScreen({ navigation }: Props) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [role, setRole] = useState<Role>(ROLES.USER);
+  const locale = useLocaleStore((s) => s.locale);
+  const backIcon = backChevronForLocale(locale);
 
   const onSubmit = useCallback(async () => {
     setError(null);
@@ -85,9 +89,9 @@ export function RegisterScreen({ navigation }: Props) {
           style={styles.backBtn}
           onPress={() => navigation.goBack()}
           accessibilityRole="button"
-          accessibilityLabel="Back"
+          accessibilityLabel={t('common.back')}
         >
-          <MaterialCommunityIcons name="chevron-left" size={28} color={colors.primary} />
+          <MaterialCommunityIcons name={backIcon} size={28} color={colors.primary} />
         </TouchableOpacity>
         <View style={styles.carIconWrap}>
           <MaterialCommunityIcons name="car-side" size={32} color={colors.primary} />
@@ -160,7 +164,7 @@ export function RegisterScreen({ navigation }: Props) {
                 <TouchableOpacity
                   onPress={() => setShowPassword((p) => !p)}
                   style={styles.eyeBtn}
-                  accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                  accessibilityLabel={showPassword ? t('auth.password.hide') : t('auth.password.show')}
                 >
                   <MaterialCommunityIcons
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
@@ -170,7 +174,7 @@ export function RegisterScreen({ navigation }: Props) {
                 </TouchableOpacity>
               </View>
               <View style={styles.roleRow}>
-                {[ROLES.USER, ROLES.MECHANIC, ROLES.MECHANIC_TOW, ROLES.CAR_RENTAL].map((r) => (
+                {[ROLES.USER, ROLES.MECHANIC, ROLES.MECHANIC_TOW, ROLES.CAR_RENTAL, ROLES.INSURANCE].map((r) => (
                   <TouchableOpacity
                     key={r}
                     style={[styles.roleChip, role === r && styles.roleChipActive]}
@@ -186,6 +190,8 @@ export function RegisterScreen({ navigation }: Props) {
                           ? 'car-estate'
                           : r === ROLES.MECHANIC_TOW
                           ? 'tow-truck'
+                          : r === ROLES.INSURANCE
+                          ? 'shield-check-outline'
                           : 'wrench-outline'
                       }
                       size={16}
@@ -208,7 +214,7 @@ export function RegisterScreen({ navigation }: Props) {
                   <MaterialCommunityIcons name="checkbox-marked-outline" size={22} color={colors.primary} />
                   <AppText variant="callout" style={styles.rememberText}>{t('auth.rememberMe')}</AppText>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => toast({ type: 'info', message: t('auth.login.forgotComingSoon') ?? 'Password reset coming soon.' })} accessibilityRole="button">
+                <TouchableOpacity onPress={() => toast({ type: 'info', message: t('auth.login.forgotComingSoon') })} accessibilityRole="button">
                   <AppText variant="callout" style={styles.forgotLink}>{t('auth.login.forgot')}</AppText>
                 </TouchableOpacity>
               </View>

@@ -19,6 +19,8 @@ import type { RootStackParamList } from '../../../../navigation/RootNavigator';
 import { AppText } from '../../../../shared/components/AppText';
 import { Button } from '../../../../shared/components/Button';
 import { t } from '../../../../shared/i18n/t';
+import { backChevronForLocale } from '../../../../shared/i18n/rtlUtils';
+import { useLocaleStore } from '../../../../store/localeStore';
 import { colors } from '../../../../shared/theme/colors';
 import { spacing, typography, radii, shadows } from '../../../../shared/theme';
 import { useUIStore } from '../../../../store/uiStore';
@@ -26,10 +28,11 @@ import { ROLES, type Role } from '../../../../shared/constants/roles';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ProviderRegister'>;
 
-const PROVIDER_TYPES: { role: Role; key: 'typeMechanic' | 'typeTow' | 'typeRental' }[] = [
+const PROVIDER_TYPES: { role: Role; key: 'typeMechanic' | 'typeTow' | 'typeRental' | 'typeInsurance' }[] = [
   { role: ROLES.MECHANIC, key: 'typeMechanic' },
   { role: ROLES.MECHANIC_TOW, key: 'typeTow' },
   { role: ROLES.CAR_RENTAL, key: 'typeRental' },
+  { role: ROLES.INSURANCE, key: 'typeInsurance' },
 ];
 
 const MECHANIC_SERVICES: { id: string; key: 'serviceMaintenance' | 'serviceElectric' | 'serviceOilChange' | 'serviceTires' | 'serviceEngine' | 'serviceBrakes' }[] = [
@@ -112,6 +115,8 @@ const checkboxStyles = StyleSheet.create({
 });
 
 export function ProviderRegistrationScreen({ navigation }: Props) {
+  const locale = useLocaleStore((s) => s.locale);
+  const backIcon = backChevronForLocale(locale);
   const toast = useUIStore((s) => s.toast);
   const [providerType, setProviderType] = useState<Role>(ROLES.MECHANIC);
   const [fullName, setFullName] = useState('');
@@ -198,10 +203,10 @@ export function ProviderRegistrationScreen({ navigation }: Props) {
       {/* ——— 1. الهيدر ——— */}
       <View style={[styles.headerBar, { backgroundColor: HEADER_BG }]}>
         <TouchableOpacity style={styles.headerBack} onPress={() => navigation.goBack()} accessibilityRole="button">
-          <MaterialCommunityIcons name="chevron-left" size={28} color={HEADER_TITLE_COLOR} />
+          <MaterialCommunityIcons name={backIcon} size={28} color={HEADER_TITLE_COLOR} />
         </TouchableOpacity>
         <AppText variant="title3" weight="semibold" style={[styles.headerTitle, { color: HEADER_TITLE_COLOR }]}>
-          مزود الخدمة
+          {t('providerReg.title')}
         </AppText>
         <View style={styles.headerRight} />
       </View>
@@ -477,6 +482,55 @@ export function ProviderRegistrationScreen({ navigation }: Props) {
                   style={[styles.input, { color: TEXT_PRIMARY }]}
                   keyboardType="decimal-pad"
                 />
+              </View>
+            </View>
+          )}
+
+          {/* ——— 7b. حقول خاصة: مزود تأمين ——— */}
+          {providerType === ROLES.INSURANCE && (
+            <View style={[styles.card, { backgroundColor: CARD_BG, borderRadius: CARD_RADIUS }]}>
+              <AppText variant="subhead" weight="semibold" style={[styles.cardTitle, { color: TEXT_PRIMARY }]}>
+                {t('providerReg.insuranceOfficeTitle')}
+              </AppText>
+              <View style={styles.addressRow}>
+                <View style={[styles.inputWrap, { flex: 1, backgroundColor: INPUT_BG, borderColor: BORDER_COLOR, minHeight: INPUT_HEIGHT }]}>
+                  <MaterialCommunityIcons name="map-marker-outline" size={20} color={TEXT_SECONDARY} />
+                  <TextInput
+                    value={workshopAddress}
+                    onChangeText={setWorkshopAddress}
+                    placeholder={t('providerReg.workshopAddress')}
+                    placeholderTextColor={TEXT_SECONDARY}
+                    style={[styles.input, { color: TEXT_PRIMARY }]}
+                  />
+                </View>
+                <TouchableOpacity style={[styles.gpsButton, { backgroundColor: colors.primary }]} onPress={onGpsWorkshop}>
+                  <MaterialCommunityIcons name="crosshairs-gps" size={22} color="#FFF" />
+                  <AppText variant="caption" style={styles.gpsButtonText}>{t('providerReg.gpsButton')}</AppText>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.timeRow}>
+                <View style={[styles.inputWrap, { flex: 1, backgroundColor: INPUT_BG, borderColor: BORDER_COLOR, minHeight: INPUT_HEIGHT }]}>
+                  <MaterialCommunityIcons name="clock-outline" size={20} color={TEXT_SECONDARY} />
+                  <TextInput
+                    value={workingHoursFrom}
+                    onChangeText={setWorkingHoursFrom}
+                    placeholder={t('providerReg.workingHoursFrom')}
+                    placeholderTextColor={TEXT_SECONDARY}
+                    style={[styles.input, { color: TEXT_PRIMARY }]}
+                    keyboardType="numbers-and-punctuation"
+                  />
+                </View>
+                <AppText variant="body" style={{ color: TEXT_SECONDARY, marginHorizontal: 8 }}>–</AppText>
+                <View style={[styles.inputWrap, { flex: 1, backgroundColor: INPUT_BG, borderColor: BORDER_COLOR, minHeight: INPUT_HEIGHT }]}>
+                  <TextInput
+                    value={workingHoursTo}
+                    onChangeText={setWorkingHoursTo}
+                    placeholder={t('providerReg.workingHoursTo')}
+                    placeholderTextColor={TEXT_SECONDARY}
+                    style={[styles.input, { color: TEXT_PRIMARY }]}
+                    keyboardType="numbers-and-punctuation"
+                  />
+                </View>
               </View>
             </View>
           )}

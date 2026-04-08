@@ -24,7 +24,7 @@ jobs:
         run: npx prisma generate
       - run: npm run build
       - name: Run backend tests
-        run: npm run test 2>/dev/null || true
+        run: npm run test
   frontend:
     runs-on: ubuntu-latest
     steps:
@@ -35,12 +35,12 @@ jobs:
           cache: "npm"
           cache-dependency-path: package-lock.json
       - run: npm ci
-      - run: npm run test -- --passWithNoTests 2>/dev/null || true
+      - run: npm run test -- --passWithNoTests
       - name: Build web
         env:
           EXPO_PUBLIC_API_URL: https://api.staging.mechnow.example.com
           EXPO_PUBLIC_ENVIRONMENT: staging
-        run: npx expo export --platform web 2>/dev/null || true
+        run: npx expo export --platform web
   security:
     runs-on: ubuntu-latest
     steps:

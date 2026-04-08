@@ -3,11 +3,12 @@ import { CustomerStack } from './CustomerStack';
 import { MechanicStack } from './MechanicStack';
 import { TowStack } from './TowStack';
 import { RentalStack } from './RentalStack';
+import { InsuranceStack } from './InsuranceStack';
 import { AdminStack } from './AdminStack';
 import { useAuthStore } from '../store/authStore';
 import type { Role } from '../shared/constants/roles';
 
-type RoleSegment = 'customer' | 'mechanic' | 'tow' | 'rental' | 'admin';
+type RoleSegment = 'customer' | 'mechanic' | 'tow' | 'rental' | 'insurance' | 'admin';
 
 const mapRoleToSegment = (role: Role | 'guest' | undefined): RoleSegment => {
   switch (role) {
@@ -17,6 +18,8 @@ const mapRoleToSegment = (role: Role | 'guest' | undefined): RoleSegment => {
       return 'tow';
     case 'car_rental':
       return 'rental';
+    case 'insurance':
+      return 'insurance';
     case 'admin':
       return 'admin';
     default:
@@ -31,6 +34,7 @@ export const RoleNavigator = () => {
   if (segment === 'mechanic') return <MechanicStack />;
   if (segment === 'tow') return <TowStack />;
   if (segment === 'rental') return <RentalStack />;
+  if (segment === 'insurance') return <InsuranceStack />;
   if (segment === 'admin') return <AdminStack />;
 
   return <CustomerStack />;

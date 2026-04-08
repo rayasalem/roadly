@@ -28,4 +28,13 @@ export const spacing = {
   xxxl: 48,
 } as const;
 
+/** Border radius scale (Uber-style); use with StyleSheet or alongside `radii` from theme. */
+export const borderRadius = {
+  sm: 4,
+  md: 8,
+  lg: 12,
+  xl: 16,
+  full: 9999,
+} as const;
+
 export type SpacingKey = keyof typeof spacing;

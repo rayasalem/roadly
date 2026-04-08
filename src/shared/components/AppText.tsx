@@ -13,6 +13,7 @@ export type AppTextVariant =
   | 'title3'
   | 'body'
   | 'callout'
+  | 'subhead'
   | 'caption';
 
 export type AppTextWeight = 'regular' | 'medium' | 'semibold' | 'bold';
@@ -34,6 +35,7 @@ const variantToFontSizeAndLineHeight = {
   title3: { fontSize: typography.presets.titleSmall.fontSize, lineHeight: typography.presets.titleSmall.lineHeight },
   body: { fontSize: typography.presets.body.fontSize, lineHeight: typography.presets.body.lineHeight },
   callout: { fontSize: typography.presets.bodySmall.fontSize, lineHeight: typography.presets.bodySmall.lineHeight },
+  subhead: { fontSize: typography.presets.bodySmall.fontSize, lineHeight: typography.presets.bodySmall.lineHeight },
   caption: { fontSize: typography.presets.caption.fontSize, lineHeight: typography.presets.caption.lineHeight },
 } as const;
 
@@ -51,6 +53,7 @@ const variantToDefaultWeight = {
   title3: 'semibold' as const,
   body: 'regular' as const,
   callout: 'regular' as const,
+  subhead: 'medium' as const,
   caption: 'regular' as const,
 };
 

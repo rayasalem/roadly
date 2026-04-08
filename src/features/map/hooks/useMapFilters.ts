@@ -13,6 +13,7 @@ const PROVIDER_FILTER_OPTIONS: MapFilterRole[] = [
   ROLES.MECHANIC,
   ROLES.MECHANIC_TOW,
   ROLES.CAR_RENTAL,
+  ROLES.INSURANCE,
 ];
 
 export function useMapFilters() {
